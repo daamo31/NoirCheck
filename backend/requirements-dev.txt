@@ -1,0 +1,68 @@
+# ==========================================
+# NOIRCHECK DEVELOPMENT DEPENDENCIES
+# ==========================================
+
+# Testing avanzado
+pytest-xdist==3.5.0           # Ejecución paralela de tests
+pytest-mock==3.12.0           # Mocking para tests
+pytest-benchmark==4.0.0       # Benchmarking de performance
+pytest-html==4.1.1            # Reportes HTML de tests
+pytest-watch==4.2.0           # Auto-ejecutar tests al cambiar código
+
+# Code quality y linting
+black==24.1.1                 # Formateo de código
+isort==5.13.2                 # Ordenamiento de imports
+flake8==7.0.0                 # Linting básico
+pylint==3.0.3                 # Linting avanzado
+mypy==1.8.0                   # Type checking estático
+bandit==1.7.6                 # Análisis de seguridad
+
+# Documentación
+sphinx==7.2.6                 # Generación de documentación
+sphinx-rtd-theme==2.0.0       # Tema para documentación
+mkdocs==1.5.3                 # Documentación alternativa
+mkdocs-material==9.5.6        # Tema material para mkdocs
+
+# Debugging y profiling
+pdb++==0.10.3                 # Debugger mejorado
+py-spy==0.3.14                # Profiler de performance
+memory-profiler==0.61.0       # Profiling de memoria
+line-profiler==4.1.1          # Profiling línea por línea
+
+# Database tools para desarrollo
+sqlalchemy-stubs==0.4         # Stubs para SQLAlchemy
+alembic-utils==0.8.2          # Utilidades para Alembic
+
+# API testing y mocking
+responses==0.24.1             # Mock de requests HTTP
+factory-boy==3.3.0            # Factories para testing
+freezegun==1.4.0              # Mock de fechas/tiempo
+
+# Development tools
+ipython==8.21.0               # Shell interactivo mejorado
+jupyter==1.0.0                # Notebooks para desarrollo
+pre-commit==3.6.1             # Hooks de pre-commit
+
+# Load testing
+locust==2.22.0                # Load testing de APIs
+
+# Monitoring y debugging en desarrollo
+watchdog==3.0.0               # File system monitoring
+rich==13.7.0                  # Pretty printing en terminal
+click==8.1.7                  # CLI tools
+
+# Hot reload para desarrollo
+watchfiles==0.21.0            # File watching para auto-reload
+
+# Análisis de código
+vulture==2.11                 # Detección de código muerto
+radon==6.0.1                  # Análisis de complejidad
+
+# ==========================================
+# INSTALACIÓN
+# ==========================================
+# Para instalar dependencias de desarrollo:
+# pip install -r requirements-dev.txt
+#
+# Para usar con requirements principal:
+# pip install -r requirements.txt -r requirements-dev.txt
