@@ -1,6 +1,11 @@
-# NoirCheck - Plataforma de Verificación de Autenticidad Digital
+# 🔐 NoirCheck - Plataforma de Verificación de Autenticidad
 
-NoirCheck es una aplicación innovadora diseñada para combatir la desinformación y la falsificación de contenido digital. Utiliza tecnología blockchain y zkTLS para crear un ecosistema de confianza donde creadores y consumidores pueden verificar la autenticidad del contenido digital.
+![Estado del Proyecto](https://img.shields.io/badge/Estado-✅%20CONFIGURADO-brightgreen)
+![Backend](https://img.shields.io/badge/Backend-Python%20+%20FastAPI-blue)
+![Frontend](https://img.shields.io/badge/Frontend-Flutter-cyan)
+![Blockchain](https://img.shields.io/badge/Blockchain-XION%20zkTLS-purple)
+
+NoirCheck es una plataforma innovadora de verificación de autenticidad de contenido digital que combate la desinformación utilizando tecnología blockchain y zkTLS (Zero-Knowledge Transport Layer Security).
 
 ## 🚀 Características Principales
 
