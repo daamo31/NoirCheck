@@ -1,0 +1,457 @@
+# NoirCheck - Gitignore completo para Flutter + Python Backend
+
+# ==========================================
+# ARCHIVOS SENSIBLES Y CREDENCIALES
+# ==========================================
+# Variables de entorno y configuración
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+config.json
+secrets.json
+credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Tokens y claves API
+api_keys.txt
+tokens.txt
+xion_credentials.json
+blockchain_keys.json
+
+# ==========================================
+# PYTHON BACKEND
+# ==========================================
+# Entornos virtuales
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.ENV/
+.env.bak/
+.venv.bak/
+
+# Bytecode de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribución / empaquetado
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# ==========================================
+# BASE DE DATOS Y ALMACENAMIENTO
+# ==========================================
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+noircheck.db
+test.db
+
+# PostgreSQL
+*.sql
+
+# Archivos de contenido subidos
+uploads/
+files/
+storage/
+media/
+static_files/
+user_content/
+
+# Logs
+*.log
+logs/
+*.out
+
+# ==========================================
+# FLUTTER FRONTEND
+# ==========================================
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code related
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS related
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+*.keystore
+
+# Web related
+lib/generated_plugin_registrant.dart
+
+# ==========================================
+# ARCHIVOS DE COMPILACIÓN Y TEMPORALES
+# ==========================================
+# Archivos temporales del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de respaldo
+*.bak
+*.backup
+*.orig
+*.tmp
+*~
+
+# ==========================================
+# ARCHIVOS GRANDES Y BINARIOS
+# ==========================================
+# Archivos de más de 100MB (GitHub limit)
+*.zip
+*.tar.gz
+*.tar.bz2
+*.rar
+*.7z
+
+# Videos grandes
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+*.flv
+*.webm
+
+# Audio
+*.mp3
+*.wav
+*.flac
+*.aac
+*.ogg
+
+# Imágenes grandes (excepto assets pequeños)
+*.psd
+*.ai
+*.eps
+*.tiff
+*.tif
+*.raw
+*.dng
+
+# Documentos grandes
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+
+# Archivos de base de datos grandes
+*.dump
+*.sql.gz
+
+# ==========================================
+# HERRAMIENTAS DE DESARROLLO
+# ==========================================
+# Node modules (si se usan herramientas de JS)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible
+*.retry
+
+# ==========================================
+# ESPECÍFICO DEL PROYECTO NOIRCHECK
+# ==========================================
+# Archivos de contenido de prueba
+test_images/
+test_videos/
+sample_content/
+demo_files/
+
+# Certificados y claves blockchain
+blockchain_certs/
+xion_keys/
+*.blockchain
+
+# Cache de verificaciones
+verification_cache/
+hash_cache/
+
+# Archivos de configuración local del proyecto
+local_settings.py
+local_config.json
+dev_config.yaml
+
+# Reportes y análisis
+reports/
+analytics/
+metrics/
+
+# ==========================================
+# ARCHIVOS DE CONFIGURACIÓN DE EDITORES
+# ==========================================
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# VS Code (configuraciones específicas)
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# ==========================================
+# ARCHIVOS DEL SISTEMA OPERATIVO
+# ==========================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==========================================
+# TESTING Y ANÁLISIS
+# ==========================================
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Test artifacts
+.pytest_cache/
+.tox/
+test-results/
+test-reports/
+
+# Performance testing
+*.prof
+*.trace
+
+# ==========================================
+# COMENTARIOS ADICIONALES
+# ==========================================
+# Este gitignore está optimizado para:
+# - Proteger credenciales y datos sensibles
+# - Evitar subir archivos grandes que excedan límites de GitHub
+# - Mantener limpio el repositorio de archivos temporales
+# - Excluir entornos virtuales y dependencias
+# - Prevenir conflictos entre diferentes sistemas operativos
+
+# Para permitir archivos específicos que estén en estas reglas, usa:
+# !archivo_especifico.pdf
+
+# Para ver qué archivos están siendo ignorados:
+# git status --ignored
