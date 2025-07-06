@@ -7,6 +7,11 @@ Plataforma de verificación de autenticidad de contenido digital
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime, timezone
 import uvicorn
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
+
 from fastapi import FastAPI, File, UploadFile, Form, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -20,7 +25,7 @@ from models.database import get_db, init_db
 from models.content import Content
 from services.hash_service import HashService
 from services.file_service import FileService
-from services.xion_service import XIONService
+from services.xion_real_service import XIONService
 
 # Configuración de la aplicación
 app = FastAPI(
