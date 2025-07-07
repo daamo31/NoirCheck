@@ -85,7 +85,7 @@ class APIService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await this.fetchWithFallback(`${this.baseURL}/register`, {
+    const response = await this.fetchWithFallback(`${this.baseURL}/content/register`, {
       method: 'POST',
       body: formData,
     });
@@ -103,7 +103,7 @@ class APIService {
       formData.append('source_url', sourceUrl);
     }
 
-    const response = await this.fetchWithFallback(`${this.baseURL}/verify`, {
+    const response = await this.fetchWithFallback(`${this.baseURL}/content/verify`, {
       method: 'POST',
       body: formData,
     });
