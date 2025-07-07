@@ -404,15 +404,36 @@ cd ../backend && python -c "import fastapi; print('✅ Backend OK')"
 
 ## 📄 Licencia
 
-Este proyecto está desarrollado como demostración técnica. Por favor, contacta a los desarrolladores para información sobre licencias.
+Este proyecto está desarrollado como demostración técnica del potencial de blockchain en la verificación de contenido digital. Para información sobre licencias comerciales, contacta al equipo de desarrollo.
 
-## 📞 Soporte
+## 📞 Soporte y Contacto
 
-Para soporte técnico o preguntas sobre NoirCheck:
-- **Email**: support@noircheck.app
-- **Documentación**: https://docs.noircheck.app
-- **Issues**: GitHub Issues
+### 🆘 Soporte Técnico
+- **GitHub Issues**: Para reportar bugs y solicitar features
+- **Documentación**: Consulta los archivos `.md` en el repositorio
+- **API Docs**: http://localhost:8000/docs (cuando el backend esté corriendo)
+
+### 📧 Contacto
+- **Email técnico**: dev@noircheck.app
+- **Consultas de negocio**: business@noircheck.app
+- **Colaboraciones**: partnerships@noircheck.app
+
+### 🔗 Enlaces Útiles
+- **Documentación XION**: https://docs.xion.global
+- **CosmJS Docs**: https://cosmos.github.io/cosmjs/
+- **Next.js Docs**: https://nextjs.org/docs
+- **FastAPI Docs**: https://fastapi.tiangolo.com/
 
 ---
 
-**NoirCheck** - Devolviendo la confianza al ecosistema digital 🛡️
+<div align="center">
+
+**🛡️ NoirCheck** - *Devolviendo la confianza al ecosistema digital*
+
+[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js%2015-black)](https://nextjs.org/)
+[![Powered by FastAPI](https://img.shields.io/badge/Powered%20by-FastAPI-009688)](https://fastapi.tiangolo.com/)
+[![XION Blockchain](https://img.shields.io/badge/Blockchain-XION-purple)](https://xion.global/)
+
+*Proyecto desarrollado en Julio 2025 • Versión 2.0.0*
+
+</div>
