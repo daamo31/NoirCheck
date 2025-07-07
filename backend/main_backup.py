@@ -423,19 +423,16 @@ async def get_mobile_status():
     try:
         # Verificar servicios críticos
         db_status = "operational"
-        xion_status_data = xion_service.get_status()
-        xion_status = xion_status_data.get("status", "disconnected")
+        xion_status = await xion_service.check_connection()
 
         return {
             "status": "online",
-            "message": "NoirCheck backend operativo con XION blockchain",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "xion_status": xion_status,
             "response_time_ms": 50,  # Simulado para demo
             "services": {
                 "api": "operational",
                 "database": db_status,
-                "xion": xion_status,
+                "blockchain": xion_status,
                 "file_storage": "operational",
             },
         }

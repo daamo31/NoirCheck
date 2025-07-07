@@ -1,102 +1,80 @@
 # ==========================================
 # NOIRCHECK BACKEND DEPENDENCIES
 # ==========================================
+# Dependencias esenciales utilizadas por el código actual
 
+# ==========================================
+# CORE FRAMEWORK
+# ==========================================
 # FastAPI y servidor web
 fastapi==0.109.2
 uvicorn[standard]==0.27.1
 python-multipart==0.0.9
-starlette==0.36.3
 
+# Validación de datos (incluido con FastAPI)
+pydantic==2.6.1
+
+# ==========================================
+# DATABASE & ORM
+# ==========================================
 # Base de datos y ORM
 sqlalchemy==2.0.25
-alembic==1.13.1
 
-# Autenticación y seguridad
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-cryptography==42.0.2
-pyjwt==2.8.0
-
-# Validación de datos
-pydantic==2.6.1
-pydantic-settings==2.1.0
-email-validator==2.1.0.post1
-
+# ==========================================
+# FILE PROCESSING & IMAGES
+# ==========================================
 # Procesamiento de archivos e imágenes
 pillow==10.2.0
 opencv-python==4.9.0.80
 numpy<2.0.0
-python-magic==0.4.27
-imageio==2.34.0
 
+# ==========================================
+# SECURITY & CRYPTOGRAPHY
+# ==========================================
 # Criptografía y hashing
-bcrypt==4.1.2
+cryptography==42.0.2
 
-# HTTP y APIs
-requests==2.31.0
-httpx==0.26.0
-aiohttp==3.9.3
-
-# Configuración y variables de entorno
-python-decouple==3.8
+# ==========================================
+# CONFIGURATION
+# ==========================================
+# Variables de entorno
 python-dotenv==1.0.1
 
-# Logging y monitoreo
-loguru==0.7.2
-
-# Fechas y tiempo
-python-dateutil==2.8.2
-pytz==2024.1
-
-# Utilitarios
-typing-extensions==4.9.0
-
-# Testing y desarrollo
-pytest==7.4.4
-pytest-asyncio==0.23.4
-pytest-cov==4.0.0
-faker==23.2.1
-
-# Simulación blockchain y XION
-# (Estas son para desarrollo, en producción se usaría el SDK real)
-web3==6.15.1
-eth-hash==0.6.0
-eth-utils==2.3.0
-
-# XION Real Dependencies
-cosmpy==0.11.1
-bech32==1.2.0
-grpcio==1.73.1
-protobuf==5.29.5
-
-# Optimización y performance
-cachetools==5.3.2
-
-# Validación adicional de archivos
-mimetypes-extension==0.1.0
-
-# Monitoreo y métricas
-psutil==5.9.8
+# ==========================================
+# DEVELOPMENT & TESTING (OPCIONAL)
+# ==========================================
+# Descomenta las siguientes líneas si necesitas testing:
+# pytest==7.4.4
+# pytest-asyncio==0.23.4
+# pytest-cov==4.0.0
+# faker==23.2.1
 
 # ==========================================
-# DEPENDENCIAS OPCIONALES PARA PRODUCCIÓN
+# PRODUCTION OPTIONAL DEPENDENCIES
 # ==========================================
-
-# Base de datos PostgreSQL (descomenta si necesitas)
+# Base de datos PostgreSQL (descomenta si necesitas):
 # psycopg2-binary==2.9.9
 
-# Servidor de producción (descomenta si necesitas)
+# Servidor de producción (descomenta si necesitas):
 # gunicorn==21.2.0
 
-# Cloud storage (descomenta si necesitas)
+# Cloud storage (descomenta si necesitas):
 # boto3==1.34.34
+
+# XION SDK real (descomenta cuando resuelvas conflictos de dependencias):
+# cosmpy==0.11.1
+# bech32==1.2.0
+# grpcio==1.73.1
+# protobuf==5.29.5
 
 # ==========================================
 # NOTAS DE INSTALACIÓN
 # ==========================================
-# Para instalar todas las dependencias:
+# Para instalar solo las dependencias esenciales:
 # pip install -r requirements.txt
 #
 # Para actualizar todas las dependencias:
 # pip install --upgrade -r requirements.txt
+#
+# El backend actual usa un servicio XION simplificado (mock)
+# para evitar conflictos de dependencias con cosmpy/protobuf.

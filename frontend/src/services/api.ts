@@ -52,10 +52,21 @@ export interface ContentVerification {
 }
 
 class APIService {
-  private baseURL = 'http://localhost:8001';
+  private baseURL = 'http://localhost:8000';
+
+  private async fetchWithFallback(url: string, options?: RequestInit): Promise<Response> {
+    // En el lado del cliente (browser), usar fetch nativo
+    if (typeof window !== 'undefined') {
+      return fetch(url, options);
+    }
+    
+    // En el lado del servidor (Node.js), usar fetch polyfill si es necesario
+    // Next.js 13+ incluye fetch por defecto
+    return fetch(url, options);
+  }
 
   async healthCheck(): Promise<HealthCheck> {
-    const response = await fetch(`${this.baseURL}/health`);
+    const response = await this.fetchWithFallback(`${this.baseURL}/health`);
     if (!response.ok) {
       throw new Error('Health check failed');
     }
@@ -63,7 +74,7 @@ class APIService {
   }
 
   async getMobileStatus(): Promise<MobileStatus> {
-    const response = await fetch(`${this.baseURL}/mobile/status`);
+    const response = await this.fetchWithFallback(`${this.baseURL}/mobile/status`);
     if (!response.ok) {
       throw new Error('Mobile status check failed');
     }
@@ -74,7 +85,7 @@ class APIService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseURL}/register`, {
+    const response = await this.fetchWithFallback(`${this.baseURL}/register`, {
       method: 'POST',
       body: formData,
     });
@@ -92,7 +103,7 @@ class APIService {
       formData.append('source_url', sourceUrl);
     }
 
-    const response = await fetch(`${this.baseURL}/verify`, {
+    const response = await this.fetchWithFallback(`${this.baseURL}/verify`, {
       method: 'POST',
       body: formData,
     });
