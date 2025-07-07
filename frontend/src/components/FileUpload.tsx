@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Upload, FileCheck, Shield, AlertTriangle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import type { ContentRegistration, ContentVerification, UploadProgress } from '@/types';
@@ -15,33 +15,63 @@ interface FileUploadProps {
 
 export function FileUpload({ mode }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState('');
+  const [description, setDescription] = useState('');
+  const [creatorId, setCreatorId] = useState('');
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [result, setResult] = useState<ContentRegistration | ContentVerification | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const generateFilePreview = useCallback((selectedFile: File) => {
+    // Limpiar preview anterior
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
+
+    if (selectedFile.type.startsWith('image/')) {
+      // Para imágenes, crear un objeto URL
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setFilePreview(objectUrl);
+    } else {
+      // Para otros tipos de archivo, no mostrar preview
+      setFilePreview(null);
+    }
+  }, [filePreview]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
+      generateFilePreview(selectedFile);
       setResult(null);
       setError(null);
     }
-  }, []);
+  }, [generateFilePreview]);
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
     if (droppedFile) {
       setFile(droppedFile);
+      generateFilePreview(droppedFile);
       setResult(null);
       setError(null);
     }
-  }, []);
+  }, [generateFilePreview]);
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   }, []);
+
+  // Limpiar preview cuando el componente se desmonta
+  useEffect(() => {
+    return () => {
+      if (filePreview) {
+        URL.revokeObjectURL(filePreview);
+      }
+    };
+  }, [filePreview]);
 
   const processFile = async () => {
     if (!file) return;
@@ -61,7 +91,7 @@ export function FileUpload({ mode }: FileUploadProps) {
           message: 'Registrando en XION blockchain...',
         });
         
-        const registration = await apiService.registerContent(file);
+        const registration = await apiService.registerContent(file, description, creatorId);
         
         setProgress({
           percentage: 100,
@@ -119,20 +149,119 @@ export function FileUpload({ mode }: FileUploadProps) {
           accept="image/*,video/*,.pdf,.doc,.docx"
         />
         <label htmlFor="file-input" className="cursor-pointer">
-          <Upload className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="mt-2 text-lg font-medium text-gray-700 dark:text-gray-300">
-            {isRegistration ? '📤 Registrar Contenido' : '🔍 Verificar Contenido'}
-          </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Arrastra y suelta un archivo aquí, o haz clic para seleccionar
-          </p>
-          {file && (
-            <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              📎 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-            </p>
+          {file && filePreview ? (
+            // Previsualización de imagen
+            <div className="space-y-4">
+              <div className="relative mx-auto w-48 h-48 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                <img
+                  src={filePreview}
+                  alt="Vista previa"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                  {(file.size / 1024 / 1024).toFixed(1)} MB
+                </div>
+              </div>
+              <div className="text-sm">
+                <p className="font-medium text-gray-700 dark:text-gray-300">📎 {file.name}</p>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {file.type || 'Tipo de archivo desconocido'}
+                </p>
+              </div>
+            </div>
+          ) : file ? (
+            // Para archivos no-imagen
+            <div className="space-y-4">
+              <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                {file.type.includes('pdf') ? (
+                  <span className="text-red-500 text-2xl">📄</span>
+                ) : file.type.includes('video') ? (
+                  <span className="text-blue-500 text-2xl">🎥</span>
+                ) : file.type.includes('document') || file.type.includes('text') ? (
+                  <span className="text-green-500 text-2xl">📝</span>
+                ) : (
+                  <span className="text-gray-500 text-2xl">📎</span>
+                )}
+              </div>
+              <div className="text-sm">
+                <p className="font-medium text-gray-700 dark:text-gray-300">📎 {file.name}</p>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'Tipo desconocido'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Estado inicial
+            <div>
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-2 text-lg font-medium text-gray-700 dark:text-gray-300">
+                {isRegistration ? '📤 Registrar Contenido' : '🔍 Verificar Contenido'}
+              </p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Arrastra y suelta un archivo aquí, o haz clic para seleccionar
+              </p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                Soporta: Imágenes, Videos, PDFs, Documentos
+              </p>
+            </div>
           )}
         </label>
       </div>
+
+      {/* Botón para cambiar archivo */}
+      {file && (
+        <div className="text-center">
+          <button
+            onClick={() => {
+              setFile(null);
+              setFilePreview(null);
+              setResult(null);
+              setError(null);
+              // Reset input
+              const input = document.getElementById('file-input') as HTMLInputElement;
+              if (input) input.value = '';
+            }}
+            className="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          >
+            🗑️ Cambiar archivo
+          </button>
+        </div>
+      )}
+
+      {/* Campos para registro */}
+      {isRegistration && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              📝 Descripción del contenido
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe tu contenido original..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              👤 ID del creador
+            </label>
+            <input
+              type="text"
+              value={creatorId}
+              onChange={(e) => setCreatorId(e.target.value)}
+              placeholder="tu-usuario-o-email"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              required
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Identificador único para registrar la autoría en XION
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* URL de origen (solo para verificación) */}
       {isVerification && (
@@ -156,7 +285,13 @@ export function FileUpload({ mode }: FileUploadProps) {
       {/* Botón de acción */}
       <button
         onClick={processFile}
-        disabled={!file || progress?.status === 'uploading' || progress?.status === 'processing' || progress?.status === 'verifying'}
+        disabled={
+          !file || 
+          (isRegistration && (!description.trim() || !creatorId.trim())) ||
+          progress?.status === 'uploading' || 
+          progress?.status === 'processing' || 
+          progress?.status === 'verifying'
+        }
         className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-md transition-colors"
       >
         {progress?.status === 'uploading' || progress?.status === 'processing' || progress?.status === 'verifying' ? (
@@ -235,24 +370,72 @@ function VerificationResult({ result }: { result: ContentVerification }) {
   const confidenceColor = result.confidence >= 0.8 ? 'text-green-600' : 
                           result.confidence >= 0.5 ? 'text-yellow-600' : 'text-red-600';
 
+  // Determinar el estado y mensaje apropiado
+  const getVerificationStatus = () => {
+    if (result.blockchain_verified && result.confidence >= 0.8) {
+      return {
+        icon: '✅',
+        status: 'Contenido auténtico verificado',
+        description: 'Este contenido está registrado en XION blockchain',
+        color: 'text-green-700 dark:text-green-300'
+      };
+    } else if (result.confidence === 0.0) {
+      return {
+        icon: '❌',
+        status: 'Contenido no registrado',
+        description: 'Este contenido no se encuentra en la blockchain o puede haber sido modificado',
+        color: 'text-red-700 dark:text-red-300'
+      };
+    } else {
+      return {
+        icon: '⚠️',
+        status: 'Verificación parcial',
+        description: 'Se encontraron coincidencias parciales, el contenido puede haber sido modificado',
+        color: 'text-yellow-700 dark:text-yellow-300'
+      };
+    }
+  };
+
+  const status = getVerificationStatus();
+
   return (
     <div>
       <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
         🔍 Resultado de Verificación
       </h3>
-      <div className="space-y-2 text-sm">
-        <div className="flex items-center space-x-2">
-          <span>{result.blockchain_verified ? '✅' : '❌'}</span>
-          <span className={result.blockchain_verified ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>
-            <strong>Blockchain XION:</strong> {result.blockchain_verified ? 'Verificado' : 'No encontrado'}
-          </span>
+      <div className="space-y-3 text-sm">
+        {/* Estado principal */}
+        <div className="p-3 rounded-lg border-l-4 bg-gray-50 dark:bg-gray-800/50" 
+             style={{ borderLeftColor: result.blockchain_verified ? '#10B981' : '#EF4444' }}>
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="text-lg">{status.icon}</span>
+            <span className={`font-semibold ${status.color}`}>
+              {status.status}
+            </span>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 text-xs">
+            {status.description}
+          </p>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <span>📊</span>
-          <span className={confidenceColor}>
-            <strong>Confianza:</strong> {(result.confidence * 100).toFixed(1)}%
-          </span>
+
+        {/* Detalles técnicos */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <span>📊</span>
+            <span className={confidenceColor}>
+              <strong>Nivel de confianza:</strong> {(result.confidence * 100).toFixed(1)}%
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span>🔗</span>
+            <span className="text-gray-700 dark:text-gray-300">
+              <strong>Hash del archivo:</strong> 
+              <code className="ml-1 text-xs bg-gray-100 dark:bg-gray-700 px-1 rounded">
+                {result.hash?.substring(0, 16)}...
+              </code>
+            </span>
+          </div>
         </div>
 
         {result.blockchain_tx && (
@@ -265,6 +448,24 @@ function VerificationResult({ result }: { result: ContentVerification }) {
           <p className="text-gray-700 dark:text-gray-300">
             📅 <strong>Fecha de registro:</strong> {new Date(result.registration_date).toLocaleString()}
           </p>
+        )}
+
+        {result.creator_id && (
+          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+            <p className="text-blue-700 dark:text-blue-300">
+              👤 <strong>Registrado por:</strong> {result.creator_id}
+            </p>
+            {result.description && (
+              <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+                📝 <strong>Descripción:</strong> {result.description}
+              </p>
+            )}
+            {result.filename && (
+              <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+                📄 <strong>Archivo original:</strong> {result.filename}
+              </p>
+            )}
+          </div>
         )}
 
         {result.source_verification && (
@@ -290,6 +491,19 @@ function VerificationResult({ result }: { result: ContentVerification }) {
                 <li key={index}>• {mod}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Mensaje explicativo para contenido no encontrado */}
+        {!result.blockchain_verified && result.confidence === 0.0 && (
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+            <p className="text-blue-700 dark:text-blue-300 text-xs">
+              💡 <strong>¿Qué significa esto?</strong><br/>
+              • El archivo no está registrado en NoirCheck<br/>
+              • Puede ser contenido original no registrado<br/>
+              • O puede haber sido modificado después del registro<br/>
+              • Para verificar autenticidad, el creador debe registrar el contenido original
+            </p>
           </div>
         )}
       </div>

@@ -43,6 +43,9 @@ export interface ContentVerification {
   blockchain_verified: boolean;
   blockchain_tx?: string;
   registration_date?: string;
+  creator_id?: string;
+  description?: string;
+  filename?: string;
   source_verification?: {
     url?: string;
     verified: boolean;
@@ -81,9 +84,11 @@ class APIService {
     return response.json();
   }
 
-  async registerContent(file: File): Promise<ContentRegistration> {
+  async registerContent(file: File, description: string, creatorId: string): Promise<ContentRegistration> {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('description', description);
+    formData.append('creator_id', creatorId);
 
     const response = await this.fetchWithFallback(`${this.baseURL}/content/register`, {
       method: 'POST',
@@ -91,7 +96,8 @@ class APIService {
     });
 
     if (!response.ok) {
-      throw new Error('Content registration failed');
+      const errorText = await response.text();
+      throw new Error(`Content registration failed: ${errorText}`);
     }
     return response.json();
   }

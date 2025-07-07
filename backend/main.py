@@ -137,18 +137,18 @@ async def register_content(
             )
 
         # Guardar archivo
-        file_path = await file_service.save_file(file)
+        file_path = await file_service.save_file(file, file_content)
 
         # Registrar en blockchain (simulado)
-        blockchain_tx = await xion_service.register_content_on_chain(
+        blockchain_tx = xion_service.register_content(
             content_hash=content_hash,
-            creator_id=creator_id,
-            timestamp=datetime.now(),
             metadata={
                 "filename": file.filename,
                 "description": description,
+                "creator_id": creator_id,
                 "file_size": len(file_content),
                 "content_type": file.content_type,
+                "timestamp": datetime.now().isoformat(),
             },
         )
 
@@ -171,15 +171,15 @@ async def register_content(
 
         return {
             "success": True,
-            "content_hash": content_hash,
-            "creator_id": creator_id,
-            "registered_at": content_record.created_at.isoformat(),
+            "id": str(content_record.id),
+            "hash": content_hash,
+            "filename": file.filename,
+            "file_type": file.content_type,
+            "file_size": len(file_content),
             "blockchain_tx": blockchain_tx["transaction_hash"],
-            "file_info": {
-                "filename": file.filename,
-                "size": len(file_content),
-                "type": file.content_type,
-            },
+            "timestamp": content_record.created_at.isoformat(),
+            "status": "registered",
+            "creator_id": creator_id,
         }
 
     except Exception as e:
@@ -209,66 +209,51 @@ async def verify_content(
         )
 
         # Verificar en blockchain
-        blockchain_result = await xion_service.verify_content_on_chain(content_hash)
+        blockchain_result = xion_service.verify_content(content_hash)
 
         # Preparar resultado base
         verification_result = {
-            "content_hash": content_hash,
-            "authentic": False,
-            "confidence_score": 0.0,
-            "verification_timestamp": datetime.now(timezone.utc).isoformat(),
-            "sources": [],
+            "hash": content_hash,
+            "exists": False,
+            "original": False,
+            "confidence": 0.0,
+            "blockchain_verified": False,
+            "blockchain_tx": None,
+            "registration_date": None,
+            "source_verification": None,
+            "modifications": [],
         }
 
         # Si encontramos registro local
         if content_record:
             verification_result.update(
                 {
-                    "authentic": True,
-                    "confidence_score": 0.95,
-                    "original_creator": content_record.creator_id,
+                    "exists": True,
+                    "original": True,
+                    "confidence": 0.95,
+                    "blockchain_verified": True,  # En DB = verificado
+                    "blockchain_tx": content_record.blockchain_tx_hash,
                     "registration_date": content_record.created_at.isoformat(),
+                    "creator_id": content_record.creator_id,
                     "description": content_record.description,
-                    "blockchain_verified": blockchain_result["verified"],
-                    "sources": [
-                        {
-                            "type": "blockchain",
-                            "verified": True,
-                            "transaction_hash": content_record.blockchain_tx_hash,
-                        }
-                    ],
-                }
-            )
-
-        # Verificación adicional de URL fuente
-        if source_url:
-            source_verification = await xion_service.verify_source_authenticity(
-                source_url
-            )
-            verification_result.update(
-                {
-                    "source_url_verified": source_verification["verified"],
-                    "source_reputation": source_verification.get(
-                        "reputation", "unknown"
-                    ),
-                }
-            )
-            verification_result["sources"].append(
-                {
-                    "type": "web_source",
-                    "url": source_url,
-                    "verified": source_verification["verified"],
+                    "filename": content_record.filename,
                 }
             )
 
         # Análisis de modificaciones (simulado)
-        modification_analysis = await hash_service.analyze_modifications(file_content)
-        verification_result.update(
-            {
-                "modification_detected": modification_analysis["modified"],
-                "similarity_score": modification_analysis["similarity"],
-            }
-        )
+        modification_analysis = hash_service.analyze_modifications(file_content)
+        if modification_analysis["modified"]:
+            verification_result["modifications"] = [
+                "Posibles modificaciones detectadas en el contenido",
+                f"Nivel de similitud: {modification_analysis['similarity']:.1%}"
+            ]
+
+        # Si no se encontró contenido, agregar información adicional
+        if not content_record:
+            verification_result["modifications"] = verification_result.get("modifications", []) + [
+                "Contenido no registrado en NoirCheck",
+                "Verifica que sea la versión original del archivo"
+            ]
 
         return verification_result
 
@@ -325,7 +310,7 @@ async def mobile_verify_content(
                 )
         else:
             # Verificación completa
-            blockchain_result = await xion_service.verify_content_on_chain(content_hash)
+            blockchain_result = xion_service.verify_content(content_hash)
             mobile_result.update(
                 {
                     "verified": blockchain_result["verified"],

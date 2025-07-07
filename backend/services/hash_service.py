@@ -40,9 +40,23 @@ class HashService:
         sha256_hash.update(content)
         return sha256_hash.hexdigest()
 
-    def calculate_file_hash(self, file_path: str, chunk_size: int = 8192) -> str:
+    def calculate_file_hash(self, file_content: bytes) -> str:
         """
-        Calcula el hash SHA-256 de un archivo leyéndolo por chunks
+        Calcula el hash SHA-256 del contenido de un archivo
+
+        Args:
+            file_content: Contenido del archivo en bytes
+
+        Returns:
+            Hash hexadecimal del contenido
+        """
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(file_content)
+        return sha256_hash.hexdigest()
+
+    def calculate_file_hash_from_path(self, file_path: str, chunk_size: int = 8192) -> str:
+        """
+        Calcula el hash SHA-256 de un archivo leyéndolo por chunks desde su ruta
 
         Args:
             file_path: Ruta al archivo
@@ -255,3 +269,54 @@ class HashService:
         return len(hash_value) == expected_length and all(
             c in "0123456789abcdef" for c in hash_value.lower()
         )
+
+    def analyze_modifications(self, file_content: bytes) -> Dict[str, Any]:
+        """
+        Analiza posibles modificaciones en el contenido (simulado)
+
+        Args:
+            file_content: Contenido del archivo en bytes
+
+        Returns:
+            Diccionario con análisis de modificaciones
+        """
+        # En una implementación real, esto podría usar:
+        # - Análisis de entropía
+        # - Detección de patrones conocidos de modificación
+        # - Comparación con versiones anteriores
+        # - Análisis de metadatos
+
+        # Por ahora, simulamos el análisis
+        file_size = len(file_content)
+
+        # Simulación simple: archivos muy pequeños o muy grandes tienen más probabilidad de ser modificados
+        modification_probability = 0.1  # Base 10%
+
+        if file_size < 100:  # Archivos muy pequeños
+            modification_probability += 0.2
+        elif file_size > 10 * 1024 * 1024:  # Archivos mayores a 10MB
+            modification_probability += 0.3
+
+        # Análisis de entropía básico
+        byte_counts = {}
+        for byte in file_content[:1000]:  # Analizar primeros 1000 bytes
+            byte_counts[byte] = byte_counts.get(byte, 0) + 1
+
+        # Si hay muy pocos bytes únicos, puede ser contenido generado/modificado
+        unique_bytes = len(byte_counts)
+        if unique_bytes < 10:
+            modification_probability += 0.2
+
+        # Simular resultado
+        is_modified = modification_probability > 0.5
+        similarity_score = 1.0 - modification_probability if not is_modified else modification_probability
+
+        return {
+            "modified": is_modified,
+            "similarity": min(max(similarity_score, 0.0), 1.0),  # Clamp entre 0 y 1
+            "analysis": {
+                "file_size": file_size,
+                "unique_bytes": unique_bytes,
+                "modification_probability": modification_probability,
+            },
+        }
