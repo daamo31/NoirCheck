@@ -82,6 +82,13 @@ class FileService:
         except Exception:
             return False
 
+
+    def is_file_supported_by_upload(self, file) -> bool:
+        """
+        Alias para validate_file para compatibilidad con main.py
+        """
+        return self.validate_file(file)
+
     def _validate_mime_type(self, content_type: Optional[str], file_ext: str) -> bool:
         """Valida que el tipo MIME coincida con la extensión"""
         if not content_type:
