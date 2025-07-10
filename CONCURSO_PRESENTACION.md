@@ -19,7 +19,7 @@ La plataforma utiliza hash SHA-256 para identificación única, integración con
 **Miembros del equipo:**
 - **Nombre**: Daniel del Amo
   - **Rol**: Lead Developer / Arquitecto del Sistema
-  - **Email**: [POR COMPLETAR]
+  - **Email**: danieldelamo31@protonmail.com
   - **GitHub**: [POR COMPLETAR]
   - **Especialización**: Blockchain, Criptografía, Desarrollo Full-Stack
 
