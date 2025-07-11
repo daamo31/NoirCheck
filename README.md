@@ -437,3 +437,55 @@ This project is developed as a technical demonstration of blockchain potential i
 *Project developed in July 2025 • Version 2.0.0*
 
 </div>
+
+## 🔗 **XION Blockchain Integration**
+
+NoirCheck now includes **complete XION blockchain integration** for real content verification on blockchain.
+
+### **📋 XION Components Implemented**
+
+✅ **Smart Contract Integration**
+- Content Registry contract (based on XION User Map pattern)
+- Stores content hashes and metadata on-chain
+- Supports gasless transactions via Treasury contract
+
+✅ **Abstraxion SDK Integration** 
+- Meta Account authentication (Email, Social, Wallets, Passkeys)
+- Real blockchain transaction signing
+- OAuth2-style user experience
+
+✅ **Treasury Contract Support**
+- Fee Grants for gasless user transactions
+- Authorization Grants for frontend permissions
+- Automatic balance monitoring
+
+✅ **Complete Frontend Integration**
+- Real contract interaction hooks
+- XION authentication components
+- Configuration status monitoring
+- Error handling and fallbacks
+
+### **🚀 Quick XION Setup (5 minutes)**
+
+1. **Deploy Contracts** via [XION Quick Launch](https://quickstart.dev.testnet.burnt.com):
+   ```bash
+   # Login with Meta Account → Select "Custom Contract" → Launch & Fund Treasury
+   ```
+
+2. **Configure Environment Variables**:
+   ```bash
+   cp frontend/.env.example frontend/.env.local
+   # Fill in your contract addresses from Quick Launch
+   ```
+
+3. **Start with XION Integration**:
+   ```bash
+   cd frontend && npm run dev
+   # Your app now uses real XION blockchain! 🎉
+   ```
+
+### **💡 Development vs Production**
+
+- **Development**: Uses simulated XION service for testing
+- **Production**: Real XION blockchain with Meta Account authentication
+- **Easy Switch**: Just configure environment variables
