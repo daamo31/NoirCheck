@@ -7,6 +7,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { getXIONConfig } from '@/config/xion';
+import { useClientOnly, usePathname } from '@/hooks/useClientOnly';
 
 interface SafeXIONProviderProps {
   children: ReactNode;
@@ -17,6 +18,8 @@ export function SafeXIONProvider({ children }: SafeXIONProviderProps) {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [AbstraxionProvider, setAbstraxionProvider] = useState<any>(null);
+  const isClient = useClientOnly();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Only load XION when explicitly enabled or when user tries to connect
@@ -143,8 +146,8 @@ export function SafeXIONProvider({ children }: SafeXIONProviderProps) {
   return (
     <>
       {children}
-      {/* Only show XION enable button if we're not on auth screens */}
-      {!window.location.pathname.includes('/auth') && (
+      {/* Only show XION enable button if we're not on auth screens and window is available */}
+      {isClient && pathname && !pathname.includes('/auth') && (
         <div className="fixed bottom-4 right-4 z-40">
           <button
             onClick={enableXION}

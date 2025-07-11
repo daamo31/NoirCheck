@@ -201,10 +201,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Clear any local storage data
       localStorage.removeItem('noircheck_user');
+      localStorage.removeItem('noircheck_enable_xion');
+      localStorage.removeItem('noircheck_session');
       
       // Clear authentication state
-      // XION disconnection is handled automatically by Abstraxion
       dispatch({ type: 'LOGOUT' });
+      
+      // If XION is available, try to disconnect
+      if (xionAvailable && setShowModal) {
+        try {
+          // This will trigger XION disconnection
+          setShowModal(false);
+        } catch (xionError) {
+          console.warn('XION disconnection warning:', xionError);
+        }
+      }
+      
+      // Force page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
     } catch (error) {
       console.error('Logout error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Logout failed' });

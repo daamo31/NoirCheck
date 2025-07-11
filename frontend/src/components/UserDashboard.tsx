@@ -26,17 +26,19 @@ import {
   TrendingUp,
   FileCheck,
   Calendar,
-  Activity
+  Activity,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileUpload } from './FileUpload';
 import { UserProfile } from './UserProfile';
 import { UserHistory } from './UserHistory';
 import { UserStats } from './UserStats';
+import { WalletInfo } from './WalletInfo';
 import { apiService, UserStats as UserStatsType } from '@/services/api';
 
 // Available dashboard tabs
-type DashboardTab = 'register' | 'verify' | 'history' | 'profile' | 'stats';
+type DashboardTab = 'register' | 'verify' | 'history' | 'profile' | 'stats' | 'wallet';
 
 export function UserDashboard() {
   // Authentication and user context
@@ -94,7 +96,15 @@ export function UserDashboard() {
    * Clears authentication state and redirects to login
    */
   const handleLogout = async () => {
-    await logout();
+    try {
+      console.log('Attempting logout...');
+      await logout();
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Force reload as fallback
+      window.location.href = '/';
+    }
   };
 
   // Dashboard navigation tabs configuration
@@ -122,6 +132,12 @@ export function UserDashboard() {
       label: 'Statistics',
       icon: <TrendingUp className="w-5 h-5" />,
       description: 'Metrics and analytics'
+    },
+    {
+      id: 'wallet' as DashboardTab,
+      label: 'Wallet & XION',
+      icon: <Wallet className="w-5 h-5" />,
+      description: 'Wallet and blockchain info'
     },
     {
       id: 'profile' as DashboardTab,
@@ -313,6 +329,21 @@ export function UserDashboard() {
                   isLoading={isLoadingStats}
                   onRefresh={refreshUserStats}
                 />
+              </div>
+            )}
+
+            {/* Wallet Information Tab */}
+            {activeTab === 'wallet' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Wallet & XION Information
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    View your wallet details, XION connection status, and account management
+                  </p>
+                </div>
+                <WalletInfo />
               </div>
             )}
 
