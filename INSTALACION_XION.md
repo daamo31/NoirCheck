@@ -1,13 +1,13 @@
-# 🔗 GUÍA DE INSTALACIÓN XION REAL
+# 🔗 REAL XION INSTALLATION GUIDE
 
-## 📋 **ESTADO ACTUAL**
-- ❌ **XION NO INSTALADO** - Solo simulación
-- ✅ **Proyecto preparado** para integración real
-- 🔄 **Fácil migración** desde simulación
+## 📋 **CURRENT STATUS**
+- ❌ **XION NOT INSTALLED** - Simulation only
+- ✅ **Project prepared** for real integration
+- 🔄 **Easy migration** from simulation
 
-## 🚀 **INSTALACIÓN DE XION SDK**
+## 🚀 **XION SDK INSTALLATION**
 
-### **1. Instalar XION SDK**
+### **1. Install XION SDK**
 ```bash
 # Navegar al backend
 cd /Users/daniel/Desktop/NoirsCheck/backend
@@ -22,17 +22,17 @@ pip install xion-sdk
 pip install git+https://github.com/xion-global/xion-python-sdk.git
 ```
 
-### **2. Dependencias Adicionales**
+### **2. Additional Dependencies**
 ```bash
-# Agregar al requirements.txt
+# Add to requirements.txt
 echo "xion-sdk>=1.0.0" >> requirements.txt
 echo "cosmpy>=0.7.0" >> requirements.txt
 echo "bech32>=1.2.0" >> requirements.txt
 ```
 
-### **3. Variables de Entorno**
+### **3. Environment Variables**
 ```bash
-# Crear archivo .env en backend/
+# Create .env file in backend/
 cat > .env << 'EOF'
 # XION Configuration
 XION_RPC_URL=https://rpc.xion.network
@@ -47,9 +47,9 @@ ZKTLS_API_KEY=your_zktls_api_key_here
 EOF
 ```
 
-## 🔧 **CÓDIGO REAL DE INTEGRACIÓN**
+## 🔧 **REAL INTEGRATION CODE**
 
-### **Reemplazar XIONService Simulado:**
+### **Replace Simulated XIONService:**
 
 ```python
 import os
@@ -83,7 +83,7 @@ class XIONService:
         )
     
     async def check_connection(self) -> str:
-        """Verificación REAL de conexión con XION"""
+        """REAL connection verification with XION"""
         try:
             status = await self.client.get_node_status()
             return "connected" if status.get("syncing") is False else "syncing"
@@ -98,9 +98,9 @@ class XIONService:
         timestamp: datetime,
         metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Registro REAL en blockchain XION"""
+        """REAL registration on XION blockchain"""
         try:
-            # Crear transacción de registro
+            # Create registration transaction
             tx_data = {
                 "content_hash": content_hash,
                 "creator": creator_id,
@@ -108,7 +108,7 @@ class XIONService:
                 "metadata": metadata
             }
             
-            # Enviar transacción
+            # Send transaction
             tx_result = await self.client.send_transaction(
                 wallet=self.wallet,
                 contract_address=os.getenv("XION_CONTRACT_ADDRESS"),
@@ -130,7 +130,7 @@ class XIONService:
             }
     
     async def verify_content_on_chain(self, content_hash: str) -> Dict[str, Any]:
-        """Verificación REAL en blockchain"""
+        """REAL blockchain verification"""
         try:
             # Consultar blockchain
             result = await self.client.query_contract(

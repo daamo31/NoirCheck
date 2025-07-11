@@ -1,6 +1,6 @@
 /**
- * NoirCheck - Página Principal
- * Plataforma de verificación de autenticidad de contenido digital
+ * NoirCheck - Main Page
+ * Digital content authenticity verification platform
  */
 
 'use client';
@@ -28,7 +28,7 @@ export default function Home() {
                   NoirCheck
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Verificación de autenticidad con XION blockchain
+                  Authenticity verification with XION blockchain
                 </p>
               </div>
             </div>
@@ -37,27 +37,27 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Estado de Conexión */}
+        {/* Connection Status */}
         <div className="mb-8">
           <ConnectionStatus />
         </div>
 
-        {/* Sección de Bienvenida */}
+        {/* Welcome Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mb-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              🛡️ ¡Bienvenido a NoirCheck!
+              🛡️ Welcome to NoirCheck!
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Tu plataforma de confianza para verificar la autenticidad del contenido digital. 
-              Combate la desinformación con tecnología blockchain y zkTLS.
+              Your trusted platform to verify the authenticity of digital content.
+              Fight misinformation with blockchain and zkTLS technology.
             </p>
           </div>
         </div>
 
-        {/* Pestañas de Funciones */}
+        {/* Feature Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          {/* Header de pestañas */}
+          {/* Tabs Header */}
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex">
               <button
@@ -70,10 +70,10 @@ export default function Home() {
               >
                 <div className="flex items-center justify-center space-x-2">
                   <Upload className="h-5 w-5" />
-                  <span>📤 Registrar Contenido</span>
+                  <span>📤 Register Content</span>
                 </div>
                 <p className="text-sm mt-1 opacity-75">
-                  Sube y autentica tu contenido original en blockchain
+                  Upload and authenticate your original content on blockchain
                 </p>
               </button>
               
@@ -87,22 +87,22 @@ export default function Home() {
               >
                 <div className="flex items-center justify-center space-x-2">
                   <Eye className="h-5 w-5" />
-                  <span>🔍 Verificar Contenido</span>
+                  <span>🔍 Verify Content</span>
                 </div>
                 <p className="text-sm mt-1 opacity-75">
-                  Verifica la autenticidad de cualquier contenido
+                  Verify the authenticity of any content
                 </p>
               </button>
             </nav>
           </div>
 
-          {/* Contenido de pestañas */}
+          {/* Tab Content */}
           <div className="p-8">
             <FileUpload mode={activeTab} />
           </div>
         </div>
 
-        {/* Información Adicional */}
+        {/* Additional Information */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
             <div className="flex items-center space-x-3 mb-3">
@@ -110,12 +110,12 @@ export default function Home() {
                 <Shield className="h-5 w-5 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                Blockchain Seguro
+                Secure Blockchain
               </h3>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Tu contenido se registra de forma inmutable en XION blockchain, 
-              garantizando la integridad y autenticidad.
+              Your content is immutably registered on XION blockchain,
+              guaranteeing integrity and authenticity.
             </p>
           </div>
 
@@ -125,12 +125,12 @@ export default function Home() {
                 <FileCheck className="h-5 w-5 text-purple-600" />
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                Verificación zkTLS
+                zkTLS Verification
               </h3>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Tecnología zkTLS para verificar la autenticidad de fuentes web 
-              sin comprometer la privacidad.
+              zkTLS technology to verify the authenticity of web sources
+              without compromising privacy.
             </p>
           </div>
 
@@ -140,12 +140,12 @@ export default function Home() {
                 <Eye className="h-5 w-5 text-blue-600" />
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                Análisis Inteligente
+                Smart Analysis
               </h3>
             </div>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Algoritmos avanzados detectan modificaciones y proporcionan 
-              un nivel de confianza detallado.
+              Advanced algorithms detect modifications and provide
+              a detailed confidence level.
             </p>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-400">
-              © 2025 NoirCheck. Combatiendo la desinformación con tecnología blockchain.
+              © 2025 NoirCheck. Fighting misinformation with blockchain technology.
             </p>
           </div>
         </div>

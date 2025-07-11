@@ -1,69 +1,69 @@
-# 🏆 NoirCheck - Presentación para Concurso
+# 🏆 NoirCheck - Contest Presentation
 
-## 📋 Información de Presentación
+## 📋 Presentation Information
 
-### 🎯 Nombre del Proyecto
-**NoirCheck - Plataforma de Verificación de Autenticidad Digital**
+### 🎯 Project Name
+**NoirCheck - Digital Authenticity Verification Platform**
 
-### 📝 Descripción del Proyecto
-NoirCheck es una plataforma innovadora que combate la desinformación mediante la verificación de autenticidad de contenido digital utilizando tecnología blockchain XION y zkTLS. Permite a los creadores registrar su contenido original de forma inmutable en blockchain, mientras que los consumidores pueden verificar instantáneamente la autenticidad de cualquier contenido digital. 
+### 📝 Project Description
+NoirCheck is an innovative platform that combats misinformation through digital content authenticity verification using XION blockchain and zkTLS technology. It allows creators to register their original content immutably on blockchain, while consumers can instantly verify the authenticity of any digital content.
 
-La plataforma utiliza hash SHA-256 para identificación única, integración con XION blockchain para registro permanente, y análisis criptográfico avanzado para detectar modificaciones. Con una interfaz web moderna desarrollada en Next.js y React, NoirCheck proporciona una experiencia intuitiva para usuarios no técnicos, democratizando el acceso a herramientas de verificación de contenido que tradicionalmente requerían conocimientos especializados.
+The platform uses SHA-256 hash for unique identification, XION blockchain integration for permanent registration, and advanced cryptographic analysis to detect modifications. With a modern web interface developed in Next.js and React, NoirCheck provides an intuitive experience for non-technical users, democratizing access to content verification tools that traditionally required specialized knowledge.
 
-**Público objetivo**: Periodistas, creadores de contenido, verificadores de noticias, educadores, y cualquier persona que necesite validar la autenticidad de contenido digital en la era de la desinformación.
+**Target audience**: Journalists, content creators, news verifiers, educators, and anyone who needs to validate the authenticity of digital content in the era of misinformation.
 
-### 👥 Información del Equipo
+### 👥 Team Information
 
-**⚠️ NOTA: Necesito completar esta información**
+**⚠️ NOTE: Need to complete this information**
 
-**Miembros del equipo:**
-- **Nombre**: Daniel del Amo
-  - **Rol**: Lead Developer / Arquitecto del Sistema
+**Team members:**
+- **Name**: Daniel del Amo
+  - **Role**: Lead Developer / System Architect
   - **Email**: danieldelamo31@protonmail.com
-  - **GitHub**: [POR COMPLETAR]
-  - **Especialización**: Blockchain, Criptografía, Desarrollo Full-Stack
+  - **GitHub**: [TO BE COMPLETED]
+  - **Specialization**: Blockchain, Cryptography, Full-Stack Development
 
 
 
-### 🛠️ Pila Tecnológica
+### 🛠️ Technology Stack
 
 #### **Backend**
-- **Lenguaje**: Python 3.11+
+- **Language**: Python 3.11+
 - **Framework**: FastAPI 0.109.2
-- **Servidor**: Uvicorn ASGI
-- **Base de Datos**: SQLAlchemy + SQLite (configurable a PostgreSQL)
-- **Criptografía**: 
-  - `cryptography` para hash SHA-256 y cifrado
-  - `hashlib` para generación de hashes
-  - `hmac` para sellos de autenticidad
-- **Procesamiento de Archivos**:
-  - `Pillow` para procesamiento de imágenes
-  - `OpenCV` para análisis de imágenes
-  - `numpy` para cálculos numéricos
+- **Server**: Uvicorn ASGI
+- **Database**: SQLAlchemy + SQLite (configurable to PostgreSQL)
+- **Cryptography**: 
+  - `cryptography` for SHA-256 hash and encryption
+  - `hashlib` for hash generation
+  - `hmac` for authenticity seals
+- **File Processing**:
+  - `Pillow` for image processing
+  - `OpenCV` for image analysis
+  - `numpy` for numerical calculations
 
 #### **Frontend**
 - **Framework**: Next.js 15.3.5 (App Router)
-- **Biblioteca UI**: React 19
-- **Lenguaje**: TypeScript 5
-- **Estilos**: Tailwind CSS 4
-- **Iconos**: Lucide React
+- **UI Library**: React 19
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **Icons**: Lucide React
 - **Build Tool**: Turbopack
-- **HTTP Client**: Fetch API nativo
+- **HTTP Client**: Native Fetch API
 
 #### **Blockchain & Web3**
 - **Blockchain**: XION Network
-- **Protocolo**: zkTLS (Zero-Knowledge Transport Layer Security)
-- **SDK**: Preparado para CosmJS/XION SDK
-- **Wallet Integration**: Preparado para Keplr Wallet
-- **Red**: XION Testnet (configurado para producción)
+- **Protocol**: zkTLS (Zero-Knowledge Transport Layer Security)
+- **SDK**: Ready for CosmJS/XION SDK
+- **Wallet Integration**: Ready for Keplr Wallet
+- **Network**: XION Testnet (configured for production)
 
-#### **Herramientas de Desarrollo**
+#### **Development Tools**
 - **Version Control**: Git + GitHub
 - **Code Quality**: 
-  - ESLint para JavaScript/TypeScript
-  - Black, isort, flake8 para Python
-  - Prettier para formateo
-- **Testing**: Preparado para Jest (Frontend) + Pytest (Backend)
+  - ESLint for JavaScript/TypeScript
+  - Black, isort, flake8 for Python
+  - Prettier for formatting
+- **Testing**: Ready for Jest (Frontend) + Pytest (Backend)
 - **Documentation**: Markdown + Sphinx
 - **API Documentation**: FastAPI auto-generated docs
 

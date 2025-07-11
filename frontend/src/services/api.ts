@@ -1,6 +1,16 @@
 /**
  * NoirCheck API Service
- * Servicio para comunicación con el backend FastAPI
+ * Service for communication with the FastAPI backend
+ * 
+ * This service provides methods to interact with the NoirCheck backend API,
+ * handling content registration, verification, and system status checks.
+ * 
+ * Features:
+ * - Content registration and verification
+ * - Health monitoring and status checks
+ * - File upload with progress tracking
+ * - Error handling and fallback mechanisms
+ * - Mobile-optimized endpoints
  */
 
 export interface HealthCheck {
@@ -58,13 +68,13 @@ class APIService {
   private baseURL = 'http://localhost:8000';
 
   private async fetchWithFallback(url: string, options?: RequestInit): Promise<Response> {
-    // En el lado del cliente (browser), usar fetch nativo
+    // On the client side (browser), use native fetch
     if (typeof window !== 'undefined') {
       return fetch(url, options);
     }
     
-    // En el lado del servidor (Node.js), usar fetch polyfill si es necesario
-    // Next.js 13+ incluye fetch por defecto
+    // On the server side (Node.js), use fetch polyfill if necessary
+    // Next.js 13+ includes fetch by default
     return fetch(url, options);
   }
 

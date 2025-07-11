@@ -1,29 +1,29 @@
 # ==========================================
 # NOIRCHECK BACKEND DEPENDENCIES
 # ==========================================
-# Dependencias esenciales utilizadas por el código actual
+# Essential dependencies used by the current code
 
 # ==========================================
 # CORE FRAMEWORK
 # ==========================================
-# FastAPI y servidor web
+# FastAPI and web server
 fastapi==0.109.2
 uvicorn[standard]==0.27.1
 python-multipart==0.0.9
 
-# Validación de datos (incluido con FastAPI)
+# Data validation (included with FastAPI)
 pydantic==2.6.1
 
 # ==========================================
 # DATABASE & ORM
 # ==========================================
-# Base de datos y ORM
+# Database and ORM
 sqlalchemy==2.0.25
 
 # ==========================================
 # FILE PROCESSING & IMAGES
 # ==========================================
-# Procesamiento de archivos e imágenes
+# File and image processing
 pillow==10.2.0
 opencv-python==4.9.0.80
 numpy<2.0.0
@@ -31,19 +31,19 @@ numpy<2.0.0
 # ==========================================
 # SECURITY & CRYPTOGRAPHY
 # ==========================================
-# Criptografía y hashing
+# Cryptography and hashing
 cryptography==42.0.2
 
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# Variables de entorno
+# Environment variables
 python-dotenv==1.0.1
 
 # ==========================================
-# DEVELOPMENT & TESTING (OPCIONAL)
+# DEVELOPMENT & TESTING (OPTIONAL)
 # ==========================================
-# Descomenta las siguientes líneas si necesitas testing:
+# Uncomment the following lines if you need testing:
 # pytest==7.4.4
 # pytest-asyncio==0.23.4
 # pytest-cov==4.0.0
@@ -52,10 +52,10 @@ python-dotenv==1.0.1
 # ==========================================
 # PRODUCTION OPTIONAL DEPENDENCIES
 # ==========================================
-# Base de datos PostgreSQL (descomenta si necesitas):
+# PostgreSQL database (uncomment if needed):
 # psycopg2-binary==2.9.9
 
-# Servidor de producción (descomenta si necesitas):
+# Production server (uncomment if needed):
 # gunicorn==21.2.0
 
 # Cloud storage (descomenta si necesitas):
@@ -68,7 +68,7 @@ python-dotenv==1.0.1
 # protobuf==5.29.5
 
 # ==========================================
-# NOTAS DE INSTALACIÓN
+# INSTALLATION NOTES
 # ==========================================
 # Para instalar solo las dependencias esenciales:
 # pip install -r requirements.txt
@@ -76,5 +76,5 @@ python-dotenv==1.0.1
 # Para actualizar todas las dependencias:
 # pip install --upgrade -r requirements.txt
 #
-# El backend actual usa un servicio XION simplificado (mock)
+# The current backend uses a simplified (mock) XION service
 # para evitar conflictos de dependencias con cosmpy/protobuf.

@@ -1,5 +1,16 @@
 /**
- * Custom hook para gestionar el estado de XION
+ * Custom hook for managing XION status
+ * 
+ * This hook provides real-time monitoring of XION blockchain connectivity
+ * and overall system status. It manages connection state, service health,
+ * and provides methods for status checking and refresh.
+ * 
+ * Features:
+ * - Real-time XION connection monitoring
+ * - Service health status tracking
+ * - Error handling and recovery
+ * - Automatic status refresh
+ * - Network information display
  */
 
 import { useState, useEffect } from 'react';
@@ -29,14 +40,14 @@ export function useXIONStatus() {
         apiService.getMobileStatus(),
       ]);
 
-      // Actualizar estado de servicios
+      // Update services status
       setServices({
         database: healthCheck.services.database as ServiceStatus['database'],
         xion: healthCheck.services.xion as ServiceStatus['xion'],
         file_storage: healthCheck.services.file_storage as ServiceStatus['file_storage'],
       });
 
-      // Actualizar estado de conexión XION
+      // Update XION connection status
       const xionConnected = healthCheck.services.xion !== 'disconnected';
       setConnection({
         connected: xionConnected,
@@ -88,6 +99,6 @@ function getNetworkName(status: string): string {
     case 'mainnet':
       return 'XION Mainnet';
     default:
-      return 'Desconectado';
+      return 'Disconnected';
   }
 }

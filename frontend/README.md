@@ -1,70 +1,70 @@
 # 🚀 NoirCheck Frontend (Next.js + XION)
 
-Frontend moderno de NoirCheck construido con **Next.js**, **TypeScript** y **Tailwind CSS**, optimizado para integrarse con **XION blockchain**.
+Modern NoirCheck frontend built with **Next.js**, **TypeScript**, and **Tailwind CSS**, optimized for integration with **XION blockchain**.
 
-## 🎯 **Características Principales**
+## 🎯 **Main Features**
 
-- ✅ **Next.js 15** con TypeScript
-- 🎨 **Tailwind CSS** para diseño moderno
-- 🔗 **Integración XION** blockchain
+- ✅ **Next.js 15** with TypeScript
+- 🎨 **Tailwind CSS** for modern design
+- 🔗 **XION Integration** blockchain
 - 📱 **Responsive Design** 
-- 🌙 **Tema Oscuro** por defecto
-- ⚡ **Performance optimizada**
+- 🌙 **Dark Theme** by default
+- ⚡ **Optimized Performance**
 
-## 🛠️ **Tecnologías**
+## 🛠️ **Technologies**
 
 ### **Core Framework**
-- **Next.js 15** - Framework React de producción
-- **TypeScript** - Tipado estático
+- **Next.js 15** - Production React framework
+- **TypeScript** - Static typing
 - **Tailwind CSS** - Utility-first CSS
 
 ### **Blockchain & XION**
-- **@cosmjs/cosmwasm-stargate** - Interacción con CosmWasm
-- **@cosmjs/stargate** - Cliente Cosmos SDK
-- **@cosmjs/proto-signing** - Firma de transacciones
-- **@cosmjs/amino** - Codificación Amino
+- **@cosmjs/cosmwasm-stargate** - CosmWasm interaction
+- **@cosmjs/stargate** - Cosmos SDK client
+- **@cosmjs/proto-signing** - Transaction signing
+- **@cosmjs/amino** - Amino encoding
 
 ### **UI & UX**
-- **Lucide React** - Iconos modernos
-- **Radix UI** - Componentes accesibles
-- **Axios** - Cliente HTTP
+- **Lucide React** - Modern icons
+- **Radix UI** - Accessible components
+- **Axios** - HTTP client
 
-## 🚀 **Instalación y Uso**
+## 🚀 **Installation and Usage**
 
-### **1. Instalar Dependencias**
+### **1. Install Dependencies**
 ```bash
 cd frontend
 npm install
 ```
 
-### **2. Configurar Variables de Entorno**
+### **2. Configure Environment Variables**
 ```bash
 # .env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_XION_NETWORK=testnet
 ```
 
-### **3. Ejecutar en Desarrollo**
+### **3. Run in Development**
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en: `http://localhost:3000`
+The application will be available at: `http://localhost:3000`
 
-### **4. Construir para Producción**
+### **4. Build for Production**
 ```bash
 npm run build
 npm start
 ```
 
-## 🎯 **Diferencias con Flutter**
+## 🎯 **Differences with Flutter**
 
-| Aspecto | Flutter (Anterior) | Next.js (Actual) |
+| Aspect | Flutter (Previous) | Next.js (Current) |
 |---------|-------------------|------------------|
-| **Lenguaje** | Dart | TypeScript/JavaScript |
-| **XION** | Integración limitada | SDK nativo completo |
-| **Desarrollo** | Mobile-first | Web-first universal |
-| **Performance** | App nativa | SSR optimizado |
-| **Ecosistema** | Limitado para blockchain | Rico en librerías Web3 |
+| **Language** | Dart | TypeScript/JavaScript |
+| **XION** | Limited integration | Complete native SDK |
+| **Development** | Mobile-first | Universal web-first |
+| **Performance** | Native app | Optimized SSR |
+| **Ecosystem** | Limited for blockchain | Rich in Web3 libraries |
 
-**🎉 El frontend Next.js ofrece una integración mucho más robusta con XION y mejor experiencia de desarrollo!**
+**🎉 The Next.js frontend offers much more robust XION integration and better development experience!**

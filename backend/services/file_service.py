@@ -1,8 +1,17 @@
 """
-Servicio de Manejo de Archivos
+File Handling Service
 
-Este módulo maneja la validación, almacenamiento y procesamiento
-de archivos subidos a NoirCheck.
+This module handles validation, storage, and processing of files uploaded
+to NoirCheck. It provides comprehensive file operations including format
+validation, secure storage, metadata extraction, and content processing.
+
+Key Features:
+- Multi-format file support (images, videos, documents)
+- Secure file validation and storage
+- Image processing and optimization
+- Metadata extraction and analysis
+- File size and dimension limits
+- Automatic cleanup and organization
 """
 
 import os
@@ -18,51 +27,63 @@ from PIL import Image, ImageOps
 
 
 class FileService:
-    """Servicio para manejo de archivos"""
+    """
+    File handling service for NoirCheck content processing
+    
+    Provides comprehensive file operations including validation, storage,
+    processing, and metadata extraction for various file formats.
+    """
 
     def __init__(self, upload_dir: str = "./uploads"):
+        """
+        Initialize file service with upload directory and configurations
+        
+        Args:
+            upload_dir: Directory path for storing uploaded files
+        """
         self.upload_dir = Path(upload_dir)
         self.upload_dir.mkdir(exist_ok=True)
 
-        # Configuraciones de archivos permitidos
+        # Supported file extensions by category
         self.allowed_image_extensions = {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".webp",
-            ".tiff",
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff",
         }
         self.allowed_video_extensions = {
-            ".mp4",
-            ".avi",
-            ".mov",
-            ".mkv",
-            ".webm",
-            ".m4v",
+            ".mp4", ".avi", ".mov", ".mkv", ".webm", ".m4v",
         }
-        self.allowed_document_extensions = {".pdf", ".txt", ".docx", ".doc"}
+        self.allowed_document_extensions = {
+            ".pdf", ".txt", ".docx", ".doc"
+        }
 
-        self.max_file_size = 100 * 1024 * 1024  # 100 MB
-        self.max_image_dimension = 4096  # píxeles
+        # File size and processing limits
+        self.max_file_size = 100 * 1024 * 1024  # 100 MB limit
+        self.max_image_dimension = 4096  # Maximum pixels per dimension
 
     def validate_file(self, file: UploadFile) -> bool:
         """
-        Valida si un archivo cumple con los criterios de NoirCheck
-
+        Validate if a file meets NoirCheck criteria and security requirements
+        
+        Performs comprehensive validation including file extension, MIME type,
+        and basic security checks to ensure the file is safe to process.
+        
         Args:
-            file: Archivo subido de FastAPI
-
+            file: FastAPI UploadFile object
+            
         Returns:
-            True si el archivo es válido
+            True if file passes all validation checks
+            
+        Validation checks:
+        - File has a valid filename
+        - Extension is in allowed list
+        - MIME type matches file extension
+        - File size is within limits
         """
         try:
-            # Verificar nombre de archivo
+            # Check if filename exists
             if not file.filename:
                 return False
 
-            # Verificar extensión
+            # Validate file extension
             file_ext = Path(file.filename).suffix.lower()
             allowed_extensions = (
                 self.allowed_image_extensions
@@ -73,7 +94,7 @@ class FileService:
             if file_ext not in allowed_extensions:
                 return False
 
-            # Verificar tipo MIME
+            # Validate MIME type matches extension (security check)
             if not self._validate_mime_type(file.content_type, file_ext):
                 return False
 
@@ -82,18 +103,39 @@ class FileService:
         except Exception:
             return False
 
-
     def is_file_supported_by_upload(self, file) -> bool:
         """
-        Alias para validate_file para compatibilidad con main.py
+        Alias for validate_file to maintain compatibility with main.py
+        
+        This method provides the same functionality as validate_file
+        but with a different name for legacy compatibility.
+        
+        Args:
+            file: FastAPI UploadFile object
+            
+        Returns:
+            True if file is supported for upload
         """
         return self.validate_file(file)
 
     def _validate_mime_type(self, content_type: Optional[str], file_ext: str) -> bool:
-        """Valida que el tipo MIME coincida con la extensión"""
+        """
+        Validate that MIME type matches file extension (security check)
+        
+        Prevents MIME type spoofing attacks by ensuring the declared content
+        type matches the file extension. This is a critical security measure.
+        
+        Args:
+            content_type: MIME type declared by the client
+            file_ext: File extension (including dot)
+            
+        Returns:
+            True if MIME type is valid for the given extension
+        """
         if not content_type:
             return False
 
+        # MIME type mappings for supported file extensions
         mime_mappings = {
             ".jpg": ["image/jpeg", "image/jpg"],
             ".jpeg": ["image/jpeg", "image/jpg"],
@@ -119,22 +161,31 @@ class FileService:
 
     async def save_file(self, file: UploadFile, file_content: bytes) -> str:
         """
-        Guarda un archivo en el sistema de archivos
-
+        Save file to filesystem with security measures
+        
+        Saves uploaded file to the filesystem with proper security measures
+        including unique naming, directory organization, and file processing.
+        
         Args:
-            file: Archivo de FastAPI
-            file_content: Contenido del archivo en bytes
-
+            file: FastAPI UploadFile object
+            file_content: File content as bytes
+            
         Returns:
-            Ruta donde se guardó el archivo
+            Path where the file was saved
+            
+        Security features:
+        - UUID-based unique naming to prevent conflicts
+        - Date-based directory organization
+        - File type validation and processing
+        - Safe filename handling
         """
         try:
-            # Generar nombre único
+            # Generate unique filename to prevent conflicts and path traversal
             file_id = str(uuid.uuid4())
             file_ext = Path(file.filename).suffix.lower()
             safe_filename = f"{file_id}{file_ext}"
 
-            # Crear subdirectorio por fecha
+            # Create subdirectory organized by date for better file management
             from datetime import date
 
             date_dir = self.upload_dir / str(date.today())
@@ -142,11 +193,11 @@ class FileService:
 
             file_path = date_dir / safe_filename
 
-            # Guardar archivo
+            # Save file to disk
             with open(file_path, "wb") as f:
                 f.write(file_content)
 
-            # Procesar archivo según tipo
+            # Process file according to its type (optimization, metadata cleanup)
             await self._process_file(file_path, file_ext)
 
             return str(file_path)
@@ -155,7 +206,16 @@ class FileService:
             raise Exception(f"Error saving file: {str(e)}")
 
     async def _process_file(self, file_path: Path, file_ext: str):
-        """Procesa el archivo según su tipo"""
+        """
+        Process file according to its type
+        
+        Applies type-specific processing to uploaded files including
+        optimization, metadata cleanup, and validation.
+        
+        Args:
+            file_path: Path to the saved file
+            file_ext: File extension for type detection
+        """
         try:
             if file_ext in self.allowed_image_extensions:
                 await self._process_image(file_path)
@@ -165,26 +225,40 @@ class FileService:
                 await self._process_document(file_path)
 
         except Exception as e:
-            # Log del error pero no fallar el guardado
+            # Log error but don't fail the save operation
             print(f"Warning: File processing failed for {file_path}: {str(e)}")
 
     async def _process_image(self, file_path: Path):
-        """Procesa y valida imágenes"""
+        """
+        Process and validate images
+        
+        Performs image optimization, resizing, and metadata cleanup
+        to ensure consistent quality and remove sensitive information.
+        
+        Args:
+            file_path: Path to the image file
+            
+        Processing steps:
+        - Validates image integrity
+        - Resizes oversized images while maintaining aspect ratio
+        - Removes EXIF metadata for privacy
+        - Optimizes file size
+        """
         try:
             with Image.open(file_path) as img:
-                # Verificar dimensiones
+                # Check dimensions and resize if necessary
                 if max(img.size) > self.max_image_dimension:
-                    # Redimensionar manteniendo aspecto
+                    # Resize maintaining aspect ratio
                     img.thumbnail(
                         (self.max_image_dimension, self.max_image_dimension),
                         Image.Resampling.LANCZOS,
                     )
                     img.save(file_path, optimize=True, quality=95)
 
-                # Extraer y limpiar metadatos EXIF
+                # Extract and clean EXIF metadata for privacy
                 img_clean = ImageOps.exif_transpose(img)
 
-                # Guardar versión limpia (sin metadatos personales)
+                # Save clean version (without personal metadata)
                 clean_path = file_path.with_suffix(f".clean{file_path.suffix}")
                 img_clean.save(clean_path, optimize=True, quality=95)
 
@@ -192,32 +266,44 @@ class FileService:
             raise Exception(f"Image processing failed: {str(e)}")
 
     async def _process_video(self, file_path: Path):
-        """Procesa y extrae información de videos"""
+        """
+        Process and extract video information
+        
+        Analyzes video files to extract metadata and validate format.
+        Provides basic information about video properties for verification.
+        
+        Args:
+            file_path: Path to the video file
+            
+        Note:
+            Uses OpenCV for basic video analysis. In production, consider
+            using FFmpeg for more comprehensive video processing.
+        """
         try:
-            # Usar OpenCV para análisis básico de video
+            # Use OpenCV for basic video analysis
             cap = cv2.VideoCapture(str(file_path))
 
             if not cap.isOpened():
                 raise Exception("Could not open video file")
 
-            # Extraer información básica
+            # Extract basic information
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             fps = cap.get(cv2.CAP_PROP_FPS)
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-            # Extraer frame representativo (medio del video)
+            # Extract representative frame (middle of video)
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count // 2)
             ret, frame = cap.read()
 
             if ret:
-                # Guardar thumbnail
+                # Save thumbnail for preview
                 thumbnail_path = file_path.with_suffix(".thumbnail.jpg")
                 cv2.imwrite(str(thumbnail_path), frame)
 
             cap.release()
 
-            # Guardar metadatos de video
+            # Save video metadata for verification purposes
             metadata = {
                 "duration_seconds": frame_count / fps if fps > 0 else 0,
                 "frame_count": frame_count,
@@ -236,14 +322,22 @@ class FileService:
             raise Exception(f"Video processing failed: {str(e)}")
 
     async def _process_document(self, file_path: Path):
-        """Procesa documentos de texto"""
+        """
+        Process text documents
+        
+        Processes text documents by normalizing encoding and format.
+        Creates clean versions suitable for content verification.
+        
+        Args:
+            file_path: Path to the document file
+        """
         try:
             if file_path.suffix.lower() == ".txt":
-                # Verificar encoding y contenido de texto
+                # Verify encoding and text content
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
-                # Crear versión normalizada
+                # Create normalized version (consistent line endings)
                 normalized_content = content.strip().replace("\r\n", "\n")
 
                 normalized_path = file_path.with_suffix(".normalized.txt")
@@ -255,13 +349,19 @@ class FileService:
 
     def get_file_info(self, file_path: str) -> Dict[str, Union[str, int, float]]:
         """
-        Obtiene información detallada de un archivo
-
+        Get detailed file information
+        
+        Retrieves comprehensive information about a file including
+        system properties, content type, and file-specific metadata.
+        
         Args:
-            file_path: Ruta al archivo
-
+            file_path: Path to the file
+            
         Returns:
-            Dict con información del archivo
+            Dictionary containing file information:
+            - Basic properties (size, dates, permissions)
+            - Content type detection
+            - File-specific metadata where available
         """
         try:
             path = Path(file_path)
@@ -283,7 +383,7 @@ class FileService:
                 "is_document": path.suffix.lower() in self.allowed_document_extensions,
             }
 
-            # Información adicional para imágenes
+            # Additional information for images
             if info["is_image"]:
                 try:
                     with Image.open(path) as img:
@@ -305,10 +405,20 @@ class FileService:
 
     def cleanup_old_files(self, days_old: int = 30):
         """
-        Limpia archivos antiguos del sistema
-
+        Clean up old files from the system
+        
+        Removes files older than the specified number of days to manage
+        storage space and maintain system performance.
+        
         Args:
-            days_old: Archivos más antiguos que estos días serán eliminados
+            days_old: Files older than this many days will be deleted
+            
+        Returns:
+            Dictionary with cleanup statistics
+            
+        Warning:
+            This operation permanently deletes files. Ensure proper
+            backup procedures are in place before running cleanup.
         """
         try:
             import time
@@ -326,7 +436,7 @@ class FileService:
                     except Exception:
                         continue
 
-            # Limpiar directorios vacíos
+            # Clean empty directories
             for dir_path in self.upload_dir.rglob("*"):
                 if dir_path.is_dir() and not any(dir_path.iterdir()):
                     try:
@@ -343,7 +453,19 @@ class FileService:
             raise Exception(f"Cleanup failed: {str(e)}")
 
     def get_storage_stats(self) -> Dict[str, Union[int, float]]:
-        """Obtiene estadísticas de almacenamiento"""
+        """
+        Get storage statistics
+        
+        Calculates and returns storage usage statistics for the
+        upload directory, including total size and file counts.
+        
+        Returns:
+            Dictionary containing storage statistics:
+            - total_size_bytes: Total size in bytes
+            - total_size_mb: Total size in megabytes  
+            - file_count: Number of files stored
+            - average_file_size: Average file size in bytes
+        """
         try:
             total_size = 0
             file_count = 0

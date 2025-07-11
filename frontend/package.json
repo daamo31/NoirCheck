@@ -2,7 +2,7 @@
   "name": "noircheck-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "NoirCheck Frontend - Plataforma de verificación de autenticidad de contenido digital",
+  "description": "NoirCheck Frontend - Digital content authenticity verification platform",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"

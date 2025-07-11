@@ -22,41 +22,42 @@
 
 ---
 
-## 📱 **LO QUE VERÁ EL USUARIO EN LA APP**
+## 📱 **WHAT THE USER WILL SEE IN THE APP**
 
-### **🏠 Pantalla Principal (Home Screen)**
+### **🏠 Main Screen (Home Screen)**
 
 #### **1. 📡 Estado de Conexión**
 ```
 ┌─────────────────────────────────────────┐
-│ ✅ Conectado a NoirCheck + XION         │
-│ Backend operativo con XION blockchain   │
+│ ✅ Connected to NoirCheck + XION        │
+│ Backend operational with XION blockchain│
 │                                         │
 │ 🔹 XION Local Mode                     │
 └─────────────────────────────────────────┘
 ```
 
-#### **2. 🎯 Sección de Bienvenida**
+#### **2. 🎯 Welcome Section**
 ```
 ┌─────────────────────────────────────────┐
-│ 🛡️  ¡Bienvenido a NoirCheck!            │
+│ 🛡️  Welcome to NoirCheck!              │
 │                                         │
-│ Tu plataforma de confianza para         │
-│ verificar la autenticidad del contenido │
-│ digital. Combate la desinformación con  │
-│ tecnología blockchain y zkTLS.          │
+│ Your trusted platform to               │
+│ verify digital content authenticity    │
+│ Combat misinformation with              │
+│ blockchain and zkTLS technology.        │
 └─────────────────────────────────────────┘
 ```
 
-#### **3. 🔧 Funciones Principales**
+#### **3. 🔧 Main Functions**
 ```
 ┌──────────────────┬──────────────────────┐
-│ 📤 Registrar     │ 🔍 Verificar        │
-│ Contenido        │ Contenido            │
+│ 📤 Register      │ 🔍 Verify           │
+│ Content          │ Content              │
 │                  │                      │
-│ Sube y autentica │ Verifica la          │
-│ tu contenido     │ autenticidad de      │
-│ original en      │ cualquier contenido  │
+│ Upload and       │ Verify the           │
+│ authenticate     │ authenticity of      │
+│ your original    │ any content          │
+│ content on       │                      │
 │ blockchain       │                      │
 └──────────────────┴──────────────────────┘
 ```
@@ -65,7 +66,7 @@
 
 ## 🔄 **FLUJOS CON XION VISIBLE AL USUARIO**
 
-### **📤 Al Registrar Contenido:**
+### **📤 When Registering Content:**
 1. **📱 Frontend:** Usuario sube archivo
 2. **🔄 Loading:** "Registrando en XION blockchain..."
 3. **✅ Éxito:** "Contenido registrado en blockchain XION"

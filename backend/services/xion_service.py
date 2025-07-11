@@ -1,8 +1,19 @@
 """
-Servicio de integración con XION zkTLS y Blockchain
+XION zkTLS and Blockchain Integration Service
 
-Este módulo simula la integración con el Premier Mobile Developer Kit (Dave) de XION
-para la verificación de identidad zkTLS y el registro en blockchain.
+This module simulates integration with XION's Premier Mobile Developer Kit (Dave)
+for zkTLS identity verification and blockchain registration. It provides the
+interface layer between NoirCheck and XION's authentication infrastructure.
+
+Features:
+- zkTLS identity verification simulation
+- Blockchain content registration
+- Creator identity management
+- Transaction status tracking
+- Error handling and fallback mechanisms
+
+Note: This is a simulation service for development. Production implementation
+would use the actual XION SDK and API endpoints.
 """
 
 import asyncio
@@ -13,17 +24,25 @@ from typing import Any, Dict, List, Optional, Union
 
 
 class XIONService:
-    """Servicio para interactuar con XION zkTLS y blockchain"""
+    """Service for interacting with XION zkTLS and blockchain"""
 
     def __init__(self):
-        self.base_url = "https://api.xion.network"  # URL simulada
+        self.base_url = "https://api.xion.network"  # Simulated URL
         self.api_key = "xion_api_key_placeholder"
         self.network = "testnet"
 
     async def check_connection(self) -> str:
-        """Verifica la conexión con XION"""
+        """
+        Verify connection with XION network
+        
+        Tests connectivity to XION services and returns connection status.
+        In production, this would ping actual XION endpoints.
+        
+        Returns:
+            Connection status: "connected" or "disconnected"
+        """
         try:
-            # Simulación de verificación de conexión
+            # Simulation of connection verification
             await asyncio.sleep(0.1)
             return "connected"
         except Exception:
@@ -33,13 +52,25 @@ class XIONService:
         self, identity_token: Optional[str]
     ) -> Dict[str, Any]:
         """
-        Verifica la identidad del creador usando XION zkTLS
+        Verify creator identity using XION zkTLS
+        
+        Validates creator identity using zero-knowledge proofs to ensure
+        privacy while confirming authenticity. This is crucial for establishing
+        trust in content registration.
 
         Args:
-            identity_token: Token de identidad proporcionado por el frontend
+            identity_token: Identity token provided by the frontend
 
         Returns:
-            Dict con resultado de verificación
+            Dictionary containing verification results:
+            - verified: Boolean indicating if identity is valid
+            - creator_id: Unique identifier for the verified creator
+            - confidence_score: Verification confidence (0-1)
+            - verification_method: Method used for verification
+            
+        Example:
+            >>> result = await service.verify_creator_identity("token123")
+            >>> print(result['verified'])  # True or False
         """
         try:
             if not identity_token:
@@ -48,11 +79,11 @@ class XIONService:
                     "error": "No identity token provided",
                 }
 
-            # Simulación de verificación zkTLS
+            # zkTLS verification simulation
             await asyncio.sleep(0.5)
 
-            # En una implementación real, aquí se validaría el token con XION
-            # Por ahora, simulamos una verificación exitosa
+            # In a real implementation, the token would be validated with XION here
+            # For now, we simulate a successful verification
             creator_id = (
                 f"creator_{hashlib.sha256(identity_token.encode()).hexdigest()[:16]}"
             )
@@ -80,19 +111,19 @@ class XIONService:
         metadata: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
-        Registra contenido en la blockchain de XION
+        Registers content on XION blockchain
 
         Args:
-            content_hash: Hash del contenido
-            creator_id: ID del creador verificado
-            timestamp: Marca de tiempo del registro
-            metadata: Metadatos adicionales del contenido
+            content_hash: Content hash
+            creator_id: Verified creator ID
+            timestamp: Registration timestamp
+            metadata: Additional content metadata
 
         Returns:
-            Dict con información de la transacción blockchain
+            Dict with blockchain transaction information
         """
         try:
-            # Simulación de registro en blockchain
+            # Blockchain registration simulation
             await asyncio.sleep(1.0)
 
             transaction_id = f"xion_tx_{uuid.uuid4().hex[:16]}"
@@ -123,23 +154,23 @@ class XIONService:
 
     async def verify_content_on_chain(self, content_hash: str) -> Dict[str, Any]:
         """
-        Verifica un contenido en la blockchain de XION
+        Verifies content on XION blockchain
 
         Args:
-            content_hash: Hash del contenido a verificar
+            content_hash: Hash of content to verify
 
         Returns:
-            Dict con información de verificación
+            Dict with verification information
         """
         try:
-            # Simulación de consulta blockchain
+            # Blockchain query simulation
             await asyncio.sleep(0.8)
 
-            # Simulamos que algunos hashes existen y otros no
-            hash_exists = int(content_hash[-1], 16) % 3 != 0  # 2/3 de probabilidad
+            # We simulate that some hashes exist and others don't
+            hash_exists = int(content_hash[-1], 16) % 3 != 0  # 2/3 probability
 
             if hash_exists:
-                # Simulación de contenido encontrado
+                # Found content simulation
                 return {
                     "found": True,
                     "creator_id": f"creator_{content_hash[:16]}",
@@ -161,7 +192,7 @@ class XIONService:
         Verifica la autenticidad de una fuente web usando zkTLS
 
         Args:
-            source_url: URL de la fuente a verificar
+            source_url: Source URL to verify
 
         Returns:
             Dict con resultado de verificación de fuente

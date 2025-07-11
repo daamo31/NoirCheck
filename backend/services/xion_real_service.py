@@ -1,5 +1,22 @@
 """
-XION Service Real - Integración completa con blockchain XION
+XION Real Service - Complete integration with XION blockchain
+
+This module provides real blockchain integration with XION network and zkTLS
+for production use. It handles wallet management, transaction broadcasting,
+and smart contract interactions for content registration and verification.
+
+Features:
+- Real XION blockchain connectivity (mainnet/testnet)
+- zkTLS integration for web source verification
+- Smart contract interactions for content registry
+- Cryptographic proof generation and verification
+- Production-ready error handling and logging
+
+Security considerations:
+- Private keys and mnemonics must be properly secured
+- All network communications use encryption
+- Transaction fees and gas limits are enforced
+- Rate limiting and retry logic for robustness
 """
 
 import os
@@ -18,10 +35,10 @@ import bech32
 
 
 class XIONRealService:
-    """Servicio REAL para interactuar con XION blockchain y zkTLS"""
+    """Real service for interacting with XION blockchain and zkTLS"""
 
     def __init__(self):
-        # Configuración de red XION
+        # XION network configuration
         self.network = os.getenv("XION_NETWORK", "testnet")
         
         if self.network == "mainnet":
@@ -33,30 +50,41 @@ class XIONRealService:
             self.rest_url = os.getenv("XION_TESTNET_REST", "rest+https://api-xion-testnet-1.xion.network")
             self.chain_id = os.getenv("XION_TESTNET_CHAIN_ID", "xion-testnet-1")
         
-        # Configuración de wallet
+        # Wallet configuration
         self.wallet_mnemonic = os.getenv("XION_WALLET_MNEMONIC")
         
-        # Configuración de contratos
+        # Smart contract configuration
         self.content_contract = os.getenv("XION_CONTENT_CONTRACT", "")
         self.zkproof_contract = os.getenv("XION_ZKPROOF_CONTRACT", "")
         
-        # zkTLS
+        # zkTLS configuration
         self.zktls_enabled = os.getenv("ZKTLS_ENABLED", "true").lower() == "true"
         self.zktls_url = os.getenv("ZKTLS_PROVIDER_URL", "https://api.reclaim.network")
         self.zktls_api_key = os.getenv("ZKTLS_API_KEY", "")
         
-        # Cliente y wallet
+        # Client and wallet instances
         self._client = None
         self._wallet = None
         self._initialized = False
 
     async def _initialize_client(self):
-        """Inicializar cliente XION"""
+        """
+        Initialize XION client
+        
+        Sets up the connection to XION blockchain network and initializes
+        the wallet for transaction signing. Handles both mainnet and testnet
+        configurations with proper error handling.
+        
+        Security Notes:
+        - Private keys are never logged or exposed
+        - Temporary wallets are used for development only
+        - Production must use secure mnemonic management
+        """
         if self._initialized:
             return
         
         try:
-            # Configurar red
+            # Configure network settings
             network_config = NetworkConfig(
                 chain_id=self.chain_id,
                 url=self.rpc_url,
@@ -65,40 +93,54 @@ class XIONRealService:
                 staking_denomination="uxion",
             )
             
-            # Crear cliente
+            # Create blockchain client
             self._client = LedgerClient(network_config)
             
-            # Crear wallet si hay mnemonic
+            # Create wallet from mnemonic if available
             if self.wallet_mnemonic and self.wallet_mnemonic != "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about":
                 self._wallet = LocalWallet.from_mnemonic(self.wallet_mnemonic, prefix="xion")
             else:
-                # Generar wallet temporal para desarrollo
+                # Generate temporary wallet for development
                 from cosmpy.crypto.keypairs import PrivateKey
                 import secrets
                 
-                # Generar clave privada manualmente
+                # Generate private key manually for development
                 private_key_bytes = secrets.randbits(256).to_bytes(32, byteorder='big')
                 private_key = PrivateKey(private_key_bytes)
                 self._wallet = LocalWallet(private_key, prefix="xion")
-                print(f"⚠️  Usando wallet temporal: {self._wallet.address()}")
+                print(f"⚠️  Using temporary wallet: {self._wallet.address()}")
             
             self._initialized = True
-            print(f"✅ XION Client inicializado - Red: {self.network}")
+            print(f"✅ XION Client initialized - Network: {self.network}")
             print(f"✅ Wallet address: {self._wallet.address()}")
             
         except Exception as e:
-            print(f"❌ Error inicializando XION client: {e}")
+            print(f"❌ Error initializing XION client: {e}")
             self._initialized = False
 
     async def check_connection(self) -> str:
-        """Verificación REAL de conexión con XION"""
+        """
+        Real verification of XION connection
+        
+        Tests connectivity to XION blockchain network by attempting
+        to reach multiple endpoints and validate network information.
+        
+        Returns:
+            Connection status: "connected", "local_mode", "disconnected", or "error"
+            
+        Connection modes:
+            - connected: Full network connectivity established
+            - local_mode: Limited connectivity, can operate offline
+            - disconnected: No network access available
+            - error: Configuration or network errors
+        """
         try:
             await self._initialize_client()
             
             if not self._client:
                 return "disconnected"
             
-            # Intentar múltiples endpoints para mayor robustez
+            # Try multiple endpoints for robustness
             test_urls = [
                 "https://api-xion-testnet-1.xion.network/cosmos/base/tendermint/v1beta1/node_info",
                 "https://rest-xion-testnet-1.xion.network/cosmos/base/tendermint/v1beta1/node_info",
@@ -117,7 +159,7 @@ class XIONRealService:
                 except:
                     continue
             
-            # Si ningún endpoint funciona, aún podemos operar localmente
+            # If no endpoint works, we can still operate locally
             return "local_mode"
                 
         except Exception as e:
@@ -125,7 +167,18 @@ class XIONRealService:
             return "error"
 
     async def get_wallet_balance(self) -> Dict[str, Any]:
-        """Obtener balance de la wallet"""
+        """
+        Get wallet balance
+        
+        Retrieves the current balance of the wallet across all denominations.
+        Used for transaction fee estimation and wallet management.
+        
+        Returns:
+            Dictionary containing balance information:
+            - balances: List of coin balances by denomination
+            - total_uxion: Total XION tokens in micro-units
+            - formatted_balance: Human-readable balance string
+        """
         try:
             await self._initialize_client()
             

@@ -1,178 +1,178 @@
-# 🔐 NoirCheck - Plataforma de Verificación de Autenticidad
+# 🔐 NoirCheck - Digital Content Authenticity Verification Platform
 
-![Estado del Proyecto](https://img.shields.io/badge/Estado-✅%20OPERATIVO-brightgreen)
+![Project Status](https://img.shields.io/badge/Status-✅%20OPERATIONAL-brightgreen)
 ![Backend](https://img.shields.io/badge/Backend-Python%20+%20FastAPI-blue)
 ![Frontend](https://img.shields.io/badge/Frontend-Next.js%20+%20React-cyan)
 ![Blockchain](https://img.shields.io/badge/Blockchain-XION%20zkTLS-purple)
-![Última Actualización](https://img.shields.io/badge/Actualización-Julio%202025-yellow)
+![Last Update](https://img.shields.io/badge/Updated-July%202025-yellow)
 
-NoirCheck es una plataforma innovadora de verificación de autenticidad de contenido digital que combate la desinformación utilizando tecnología blockchain y zkTLS (Zero-Knowledge Transport Layer Security).
+NoirCheck is an innovative digital content authenticity verification platform that combats misinformation using blockchain technology and zkTLS (Zero-Knowledge Transport Layer Security).
 
-## 🆕 Actualizaciones Recientes (Julio 2025)
+## 🆕 Recent Updates (July 2025)
 
-### ✨ Migración Frontend Completada
-- **Migrado de Flutter a Next.js 15.3.5** con React 19
-- **Compatibilidad total con XION** en ecosistema Node.js
-- **UI moderna** con Tailwind CSS y tema oscuro
-- **TypeScript** para mayor robustez del código
-- **Turbopack** para builds ultra-rápidos
+### ✨ Frontend Migration Completed
+- **Migrated from Flutter to Next.js 15.3.5** with React 19
+- **Full XION compatibility** in Node.js ecosystem
+- **Modern UI** with Tailwind CSS and dark theme
+- **TypeScript** for enhanced code robustness
+- **Turbopack** for ultra-fast builds
 
-### 🧹 Optimización de Dependencias
-- **Backend**: Reducidas de 26+ a 9 dependencias esenciales (-65%)
-- **Frontend**: Optimizado con 7 dependencias core más opcionales
-- **Instalación 60% más rápida** y menor huella de disco
-- **Sin vulnerabilidades** de seguridad conocidas
+### 🧹 Dependency Optimization
+- **Backend**: Reduced from 26+ to 9 essential dependencies (-65%)
+- **Frontend**: Optimized with 7 core dependencies plus optional ones
+- **60% faster installation** and reduced disk footprint
+- **Zero known security vulnerabilities**
 
-### 🔗 Integración XION Mejorada
-- **Servicio XION simplificado** para desarrollo estable
-- **Estado en tiempo real** del blockchain en la UI
-- **Preparado para SDK real** cuando las dependencias sean compatibles
+### 🔗 Enhanced XION Integration
+- **Simplified XION service** for stable development
+- **Real-time blockchain status** in UI
+- **Ready for real SDK** when dependencies become compatible
 
-## 🚀 Características Principales
+## 🚀 Main Features
 
-### Para Creadores
-- **Registro de Contenido Original**: Sube y autentica tu contenido original en blockchain
-- **Verificación de Identidad**: Integración con XION zkTLS para verificación segura
-- **Sello de Autenticidad**: Genera códigos QR y sellos criptográficos únicos
-- **Prueba de Autoría**: Crea registros inmutables de tu trabajo creativo
+### For Creators
+- **Original Content Registration**: Upload and authenticate your original content on blockchain
+- **Identity Verification**: Integration with XION zkTLS for secure verification
+- **Authenticity Seal**: Generate unique QR codes and cryptographic seals
+- **Proof of Authorship**: Create immutable records of your creative work
 
-### Para Consumidores
-- **Verificación Instantánea**: Verifica cualquier contenido digital en segundos
-- **Detección de Modificaciones**: Identifica si el contenido ha sido alterado
-- **Análisis de Fuente**: Evalúa la confiabilidad del sitio web de origen
-- **Historial de Verificaciones**: Mantén un registro de todas tus verificaciones
+### For Consumers
+- **Instant Verification**: Verify any digital content in seconds
+- **Modification Detection**: Identify if content has been altered
+- **Source Analysis**: Evaluate the reliability of the origin website
+- **Verification History**: Keep a record of all your verifications
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ System Architecture
 
 ### Backend (Python + FastAPI)
-- **API RESTful** para interacción con el frontend
-- **Manejo de archivos** con validación y procesamiento de imágenes
-- **Integración XION simplificada** para desarrollo estable
-- **Base de datos SQLite** con SQLAlchemy ORM
-- **Servicios de hash** SHA-256 y criptografía segura
-- **Puerto 8000** - Completamente operativo
+- **RESTful API** for frontend interaction
+- **File handling** with validation and image processing
+- **Simplified XION integration** for stable development
+- **SQLite database** with SQLAlchemy ORM
+- **SHA-256 hash services** and secure cryptography
+- **Port 8000** - Fully operational
 
 ### Frontend (Next.js + React)
-- **Aplicación web moderna** con React 19 y Next.js 15.3.5
-- **UI responsive** con Tailwind CSS y tema oscuro
-- **TypeScript** para type safety completo
-- **Turbopack** para desarrollo ultrarrápido
-- **Componentes reutilizables** para estado XION y carga de archivos
-- **Puerto 3000** - Totalmente funcional
+- **Modern web application** with React 19 and Next.js 15.3.5
+- **Responsive UI** with Tailwind CSS and dark theme
+- **TypeScript** for complete type safety
+- **Turbopack** for ultra-fast development
+- **Reusable components** for XION status and file uploads
+- **Port 3000** - Fully functional
 
-### Integración Blockchain
-- **XION zkTLS** para verificación de identidad (simulado para desarrollo)
-- **Registro inmutable** en blockchain con hash SHA-256
-- **Consultas de verificación** en tiempo real
-- **Estado de conexión** visible en tiempo real en la UI
+### Blockchain Integration
+- **XION zkTLS** for identity verification (simulated for development)
+- **Immutable registration** on blockchain with SHA-256 hash
+- **Real-time verification queries**
+- **Connection status** visible in real-time in the UI
 
-## 🛠️ Instalación y Configuración
+## 🛠️ Installation and Setup
 
-### Prerequisitos
+### Prerequisites
 - **Python 3.11+** 
-- **Node.js 18+** con npm 8+
+- **Node.js 18+** with npm 8+
 - **Git**
 
-### 🚀 Inicio Rápido
+### 🚀 Quick Start
 
-#### Backend Setup (Puerto 8000)
+#### Backend Setup (Port 8000)
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-#### Frontend Setup (Puerto 3000)
+#### Frontend Setup (Port 3000)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### ✅ Verificación del Sistema
+### ✅ System Verification
 ```bash
-# Verificar backend
+# Verify backend
 curl http://localhost:8000/health
 
-# Verificar frontend
+# Verify frontend
 curl http://localhost:3000
 ```
 
-### 🔧 Dependencias Optimizadas
+### 🔧 Optimized Dependencies
 
-#### Backend Esencial (9 paquetes)
-- `fastapi==0.109.2` - Framework web
-- `uvicorn[standard]==0.27.1` - Servidor ASGI
+#### Essential Backend (9 packages)
+- `fastapi==0.109.2` - Web framework
+- `uvicorn[standard]==0.27.1` - ASGI server
 - `sqlalchemy==2.0.25` - ORM
-- `pillow==10.2.0` - Procesamiento de imágenes
-- `opencv-python==4.9.0.80` - Análisis de imágenes
-- `cryptography==42.0.2` - Criptografía
-- `python-dotenv==1.0.1` - Variables de entorno
+- `pillow==10.2.0` - Image processing
+- `opencv-python==4.9.0.80` - Image analysis
+- `cryptography==42.0.2` - Cryptography
+- `python-dotenv==1.0.1` - Environment variables
 
-#### Frontend Core (7 paquetes)
-- `next==15.3.5` - Framework React
-- `react==19.0.0` - Biblioteca UI
-- `lucide-react==0.525.0` - Iconos
+#### Frontend Core (7 packages)
+- `next==15.3.5` - React framework
+- `react==19.0.0` - UI library
+- `lucide-react==0.525.0` - Icons
 - `tailwindcss==4` - CSS framework
-- `typescript==5` - Tipado estático
+- `typescript==5` - Static typing
 
-## 📱 Funcionalidades de la App Web
+## 📱 Web App Features
 
-### 🏠 Pantalla Principal
-- **Estado de conexión XION** en tiempo real con indicadores visuales
-- **Dashboard de servicios** (Base de datos, XION, Almacenamiento)
-- **Navegación por pestañas** entre Registro y Verificación
-- **UI moderna** con tema oscuro y componentes responsive
+### 🏠 Main Screen
+- **Real-time XION connection status** with visual indicators
+- **Services dashboard** (Database, XION, Storage)
+- **Tab navigation** between Registration and Verification
+- **Modern UI** with dark theme and responsive components
 
-### 📤 Registro de Contenido
-1. **Área de carga drag & drop** para archivos
-2. **Soporte multi-formato**: imágenes, videos, documentos PDF
-3. **Vista previa** del archivo seleccionado
-4. **Integración XION** para registro en blockchain
-5. **Sello de autenticidad** con hash SHA-256
+### 📤 Content Registration
+1. **Drag & drop upload area** for files
+2. **Multi-format support**: images, videos, PDF documents
+3. **File preview** of selected content
+4. **XION integration** for blockchain registration
+5. **Authenticity seal** with SHA-256 hash
 
-### 🔍 Verificación de Contenido
-1. **Carga simple** de archivos a verificar
-2. **Análisis criptográfico** instantáneo
-3. **Consulta en blockchain** para verificar registro original
-4. **Resultado detallado** con nivel de confianza y estado
-5. **Historial de verificaciones** persistente
+### 🔍 Content Verification
+1. **Simple file upload** for content to verify
+2. **Instant cryptographic analysis**
+3. **Blockchain query** to verify original registration
+4. **Detailed results** with confidence level and status
+5. **Persistent verification history**
 
-### 📊 Estados de Verificación
-- **✅ Auténtico**: Contenido verificado y sin modificaciones
-- **⚠️ Modificado**: Registrado pero alterado desde el original  
-- **❌ No Verificado**: Sin registro encontrado en blockchain
-- **🔄 Procesando**: Análisis en curso
+### 📊 Verification States
+- **✅ Authentic**: Verified content without modifications
+- **⚠️ Modified**: Registered but altered from original  
+- **❌ Not Verified**: No registration found on blockchain
+- **🔄 Processing**: Analysis in progress
 
-### 🎨 Interfaz de Usuario
-- **Tema oscuro** elegante y moderno
-- **Iconos Lucide React** consistentes
-- **Animaciones fluidas** y feedback visual
-- **Responsive design** para todos los dispositivos
-- **Estado de carga** para operaciones asíncronas
+### 🎨 User Interface
+- **Elegant dark theme** and modern design
+- **Consistent Lucide React icons**
+- **Smooth animations** and visual feedback
+- **Responsive design** for all devices
+- **Loading states** for asynchronous operations
 
-## 🔒 Seguridad y Privacidad
+## 🔒 Security and Privacy
 
-### Verificación de Identidad
-- Integración con **XION zkTLS** para pruebas de identidad privadas
-- No exposición de datos personales en blockchain
-- Verificación a través de plataformas sociales confiables
+### Identity Verification
+- Integration with **XION zkTLS** for private identity proofs
+- No exposure of personal data on blockchain
+- Verification through trusted social platforms
 
-### Integridad del Contenido
-- **Hash SHA-256** para identificación única
-- **Sellos HMAC** para verificación de integridad
-- **Timestamps** inmutables en blockchain
+### Content Integrity
+- **SHA-256 hash** for unique identification
+- **HMAC seals** for integrity verification
+- **Immutable timestamps** on blockchain
 
-### Privacidad de Datos
-- **Almacenamiento local** de preferencias
-- **Cifrado** de datos sensibles
-- **Limpieza automática** de archivos temporales
+### Data Privacy
+- **Local storage** of preferences
+- **Encryption** of sensitive data
+- **Automatic cleanup** of temporary files
 
-## 🔧 Configuración de Desarrollo
+## 🔧 Development Configuration
 
-### Variables de Entorno
+### Environment Variables
 ```bash
 # Backend (.env)
 DATABASE_URL=sqlite:///./noircheck.db
@@ -181,213 +181,213 @@ XION_API_KEY=development_key
 SECRET_KEY=noircheck_secret_key_2024
 ```
 
-### 📁 Estructura del Proyecto Actualizada
+### 📁 Updated Project Structure
 ```
 NoirsCheck/
 ├── backend/                     # Python + FastAPI
-│   ├── main.py                 # API principal (Puerto 8000)
-│   ├── models/                 # Modelos SQLAlchemy
-│   │   ├── database.py        # Configuración de BD
-│   │   └── content.py         # Modelo de contenido
-│   ├── services/              # Servicios de negocio
-│   │   ├── hash_service.py    # Criptografía SHA-256
-│   │   ├── file_service.py    # Manejo de archivos
-│   │   └── xion_simple_service.py # XION simplificado
-│   ├── requirements.txt       # Dependencias optimizadas
-│   └── requirements-dev.txt   # Herramientas de desarrollo
+│   ├── main.py                 # Main API (Port 8000)
+│   ├── models/                 # SQLAlchemy models
+│   │   ├── database.py        # DB configuration
+│   │   └── content.py         # Content model
+│   ├── services/              # Business services
+│   │   ├── hash_service.py    # SHA-256 cryptography
+│   │   ├── file_service.py    # File handling
+│   │   └── xion_simple_service.py # Simplified XION
+│   ├── requirements.txt       # Optimized dependencies
+│   └── requirements-dev.txt   # Development tools
 ├── frontend/                   # Next.js + React + TypeScript
 │   ├── src/
-│   │   ├── app/               # App Router de Next.js
-│   │   │   ├── layout.tsx     # Layout principal
-│   │   │   ├── page.tsx       # Página home
-│   │   │   └── globals.css    # Estilos globales
-│   │   ├── components/        # Componentes React
-│   │   │   ├── ConnectionStatus.tsx # Estado XION
-│   │   │   └── FileUpload.tsx # Carga de archivos
+│   │   ├── app/               # Next.js App Router
+│   │   │   ├── layout.tsx     # Main layout
+│   │   │   ├── page.tsx       # Home page
+│   │   │   └── globals.css    # Global styles
+│   │   ├── components/        # React components
+│   │   │   ├── ConnectionStatus.tsx # XION status
+│   │   │   └── FileUpload.tsx # File upload
 │   │   ├── hooks/             # Custom hooks
-│   │   │   └── useXIONStatus.ts # Hook estado XION
-│   │   ├── services/          # Servicios API
-│   │   │   └── api.ts         # Cliente API
-│   │   └── types/             # Tipos TypeScript
-│   │       └── index.ts       # Definiciones
-│   ├── package.json           # Dependencias optimizadas
-│   ├── next.config.ts         # Configuración Next.js
-│   └── tailwind.config.ts     # Configuración Tailwind
-├── frontend_flutter_backup_*/ # Backup del Flutter original
-├── DEPENDENCIAS_LIMPIEZA_RESUMEN.md # Resumen optimización
-├── FRONTEND_NEXTJS_COMPLETADO.md    # Documentación migración
-└── README.md                  # Este archivo
+│   │   │   └── useXIONStatus.ts # XION status hook
+│   │   ├── services/          # API services
+│   │   │   └── api.ts         # API client
+│   │   └── types/             # TypeScript types
+│   │       └── index.ts       # Type definitions
+│   ├── package.json           # Optimized dependencies
+│   ├── next.config.ts         # Next.js configuration
+│   └── tailwind.config.ts     # Tailwind configuration
+├── frontend_flutter_backup_*/ # Original Flutter backup
+├── DEPENDENCIAS_LIMPIEZA_RESUMEN.md # Optimization summary
+├── FRONTEND_NEXTJS_COMPLETADO.md    # Migration documentation
+└── README.md                  # This file
 ```
 
-### 🛠️ Scripts de Desarrollo
+### 🛠️ Development Scripts
 
 #### Backend
 ```bash
-# Iniciar con auto-reload
+# Start with auto-reload
 uvicorn main:app --reload --port 8000
 
-# Instalar dependencias de desarrollo
+# Install development dependencies
 pip install -r requirements-dev.txt
 
-# Ejecutar tests (cuando estén configurados)
+# Run tests (when configured)
 pytest
 
-# Verificar salud del API
+# Check API health
 curl http://localhost:8000/health
 ```
 
 #### Frontend  
 ```bash
-# Desarrollo con Turbopack
+# Development with Turbopack
 npm run dev
 
-# Build de producción
+# Production build
 npm run build
 
-# Verificar tipos TypeScript
+# TypeScript type checking
 npm run type-check
 
 # Linting
 npm run lint
 ```
 
-## 🧪 Testing y Demo
+## 🧪 Testing and Demo
 
-### 🔄 Estado Actual del Sistema
-- **Backend**: ✅ Operativo en puerto 8000
-- **Frontend**: ✅ Operativo en puerto 3000  
-- **XION Integration**: ✅ Modo simplificado funcional
-- **Base de Datos**: ✅ SQLite configurada
-- **API Endpoints**: ✅ Todos operativos
+### 🔄 Current System Status
+- **Backend**: ✅ Operational on port 8000
+- **Frontend**: ✅ Operational on port 3000  
+- **XION Integration**: ✅ Simplified mode functional
+- **Database**: ✅ SQLite configured
+- **API Endpoints**: ✅ All operational
 
-### 🎮 Modo Demo Actual
-- **Servicio XION simplificado** para desarrollo estable
-- **Simulación de blockchain** con respuestas consistentes
-- **UI completa** con todos los componentes funcionales
-- **Estado en tiempo real** de servicios visible
+### 🎮 Current Demo Mode
+- **Simplified XION service** for stable development
+- **Blockchain simulation** with consistent responses
+- **Complete UI** with all functional components
+- **Real-time service status** visible
 
-### 🧪 Casos de Uso de Prueba
-1. **✅ Verificar estado**: Abre http://localhost:3000 y observa el estado XION
-2. **📤 Cargar archivo**: Usa el área drag & drop para subir imágenes
-3. **🔍 Verificar contenido**: Cambia a la pestaña de verificación
-4. **📊 Ver respuesta API**: Observa las respuestas en Network tab
-5. **🔄 Probar endpoints**: Usa `/health` y `/mobile/status`
+### 🧪 Test Use Cases
+1. **✅ Check status**: Open http://localhost:3000 and observe XION status
+2. **📤 Upload file**: Use the drag & drop area to upload images
+3. **🔍 Verify content**: Switch to verification tab
+4. **📊 View API response**: Observe responses in Network tab
+5. **🔄 Test endpoints**: Use `/health` and `/mobile/status`
 
-### 🌐 URLs de Desarrollo
+### 🌐 Development URLs
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **Health Check**: http://localhost:8000/health
 - **Mobile Status**: http://localhost:8000/mobile/status
-- **Docs API**: http://localhost:8000/docs (FastAPI auto-docs)
+- **API Docs**: http://localhost:8000/docs (FastAPI auto-docs)
 
-## 🌟 Características Técnicas Avanzadas
+## 🌟 Advanced Technical Features
 
-### 🔧 Stack Tecnológico Moderno
+### 🔧 Modern Technology Stack
 - **Backend**: Python 3.11 + FastAPI + SQLAlchemy + Uvicorn
 - **Frontend**: React 19 + Next.js 15.3.5 + TypeScript + Tailwind CSS
-- **Build Tool**: Turbopack para desarrollo ultrarrápido
-- **Base de Datos**: SQLite (configurable a PostgreSQL)
-- **Criptografía**: SHA-256 + HMAC + Fernet encryption
+- **Build Tool**: Turbopack for ultra-fast development
+- **Database**: SQLite (configurable to PostgreSQL)
+- **Cryptography**: SHA-256 + HMAC + Fernet encryption
 
-### 📁 Procesamiento de Archivos
-- **Validación multi-formato**: Imágenes, videos, documentos PDF
-- **Procesamiento con OpenCV** y Pillow para análisis de imágenes
-- **Extracción de metadatos** de archivos multimedia
-- **Normalización de contenido** para comparación consistente
+### 📁 File Processing
+- **Multi-format validation**: Images, videos, PDF documents
+- **OpenCV and Pillow processing** for image analysis
+- **Metadata extraction** from multimedia files
+- **Content normalization** for consistent comparison
 
-### 🔒 Seguridad Implementada
-- **Hash SHA-256** para identificación única de contenido
-- **Sellos HMAC** para verificación de integridad
-- **Cifrado Fernet** para datos sensibles
-- **Validación de entrada** estricta en todos los endpoints
+### 🔒 Implemented Security
+- **SHA-256 hash** for unique content identification
+- **HMAC seals** for integrity verification
+- **Fernet encryption** for sensitive data
+- **Strict input validation** on all endpoints
 
-### ⚡ Optimizaciones de Rendimiento
-- **Dependencias minimalistas**: 65% menos paquetes que la versión original
-- **Turbopack**: Builds 10x más rápidos que Webpack
-- **React 19**: Última versión con mejoras de rendimiento
-- **Lazy loading** de componentes pesados
+### ⚡ Performance Optimizations
+- **Minimalist dependencies**: 65% fewer packages than original version
+- **Turbopack**: Builds 10x faster than Webpack
+- **React 19**: Latest version with performance improvements
+- **Lazy loading** of heavy components
 
-### 🔄 Integración XION
-- **Servicio simplificado** para desarrollo sin conflictos de dependencias
-- **Estados de conexión** en tiempo real visibles en UI
-- **Preparado para migración** a SDK real cuando esté disponible
-- **Mock responses** consistentes para testing
+### 🔄 XION Integration
+- **Simplified service** for development without dependency conflicts
+- **Real-time connection status** visible in UI
+- **Ready for migration** to real SDK when available
+- **Consistent mock responses** for testing
 
-## 🚧 Roadmap y Mejoras Futuras
+## 🚧 Roadmap and Future Improvements
 
-### 🎯 Próximas Funcionalidades
-- [ ] **Integración XION real** cuando se resuelvan conflictos de dependencias
-- [ ] **Análisis de deepfakes** con modelos de IA especializados
-- [ ] **Verificación batch** para múltiples archivos simultáneos
-- [ ] **API pública** con rate limiting y autenticación
-- [ ] **Extensión de navegador** para verificación web directa
-- [ ] **Base de datos distribuida** para mayor escalabilidad
+### 🎯 Upcoming Features
+- [ ] **Real XION integration** when dependency conflicts are resolved
+- [ ] **Deepfake analysis** with specialized AI models
+- [ ] **Batch verification** for multiple simultaneous files
+- [ ] **Public API** with rate limiting and authentication
+- [ ] **Browser extension** for direct web verification
+- [ ] **Distributed database** for greater scalability
 
-### 🔧 Mejoras Técnicas Planificadas
-- [ ] **Test suite completo** con pytest y Jest
-- [ ] **CI/CD pipeline** con GitHub Actions
-- [ ] **Containerización** con Docker y Docker Compose
-- [ ] **Monitoreo** con Prometheus y Grafana
-- [ ] **Caché Redis** para mejor rendimiento
-- [ ] **WebSocket** para actualizaciones en tiempo real
+### 🔧 Planned Technical Improvements
+- [ ] **Complete test suite** with pytest and Jest
+- [ ] **CI/CD pipeline** with GitHub Actions
+- [ ] **Containerization** with Docker and Docker Compose
+- [ ] **Monitoring** with Prometheus and Grafana
+- [ ] **Redis cache** for better performance
+- [ ] **WebSocket** for real-time updates
 
-### 🌐 Integraciones Futuras
-- [ ] **Integración redes sociales** (Twitter, Instagram, TikTok)
-- [ ] **Marketplace de contenido** verificado
-- [ ] **Notificaciones push** para alertas de verificación
-- [ ] **Sincronización en la nube** del historial de usuario
-- [ ] **Plugin WordPress** para verificación automática
-- [ ] **SDK para desarrolladores** con múltiples lenguajes
+### 🌐 Future Integrations
+- [ ] **Social media integration** (Twitter, Instagram, TikTok)
+- [ ] **Verified content marketplace**
+- [ ] **Push notifications** for verification alerts
+- [ ] **Cloud synchronization** of user history
+- [ ] **WordPress plugin** for automatic verification
+- [ ] **Developer SDK** with multiple languages
 
-### 📱 Mejoras de UX/UI
-- [ ] **PWA** para instalación como app nativa
-- [ ] **Modo offline** para verificaciones básicas
-- [ ] **Tutorials interactivos** para nuevos usuarios
-- [ ] **Dashboard analytics** para creadores de contenido
-- [ ] **Temas personalizables** más allá del modo oscuro
-- [ ] **Accesibilidad mejorada** (ARIA, screen readers)
+### 📱 UX/UI Improvements
+- [ ] **PWA** for native app installation
+- [ ] **Offline mode** for basic verifications
+- [ ] **Interactive tutorials** for new users
+- [ ] **Analytics dashboard** for content creators
+- [ ] **Customizable themes** beyond dark mode
+- [ ] **Enhanced accessibility** (ARIA, screen readers)
 
-## 📋 Historial de Cambios
+## 📋 Change History
 
-### 🆕 v2.0.0 - Julio 2025 (Actual)
-- **✨ Migración completa** de Flutter a Next.js 15.3.5 + React 19
-- **🧹 Optimización de dependencias**: Backend (-65%), Frontend (optimizado)
-- **⚡ Turbopack integration** para builds ultrarrápidos
-- **🎨 UI completamente rediseñada** con Tailwind CSS
-- **🔗 XION service simplificado** para desarrollo estable
-- **📱 Componentes React** para estado de conexión y carga de archivos
-- **🛠️ TypeScript** en todo el frontend para type safety
-- **📚 Documentación actualizada** y guías de desarrollo
+### 🆕 v2.0.0 - July 2025 (Current)
+- **✨ Complete migration** from Flutter to Next.js 15.3.5 + React 19
+- **🧹 Dependency optimization**: Backend (-65%), Frontend (optimized)
+- **⚡ Turbopack integration** for ultra-fast builds
+- **🎨 Completely redesigned UI** with Tailwind CSS
+- **🔗 Simplified XION service** for stable development
+- **📱 React components** for connection status and file upload
+- **🛠️ TypeScript** throughout frontend for type safety
+- **📚 Updated documentation** and development guides
 
-### v1.0.0 - Versión Inicial (Respaldada)
-- Framework Flutter con Riverpod para gestión de estado
-- Integración XION con cosmpy (conflictos de dependencias)
-- UI básica con tema oscuro
-- Servicios de hash y criptografía básicos
+### v1.0.0 - Initial Version (Backed up)
+- Flutter framework with Riverpod for state management
+- XION integration with cosmpy (dependency conflicts)
+- Basic UI with dark theme
+- Basic hash and cryptography services
 
-## 🤝 Contribución
+## 🤝 Contributing
 
-NoirCheck está evolucionando hacia una plataforma de producción robusta. Las contribuciones son especialmente bienvenidas en las siguientes áreas:
+NoirCheck is evolving towards a robust production platform. Contributions are especially welcome in the following areas:
 
-### 🎯 Áreas de Contribución Prioritarias
-1. **Testing**: Implementar test suites completos
-2. **Seguridad**: Auditorías de seguridad y mejores prácticas
-3. **Performance**: Optimizaciones de rendimiento y escalabilidad
-4. **UX/UI**: Mejoras de experiencia de usuario
-5. **Documentación**: Guías técnicas y tutoriales
+### 🎯 Priority Contribution Areas
+1. **Testing**: Implement complete test suites
+2. **Security**: Security audits and best practices
+3. **Performance**: Performance optimizations and scalability
+4. **UX/UI**: User experience improvements
+5. **Documentation**: Technical guides and tutorials
 
-### 📝 Cómo Contribuir
-1. **Fork** del repositorio
-2. **Crea rama feature** (`git checkout -b feature/nueva-funcionalidad`)
-3. **Implementa y prueba** tu funcionalidad
-4. **Commit con mensajes descriptivos** siguiendo conventional commits
-5. **Push** a tu fork (`git push origin feature/nueva-funcionalidad`)
-6. **Abre Pull Request** con descripción detallada
+### 📝 How to Contribute
+1. **Fork** the repository
+2. **Create feature branch** (`git checkout -b feature/new-functionality`)
+3. **Implement and test** your functionality
+4. **Commit with descriptive messages** following conventional commits
+5. **Push** to your fork (`git push origin feature/new-functionality`)
+6. **Open Pull Request** with detailed description
 
-### 🔧 Setup para Contribuidores
+### 🔧 Setup for Contributors
 ```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/NoirsCheck.git
+# Clone repository
+git clone https://github.com/your-user/NoirsCheck.git
 cd NoirsCheck
 
 # Setup backend
@@ -397,29 +397,29 @@ pip install -r requirements.txt -r requirements-dev.txt
 # Setup frontend  
 cd ../frontend && npm install
 
-# Verificar funcionamiento
+# Verify functionality
 npm run type-check && echo "✅ Frontend OK"
 cd ../backend && python -c "import fastapi; print('✅ Backend OK')"
 ```
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está desarrollado como demostración técnica del potencial de blockchain en la verificación de contenido digital. Para información sobre licencias comerciales, contacta al equipo de desarrollo.
+This project is developed as a technical demonstration of blockchain potential in digital content verification. For information about commercial licenses, contact the development team.
 
-## 📞 Soporte y Contacto
+## 📞 Support and Contact
 
-### 🆘 Soporte Técnico
-- **GitHub Issues**: Para reportar bugs y solicitar features
-- **Documentación**: Consulta los archivos `.md` en el repositorio
-- **API Docs**: http://localhost:8000/docs (cuando el backend esté corriendo)
+### 🆘 Technical Support
+- **GitHub Issues**: To report bugs and request features
+- **Documentation**: Check the `.md` files in the repository
+- **API Docs**: http://localhost:8000/docs (when backend is running)
 
-### 📧 Contacto
-- **Email técnico**: dev@noircheck.app
-- **Consultas de negocio**: business@noircheck.app
-- **Colaboraciones**: partnerships@noircheck.app
+### 📧 Contact
+- **Technical email**: dev@noircheck.app
+- **Business inquiries**: business@noircheck.app
+- **Partnerships**: partnerships@noircheck.app
 
-### 🔗 Enlaces Útiles
-- **Documentación XION**: https://docs.xion.global
+### 🔗 Useful Links
+- **XION Documentation**: https://docs.xion.global
 - **CosmJS Docs**: https://cosmos.github.io/cosmjs/
 - **Next.js Docs**: https://nextjs.org/docs
 - **FastAPI Docs**: https://fastapi.tiangolo.com/
@@ -428,12 +428,12 @@ Este proyecto está desarrollado como demostración técnica del potencial de bl
 
 <div align="center">
 
-**🛡️ NoirCheck** - *Devolviendo la confianza al ecosistema digital*
+**🛡️ NoirCheck** - *Restoring trust to the digital ecosystem*
 
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js%2015-black)](https://nextjs.org/)
 [![Powered by FastAPI](https://img.shields.io/badge/Powered%20by-FastAPI-009688)](https://fastapi.tiangolo.com/)
 [![XION Blockchain](https://img.shields.io/badge/Blockchain-XION-purple)](https://xion.global/)
 
-*Proyecto desarrollado en Julio 2025 • Versión 2.0.0*
+*Project developed in July 2025 • Version 2.0.0*
 
 </div>

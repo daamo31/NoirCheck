@@ -1,5 +1,5 @@
 # ============================================================================
-# NoirCheck - Plataforma de Verificación de Autenticidad Digital
+# NoirCheck - Digital Authenticity Verification Platform
 # ============================================================================
 
 # Python
@@ -60,7 +60,7 @@ test.db
 # PostgreSQL
 *.sql
 
-# Archivos de contenido subidos
+# Uploaded content files
 uploads/
 temp/
 cache/

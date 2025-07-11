@@ -2,32 +2,32 @@
 # NOIRCHECK DEVELOPMENT DEPENDENCIES
 # ==========================================
 
-# Testing avanzado
-pytest-xdist==3.5.0           # Ejecución paralela de tests
-pytest-mock==3.12.0           # Mocking para tests
-pytest-benchmark==4.0.0       # Benchmarking de performance
-pytest-html==4.1.1            # Reportes HTML de tests
-pytest-watch==4.2.0           # Auto-ejecutar tests al cambiar código
+# Advanced testing
+pytest-xdist==3.5.0           # Parallel test execution
+pytest-mock==3.12.0           # Mocking for tests
+pytest-benchmark==4.0.0       # Performance benchmarking
+pytest-html==4.1.1            # HTML test reports
+pytest-watch==4.2.0           # Auto-run tests on code changes
 
-# Code quality y linting
-black==24.1.1                 # Formateo de código
-isort==5.13.2                 # Ordenamiento de imports
-flake8==7.0.0                 # Linting básico
-pylint==3.0.3                 # Linting avanzado
-mypy==1.8.0                   # Type checking estático
-bandit==1.7.6                 # Análisis de seguridad
+# Code quality and linting
+black==24.1.1                 # Code formatting
+isort==5.13.2                 # Import sorting
+flake8==7.0.0                 # Basic linting
+pylint==3.0.3                 # Advanced linting
+mypy==1.8.0                   # Static type checking
+bandit==1.7.6                 # Security analysis
 
-# Documentación
-sphinx==7.2.6                 # Generación de documentación
-sphinx-rtd-theme==2.0.0       # Tema para documentación
-mkdocs==1.5.3                 # Documentación alternativa
-mkdocs-material==9.5.6        # Tema material para mkdocs
+# Documentation
+sphinx==7.2.6                 # Documentation generation
+sphinx-rtd-theme==2.0.0       # Documentation theme
+mkdocs==1.5.3                 # Alternative documentation
+mkdocs-material==9.5.6        # Material theme for mkdocs
 
-# Debugging y profiling
-pdb++==0.10.3                 # Debugger mejorado
-py-spy==0.3.14                # Profiler de performance
-memory-profiler==0.61.0       # Profiling de memoria
-line-profiler==4.1.1          # Profiling línea por línea
+# Debugging and profiling
+pdb++==0.10.3                 # Enhanced debugger
+py-spy==0.3.14                # Performance profiler
+memory-profiler==0.61.0       # Memory profiling
+line-profiler==4.1.1          # Line-by-line profiling
 
 # Database tools para desarrollo
 sqlalchemy-stubs==0.4         # Stubs para SQLAlchemy
@@ -59,7 +59,7 @@ vulture==2.11                 # Detección de código muerto
 radon==6.0.1                  # Análisis de complejidad
 
 # ==========================================
-# INSTALACIÓN
+# INSTALLATION
 # ==========================================
 # Para instalar dependencias de desarrollo:
 # pip install -r requirements-dev.txt

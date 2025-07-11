@@ -1,5 +1,15 @@
 /**
- * Componente de Estado de Conexión XION
+ * XION Connection Status Component
+ * 
+ * Displays real-time connection status to XION blockchain and NoirCheck services.
+ * Shows network information, service health, and provides refresh functionality.
+ * 
+ * Features:
+ * - Real-time connection monitoring
+ * - Visual status indicators with colors and icons
+ * - Service health display
+ * - Manual refresh capability
+ * - Responsive design with modern UI
  */
 
 'use client';
@@ -36,12 +46,12 @@ export function ConnectionStatus() {
   };
 
   const getStatusText = () => {
-    if (loading) return 'Conectando con XION blockchain...';
-    if (error) return 'Sin conexión';
+    if (loading) return 'Connecting to XION blockchain...';
+    if (error) return 'No connection';
     if (connection.connected) {
-      return `Conectado a NoirCheck + XION`;
+      return `Connected to NoirCheck + XION`;
     }
-    return 'Desconectado';
+    return 'Disconnected';
   };
 
   const getStatusBadge = () => {
@@ -65,7 +75,7 @@ export function ConnectionStatus() {
             </span>
             {connection.connected && (
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Backend operativo con XION blockchain
+                Backend operational with XION blockchain
               </span>
             )}
           </div>
@@ -77,7 +87,7 @@ export function ConnectionStatus() {
             onClick={refresh}
             disabled={loading}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Actualizar estado"
+            title="Refresh status"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -87,13 +97,13 @@ export function ConnectionStatus() {
       {/* Servicios Detallados */}
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          📊 Servicios Activos:
+          📊 Active Services:
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
           <div className="flex items-center space-x-2">
-            <span>🗄️ Base de datos:</span>
+            <span>🗄️ Database:</span>
             <span className={getStatusColor(services.database)}>
-              {services.database === 'connected' ? '✅ Conectado' : '❌ Desconectado'}
+              {services.database === 'connected' ? '✅ Connected' : '❌ Disconnected'}
             </span>
           </div>
           <div className="flex items-center space-x-2">
@@ -101,13 +111,13 @@ export function ConnectionStatus() {
             <span className={getStatusColor(services.xion)}>
               {services.xion === 'local_mode' ? '✅ Local mode' : 
                services.xion === 'testnet' ? '✅ Testnet' :
-               services.xion === 'mainnet' ? '✅ Mainnet' : '❌ Desconectado'}
+               services.xion === 'mainnet' ? '✅ Mainnet' : '❌ Disconnected'}
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <span>📁 Almacenamiento:</span>
+            <span>📁 Storage:</span>
             <span className={getStatusColor(services.file_storage)}>
-              {services.file_storage === 'available' ? '✅ Disponible' : '❌ No disponible'}
+              {services.file_storage === 'available' ? '✅ Available' : '❌ Unavailable'}
             </span>
           </div>
         </div>
@@ -116,7 +126,7 @@ export function ConnectionStatus() {
       {error && (
         <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
           <p className="text-sm text-red-700 dark:text-red-400">
-            ⚠️ Error de conexión: {error}
+            ⚠️ Connection error: {error}
           </p>
         </div>
       )}

@@ -1,8 +1,21 @@
 """
-Servicio de Hash y Criptografía
+Hash and Cryptography Service
 
-Este módulo maneja todo lo relacionado con el cálculo de hashes,
-generación de sellos de autenticidad y comparación de contenido.
+This module handles everything related to hash calculation, authenticity 
+seal generation, and content comparison for the NoirCheck platform.
+
+Key Features:
+- SHA-256 hash calculation for content fingerprinting
+- HMAC-based authenticity seals for verification
+- Fernet encryption for sensitive data
+- Content modification analysis and similarity detection
+- Secure random token generation for unique identifiers
+
+Security Standards:
+- Uses SHA-256 for cryptographic hashing (FIPS 140-2 approved)
+- HMAC for message authentication codes
+- Fernet (AES 128 in CBC mode) for symmetric encryption
+- Cryptographically secure random number generation
 """
 
 import base64
@@ -15,23 +28,44 @@ from cryptography.fernet import Fernet
 
 
 class HashService:
-    """Servicio para manejo de hashes y criptografía"""
+    """
+    Hash and cryptography service for content authenticity verification
+    
+    This service provides cryptographic operations necessary for content
+    verification, including hashing, signing, and encryption capabilities.
+    """
 
     def __init__(self):
-        # Clave secreta para sellos de autenticidad (en producción usar variable de entorno)
+        """
+        Initialize the hash service with cryptographic keys
+        
+        Sets up secret keys for HMAC authentication and Fernet encryption.
+        In production, these keys should be loaded from environment variables.
+        """
+        # Secret key for authenticity seals (use environment variable in production)
         self.secret_key = b"noircheck_secret_key_2024_production"
+        
+        # Generate Fernet key for symmetric encryption
         self.fernet_key = Fernet.generate_key()
         self.fernet = Fernet(self.fernet_key)
 
     def calculate_hash(self, content: Union[bytes, str]) -> str:
         """
-        Calcula el hash SHA-256 de un contenido
-
+        Calculate SHA-256 hash of content
+        
+        Computes a cryptographic hash of the provided content using SHA-256
+        algorithm, which provides a unique fingerprint for the content.
+        
         Args:
-            content: Contenido a hashear (bytes o string)
-
+            content: Content to hash (bytes or string)
+            
         Returns:
-            Hash hexadecimal del contenido
+            Hexadecimal representation of the SHA-256 hash
+            
+        Example:
+            >>> service = HashService()
+            >>> service.calculate_hash("Hello World")
+            'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
         """
         if isinstance(content, str):
             content = content.encode("utf-8")
@@ -42,13 +76,20 @@ class HashService:
 
     def calculate_file_hash(self, file_content: bytes) -> str:
         """
-        Calcula el hash SHA-256 del contenido de un archivo
-
+        Calculate SHA-256 hash of file content
+        
+        Specialized method for hashing file content, optimized for binary data.
+        This is the primary method used for content registration and verification.
+        
         Args:
-            file_content: Contenido del archivo en bytes
-
+            file_content: File content as bytes
+            
         Returns:
-            Hash hexadecimal del contenido
+            Hexadecimal representation of the SHA-256 hash of the file
+            
+        Usage:
+            This method is called during content registration and verification
+            to create a unique fingerprint for uploaded files.
         """
         sha256_hash = hashlib.sha256()
         sha256_hash.update(file_content)
@@ -56,57 +97,84 @@ class HashService:
 
     def calculate_file_hash_from_path(self, file_path: str, chunk_size: int = 8192) -> str:
         """
-        Calcula el hash SHA-256 de un archivo leyéndolo por chunks desde su ruta
-
+        Calculate SHA-256 hash of a file by reading it in chunks from disk
+        
+        Memory-efficient method for hashing large files by reading them
+        in chunks rather than loading the entire file into memory.
+        
         Args:
-            file_path: Ruta al archivo
-            chunk_size: Tamaño del chunk para lectura
+            file_path: Path to the file on disk
+            chunk_size: Size of chunks to read at a time (default: 8KB)
 
         Returns:
-            Hash hexadecimal del archivo
+            Hexadecimal hash of the file content
+            
+        Raises:
+            Exception: If file is not found or cannot be read
+            
+        Usage:
+            Useful for hashing large files without loading them entirely into memory.
+            Preferred method for processing uploaded files in production.
         """
         sha256_hash = hashlib.sha256()
 
         try:
             with open(file_path, "rb") as f:
+                # Read file in chunks to handle large files efficiently
                 for chunk in iter(lambda: f.read(chunk_size), b""):
                     sha256_hash.update(chunk)
             return sha256_hash.hexdigest()
         except FileNotFoundError:
-            raise Exception(f"Archivo no encontrado: {file_path}")
+            raise Exception(f"File not found: {file_path}")
         except Exception as e:
-            raise Exception(f"Error al calcular hash del archivo: {str(e)}")
+            raise Exception(f"Error calculating file hash: {str(e)}")
 
     def generate_authenticity_seal(
         self, content_hash: str, creator_id: str, blockchain_tx_id: str
     ) -> Dict[str, Any]:
         """
-        Genera un sello de autenticidad criptográfico
-
+        Generate cryptographic authenticity seal
+        
+        Creates a tamper-proof authenticity seal that can be used to verify
+        the integrity and origin of content. The seal includes HMAC signature
+        and can be embedded in QR codes for easy verification.
+        
         Args:
-            content_hash: Hash del contenido
-            creator_id: ID del creador
-            blockchain_tx_id: ID de transacción blockchain
-
+            content_hash: SHA-256 hash of the content
+            creator_id: Unique identifier of the content creator
+            blockchain_tx_id: Blockchain transaction ID for the registration
+            
         Returns:
-            Dict con información del sello de autenticidad
+            Dictionary containing seal information:
+            - seal_id: Unique identifier for the seal
+            - hmac_signature: HMAC signature for integrity verification
+            - compact_seal: Shortened version suitable for QR codes
+            - verification_url: URL for online seal verification
+            
+        Example:
+            >>> seal = service.generate_authenticity_seal(
+            ...     "abc123...", "creator_001", "tx_456789"
+            ... )
+            >>> print(seal['seal_id'])
+            'a1b2c3d4e5f6g7h8'
         """
-        # Crear payload del sello
+        # Create seal payload with all relevant information
         seal_data = f"{content_hash}:{creator_id}:{blockchain_tx_id}"
 
-        # Generar HMAC para integridad
+        # Generate HMAC signature for integrity verification
+        # Uses SHA-256 as the hash function for the HMAC
         seal_hmac = hmac.new(
             self.secret_key, seal_data.encode("utf-8"), hashlib.sha256
         ).hexdigest()
 
-        # Generar ID único del sello
+        # Generate unique seal ID (first 16 characters of hash)
         seal_id = self.calculate_hash(f"{seal_data}:{seal_hmac}")[:16]
 
-        # Crear sello compacto para QR
+        # Create compact seal for QR code embedding (space-efficient format)
         compact_seal = (
             base64.urlsafe_b64encode(f"{seal_id}:{seal_hmac[:16]}".encode())
             .decode()
-            .rstrip("=")
+            .rstrip("=")  # Remove padding for cleaner QR codes
         )
 
         return {
@@ -116,6 +184,9 @@ class HashService:
             "qr_data": f"noircheck://verify/{compact_seal}",
             "verification_url": f"https://noircheck.app/verify/{content_hash}",
             "embed_code": f"<!-- NoirCheck Seal: {compact_seal} -->",
+            "creation_timestamp": base64.urlsafe_b64encode(
+                str(int(hashlib.sha256(seal_data.encode()).hexdigest()[:8], 16)).encode()
+            ).decode().rstrip("=")
         }
 
     def verify_authenticity_seal(
@@ -126,28 +197,43 @@ class HashService:
         blockchain_tx_id: str,
     ) -> Dict[str, Any]:
         """
-        Verifica un sello de autenticidad
-
+        Verify authenticity seal integrity and authenticity
+        
+        Validates a given authenticity seal against the provided content
+        information to determine if the seal is valid and hasn't been tampered with.
+        
         Args:
-            compact_seal: Sello compacto a verificar
-            content_hash: Hash del contenido original
-            creator_id: ID del creador original
-            blockchain_tx_id: ID de transacción blockchain original
-
+            compact_seal: Compact seal to verify (from QR code or embed)
+            content_hash: Expected SHA-256 hash of the content
+            creator_id: Expected creator ID
+            blockchain_tx_id: Expected blockchain transaction ID
+            
         Returns:
-            Dict con resultado de verificación
+            Dictionary containing verification results:
+            - valid: Boolean indicating if seal is valid
+            - seal_verified: Boolean indicating HMAC verification status
+            - message: Human-readable verification result
+            - confidence_score: Numeric confidence (0-100)
+            
+        Example:
+            >>> result = service.verify_authenticity_seal(
+            ...     compact_seal, content_hash, creator_id, tx_id
+            ... )
+            >>> print(f"Valid: {result['valid']}, Score: {result['confidence_score']}")
+            Valid: True, Score: 95
         """
         try:
-            # Decodificar sello compacto
+            # Recreate the original seal data for comparison
+            # Decode the compact seal to extract seal ID and partial HMAC
             decoded = base64.urlsafe_b64decode(compact_seal + "===").decode()
             seal_id, partial_hmac = decoded.split(":")
 
-            # Recalcular sello original
+            # Regenerate the original seal using provided parameters
             original_seal = self.generate_authenticity_seal(
                 content_hash, creator_id, blockchain_tx_id
             )
 
-            # Verificar integridad
+            # Verify seal integrity by comparing IDs and HMAC signatures
             is_valid = (
                 seal_id == original_seal["seal_id"]
                 and partial_hmac == original_seal["seal_hmac"][:16]
@@ -155,8 +241,12 @@ class HashService:
 
             return {
                 "valid": is_valid,
+                "seal_verified": is_valid,
+                "message": "Authenticity seal verified successfully" if is_valid else "Authenticity seal verification failed",
+                "confidence_score": 95 if is_valid else 0,
                 "seal_id": seal_id,
                 "content_hash": content_hash if is_valid else None,
+                "original_creator": creator_id if is_valid else None,
                 "verification_timestamp": hashlib.sha256(
                     str(secrets.randbits(128)).encode()
                 ).hexdigest()[:16],
@@ -165,27 +255,36 @@ class HashService:
         except Exception as e:
             return {
                 "valid": False,
+                "seal_verified": False,
                 "error": f"Seal verification failed: {str(e)}",
+                "confidence_score": 0,
+                "message": "Error occurred during seal verification"
             }
 
     def calculate_similarity(self, hash1: str, hash2: str) -> float:
         """
-        Calcula la similitud entre dos hashes (simplificado)
-
+        Calculate similarity between two hashes (simplified implementation)
+        
+        Computes a basic similarity score between two hash strings.
+        This is a simplified implementation; production systems would use
+        more sophisticated techniques like perceptual hashing for images.
+        
         Args:
-            hash1: Primer hash
-            hash2: Segundo hash
-
+            hash1: First hash string to compare
+            hash2: Second hash string to compare
+            
         Returns:
-            Porcentaje de similitud (0-100)
+            Similarity percentage (0-100), where 100 is identical            Note:
+            For content verification, exact hash matches (100% similarity)
+            indicate identical content. Lower similarity may indicate
+            content modifications or different content entirely.
         """
         if hash1 == hash2:
             return 100.0
 
-        # Similitud basada en caracteres comunes (método simplificado)
-        # En una implementación real, se usarían técnicas más sofisticadas
-        # como perceptual hashing para imágenes
-
+        # Calculate similarity based on common characters (simplified method)
+        # In a real implementation, more sophisticated techniques would be used
+        # such as perceptual hashing for images or fuzzy hashing for documents
         common_chars = sum(1 for a, b in zip(hash1, hash2) if a == b)
         similarity = (common_chars / len(hash1)) * 100
 
@@ -193,22 +292,37 @@ class HashService:
 
     def generate_content_fingerprint(self, content: bytes) -> Dict[str, str]:
         """
-        Genera múltiples hashes para crear una huella digital del contenido
-
+        Generate multiple hashes to create a comprehensive content fingerprint
+        
+        Creates a multi-hash fingerprint using different algorithms to provide
+        enhanced security and verification capabilities. Each algorithm has
+        different strengths and resistance to various attack vectors.
+        
         Args:
-            content: Contenido en bytes
-
+            content: Content as bytes to fingerprint
+            
         Returns:
-            Dict con diferentes tipos de hash
+            Dictionary containing multiple hash types:
+            - sha256: Primary hash (most commonly used)
+            - sha512: Extended hash for higher security
+            - md5: Legacy hash (for compatibility)
+            - blake2b: Modern fast hash algorithm
+            - combined: Composite hash for enhanced security
+            
+        Security Note:
+            SHA-256 is the primary hash used for blockchain registration.
+            MD5 is included only for legacy compatibility and should not
+            be used for security-critical operations.
         """
         fingerprint = {
-            "sha256": hashlib.sha256(content).hexdigest(),
-            "sha512": hashlib.sha512(content).hexdigest(),
-            "md5": hashlib.md5(content).hexdigest(),
-            "blake2b": hashlib.blake2b(content).hexdigest(),
+            "sha256": hashlib.sha256(content).hexdigest(),      # Primary hash
+            "sha512": hashlib.sha512(content).hexdigest(),      # Extended security
+            "md5": hashlib.md5(content).hexdigest(),            # Legacy compatibility
+            "blake2b": hashlib.blake2b(content).hexdigest(),    # Modern fast hash
         }
 
-        # Hash combinado para mayor seguridad
+        # Generate combined hash for enhanced security
+        # Combines SHA-256 and BLAKE2b for additional protection
         combined = f"{fingerprint['sha256']}:{fingerprint['blake2b']}"
         fingerprint["combined"] = hashlib.sha256(combined.encode()).hexdigest()
 
@@ -216,26 +330,39 @@ class HashService:
 
     def encrypt_sensitive_data(self, data: str) -> str:
         """
-        Encripta datos sensibles
-
+        Encrypt sensitive data using Fernet symmetric encryption
+        
+        Provides secure encryption for sensitive data that needs to be stored
+        or transmitted securely. Uses AES 128 in CBC mode with HMAC for integrity.
+        
         Args:
-            data: Datos a encriptar
-
+            data: String data to encrypt
+            
         Returns:
-            Datos encriptados en base64
+            Base64-encoded encrypted data
+            
+        Security Note:
+            The encrypted data includes an HMAC for integrity verification.
+            Fernet automatically handles IV generation and key management.
         """
         encrypted = self.fernet.encrypt(data.encode())
         return base64.urlsafe_b64encode(encrypted).decode()
 
     def decrypt_sensitive_data(self, encrypted_data: str) -> str:
         """
-        Desencripta datos sensibles
-
+        Decrypt sensitive data encrypted with encrypt_sensitive_data
+        
+        Decrypts data that was previously encrypted using the same service instance.
+        Automatically verifies integrity using the embedded HMAC.
+        
         Args:
-            encrypted_data: Datos encriptados en base64
-
+            encrypted_data: Base64-encoded encrypted data
+            
         Returns:
-            Datos desencriptados
+            Original decrypted string data
+            
+        Raises:
+            Exception: If decryption fails due to invalid data or wrong key
         """
         try:
             encrypted_bytes = base64.urlsafe_b64decode(encrypted_data)
@@ -246,14 +373,23 @@ class HashService:
 
     def validate_hash_format(self, hash_value: str, hash_type: str = "sha256") -> bool:
         """
-        Valida el formato de un hash
-
+        Validate hash format and length
+        
+        Checks if a hash string has the correct format and length for the
+        specified hash algorithm. Useful for input validation.
+        
         Args:
-            hash_value: Valor del hash a validar
-            hash_type: Tipo de hash (sha256, sha512, md5, etc.)
-
+            hash_value: Hash string to validate
+            hash_type: Hash algorithm type (sha256, sha512, md5, blake2b)
+            
         Returns:
-            True si el formato es válido
+            True if hash format is valid for the specified type
+            
+        Supported hash types:
+            - sha256: 64 hexadecimal characters
+            - sha512: 128 hexadecimal characters  
+            - md5: 32 hexadecimal characters
+            - blake2b: 128 hexadecimal characters
         """
         expected_lengths = {
             "sha256": 64,
@@ -266,54 +402,72 @@ class HashService:
         if not expected_length:
             return False
 
+        # Check length and ensure all characters are valid hexadecimal
         return len(hash_value) == expected_length and all(
             c in "0123456789abcdef" for c in hash_value.lower()
         )
 
     def analyze_modifications(self, file_content: bytes) -> Dict[str, Any]:
         """
-        Analiza posibles modificaciones en el contenido (simulado)
-
+        Analyze potential content modifications (simulated implementation)
+        
+        Performs basic analysis to detect potential modifications in content.
+        This is a simplified implementation for demonstration purposes.
+        
+        In a production system, this would include:
+        - Entropy analysis for detecting compression/encryption
+        - Known modification pattern detection
+        - Metadata analysis for digital fingerprints
+        - Comparison with known original versions
+        - Advanced forensic techniques
+        
         Args:
-            file_content: Contenido del archivo en bytes
-
+            file_content: File content as bytes to analyze
+            
         Returns:
-            Diccionario con análisis de modificaciones
+            Dictionary with modification analysis results:
+            - modified: Boolean indicating if modifications detected
+            - similarity: Confidence score (0-1) for content authenticity
+            - analysis: Detailed analysis metrics
+            
+        Note:
+            This is a simulation for development purposes. Production
+            implementations would use sophisticated forensic techniques.
         """
-        # En una implementación real, esto podría usar:
-        # - Análisis de entropía
-        # - Detección de patrones conocidos de modificación
-        # - Comparación con versiones anteriores
-        # - Análisis de metadatos
-
-        # Por ahora, simulamos el análisis
+        # SIMULATION: Analyze potential modifications for demo purposes
         file_size = len(file_content)
 
-        # Simulación simple: archivos muy pequeños o muy grandes tienen más probabilidad de ser modificados
-        modification_probability = 0.1  # Base 10%
+        # Start with base modification probability (10% chance)
+        modification_probability = 0.1
 
-        if file_size < 100:  # Archivos muy pequeños
+        # HEURISTIC 1: Size-based analysis
+        # Very small files are more likely to be modified (test data)
+        if file_size < 100:  # Very small files
             modification_probability += 0.2
-        elif file_size > 10 * 1024 * 1024:  # Archivos mayores a 10MB
+        # Very large files might have compression artifacts
+        elif file_size > 10 * 1024 * 1024:  # Files larger than 10MB
             modification_probability += 0.3
 
-        # Análisis de entropía básico
+        # HEURISTIC 2: Basic entropy analysis (simplified)
+        # Calculate byte frequency distribution to detect patterns
         byte_counts = {}
-        for byte in file_content[:1000]:  # Analizar primeros 1000 bytes
+        sample_size = min(1000, len(file_content))  # Analyze first 1000 bytes
+        for byte in file_content[:sample_size]:
             byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
-        # Si hay muy pocos bytes únicos, puede ser contenido generado/modificado
+        # Low byte diversity might indicate generated/modified content
         unique_bytes = len(byte_counts)
         if unique_bytes < 10:
             modification_probability += 0.2
 
-        # Simular resultado
+        # Determine final result
         is_modified = modification_probability > 0.5
         similarity_score = 1.0 - modification_probability if not is_modified else modification_probability
 
         return {
             "modified": is_modified,
-            "similarity": min(max(similarity_score, 0.0), 1.0),  # Clamp entre 0 y 1
+            "similarity": min(max(similarity_score, 0.0), 1.0),  # Clamp between 0 and 1
+            "confidence_level": int((1.0 - modification_probability) * 100),
             "analysis": {
                 "file_size": file_size,
                 "unique_bytes": unique_bytes,

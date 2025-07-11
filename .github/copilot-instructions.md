@@ -1,23 +1,23 @@
-# Instrucciones para GitHub Copilot
+# GitHub Copilot Instructions
 
-Este es el proyecto **NoirCheck**, una plataforma de verificación de autenticidad de contenido digital que combate la desinformación utilizando tecnología blockchain y zkTLS.
+This is the **NoirCheck** project, a digital content authenticity verification platform that combats misinformation using blockchain and zkTLS technology.
 
-## Contexto del Proyecto
+## Project Context
 
-NoirCheck permite a los creadores registrar su contenido original en blockchain y a los consumidores verificar la autenticidad de cualquier contenido digital. El proyecto está dividido en:
+NoirCheck allows creators to register their original content on blockchain and consumers to verify the authenticity of any digital content. The project is divided into:
 
 ### Backend (Python + FastAPI)
-- Ubicado en `/backend/`
-- API RESTful para manejo de contenido
-- Integración simulada con XION zkTLS
-- Base de datos SQLite con SQLAlchemy
-- Servicios de hash, archivos y blockchain
+- Located in `/backend/`
+- RESTful API for content management
+- Simulated integration with XION zkTLS
+- SQLite database with SQLAlchemy
+- Hash, file, and blockchain services
 
 ### Frontend (Flutter)
-- Ubicado en `/frontend/`
-- Aplicación móvil multiplataforma
-- Interfaz moderna con tema oscuro
-- Gestión de estado con Riverpod
+- Located in `/frontend/`
+- Cross-platform mobile application
+- Modern interface with dark theme
+- State management with Riverpod
 - Integración de cámara y galería
 
 ## Patrones y Convenciones
@@ -32,22 +32,22 @@ NoirCheck permite a los creadores registrar su contenido original en blockchain 
 ### Frontend Flutter
 - **Material Design 3** con tema personalizado
 - **Riverpod** para gestión de estado
-- Arquitectura **MVVM** con servicios
-- Widgets reutilizables en `/widgets/`
-- Navegación con rutas nombradas
+- **MVVM** architecture with services
+- Reusable widgets in `/widgets/`
+- Navigation with named routes
 
-## Funcionalidades Principales
+## Main Features
 
-1. **Registro de Contenido**: Los creadores suben contenido original y lo registran en blockchain
-2. **Verificación de Contenido**: Los usuarios verifican la autenticidad de cualquier archivo
-3. **Gestión de Identidad**: Integración con XION zkTLS para verificación segura
-4. **Historial y Estadísticas**: Almacenamiento local de actividad del usuario
+1. **Content Registration**: Creators upload original content and register it on blockchain
+2. **Content Verification**: Users verify the authenticity of any file
+3. **Identity Management**: Integration with XION zkTLS for secure verification
+4. **History and Statistics**: Local storage of user activity
 
-## Tecnologías Clave
+## Key Technologies
 
-- **Python 3.11+** con FastAPI, SQLAlchemy, Cryptography
-- **Flutter 3.0+** con Riverpod, Material Design
-- **XION SDK** para blockchain y zkTLS (simulado)
+- **Python 3.11+** with FastAPI, SQLAlchemy, Cryptography
+- **Flutter 3.0+** with Riverpod, Material Design
+- **XION SDK** for blockchain and zkTLS (simulated)
 - **SQLite** para persistencia local
 - **Hash SHA-256** para identificación de contenido
 
