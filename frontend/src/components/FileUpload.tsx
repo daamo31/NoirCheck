@@ -163,7 +163,7 @@ export function FileUpload({ mode }: FileUploadProps) {
 
   return (
     <div className="w-full space-y-6">
-      {/* Área de carga */}
+      {/* File upload area */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -369,7 +369,7 @@ export function FileUpload({ mode }: FileUploadProps) {
       )}
 
       {/* Error Display Section */}
-      {/* Shows any errors that occurred during processing */
+      {/* Shows any errors that occurred during processing */}
       {error && (
         <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
           <div className="flex items-center">

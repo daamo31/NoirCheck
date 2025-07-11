@@ -64,6 +64,39 @@ export interface ContentVerification {
   modifications?: string[];
 }
 
+export interface User {
+  id: string;
+  address: string;
+  username?: string;
+  email?: string;
+  registeredAt: string;
+  totalRegistrations: number;
+  totalVerifications: number;
+  lastActivity: string;
+}
+
+export interface UserRegistrationData {
+  address: string;
+  username?: string;
+  email?: string;
+}
+
+export interface UserActivity {
+  id: string;
+  type: 'registration' | 'verification';
+  filename: string;
+  timestamp: string;
+  status: string;
+  hash?: string;
+}
+
+export interface UserStats {
+  totalRegistrations: number;
+  totalVerifications: number;
+  recentActivity: UserActivity[];
+  joinDate: string;
+}
+
 class APIService {
   private baseURL = 'http://localhost:8000';
 
@@ -126,6 +159,87 @@ class APIService {
 
     if (!response.ok) {
       throw new Error('Content verification failed');
+    }
+    return response.json();
+  }
+
+  // User Management Methods
+  async registerUser(userData: UserRegistrationData): Promise<User> {
+    const response = await this.fetchWithFallback(`${this.baseURL}/users/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`User registration failed: ${errorText}`);
+    }
+    return response.json();
+  }
+
+  async getUser(address: string): Promise<User | null> {
+    try {
+      const response = await this.fetchWithFallback(`${this.baseURL}/users/${address}`);
+      
+      if (response.status === 404) {
+        return null;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user');
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Get user error:', error);
+      return null;
+    }
+  }
+
+  async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+    const response = await this.fetchWithFallback(`${this.baseURL}/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`User update failed: ${errorText}`);
+    }
+    return response.json();
+  }
+
+  async getUserStats(userId: string): Promise<UserStats> {
+    const response = await this.fetchWithFallback(`${this.baseURL}/users/${userId}/stats`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user stats');
+    }
+    return response.json();
+  }
+
+  async getUserActivity(userId: string, limit: number = 20): Promise<UserActivity[]> {
+    const response = await this.fetchWithFallback(
+      `${this.baseURL}/users/${userId}/activity?limit=${limit}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user activity');
+    }
+    return response.json();
+  }
+
+  async getUserRegistrations(userId: string): Promise<ContentRegistration[]> {
+    const response = await this.fetchWithFallback(`${this.baseURL}/users/${userId}/registrations`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user registrations');
     }
     return response.json();
   }

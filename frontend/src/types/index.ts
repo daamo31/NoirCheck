@@ -45,5 +45,9 @@ export type {
   ContentRegistration,
   ContentVerification,
   HealthCheck,
-  MobileStatus
+  MobileStatus,
+  User,
+  UserRegistrationData,
+  UserActivity,
+  UserStats
 } from '@/services/api';

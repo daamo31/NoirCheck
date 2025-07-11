@@ -414,9 +414,8 @@ This project is developed as a technical demonstration of blockchain potential i
 - **API Docs**: http://localhost:8000/docs (when backend is running)
 
 ### 📧 Contact
-- **Technical email**: dev@noircheck.app
-- **Business inquiries**: business@noircheck.app
-- **Partnerships**: partnerships@noircheck.app
+- **Business inquiries**: 
+- **Partnerships**: 
 
 ### 🔗 Useful Links
 - **XION Documentation**: https://docs.xion.global

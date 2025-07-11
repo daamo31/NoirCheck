@@ -38,6 +38,9 @@ from services.hash_service import HashService
 from services.file_service import FileService
 from services.xion_simple_service import XIONService
 
+# Import user API routes
+from app.api.users import router as users_router
+
 # FastAPI application configuration
 app = FastAPI(
     title="NoirCheck API",
@@ -97,6 +100,18 @@ async def mobile_optimization_middleware(request, call_next):
 
 # Apply mobile optimization middleware to all requests
 app.middleware("http")(mobile_optimization_middleware)
+
+# Import models to register them with SQLAlchemy
+from app.models.user import User, UserActivity
+
+# Include API routers
+app.include_router(users_router)
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on application startup"""
+    init_db()
 
 
 # Application lifecycle events
