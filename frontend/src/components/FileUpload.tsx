@@ -178,12 +178,12 @@ export function FileUpload({ mode }: FileUploadProps) {
         />
         <label htmlFor="file-input" className="cursor-pointer">
           {file && filePreview ? (
-            // Previsualización de imagen
+            // Image preview display
             <div className="space-y-4">
               <div className="relative mx-auto w-48 h-48 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                 <img
                   src={filePreview}
-                  alt="Vista previa"
+                  alt="File preview"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
@@ -193,12 +193,12 @@ export function FileUpload({ mode }: FileUploadProps) {
               <div className="text-sm">
                 <p className="font-medium text-gray-700 dark:text-gray-300">📎 {file.name}</p>
                 <p className="text-gray-500 dark:text-gray-400">
-                  {file.type || 'Tipo de archivo desconocido'}
+                  {file.type || 'Unknown file type'}
                 </p>
               </div>
             </div>
           ) : file ? (
-            // Para archivos no-imagen
+            // Non-image file preview
             <div className="space-y-4">
               <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                 {file.type.includes('pdf') ? (
@@ -217,123 +217,122 @@ export function FileUpload({ mode }: FileUploadProps) {
                   {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type || 'Unknown type'}
                 </p>
               </div>
-            </div>
-          ) : (
-            // Initial state
-            <div>
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-lg font-medium text-gray-700 dark:text-gray-300">
-                {isRegistration ? '📤 Register Content' : '🔍 Verify Content'}
-              </p>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Drag and drop a file here, or click to select
-              </p>
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                Supports: Images, Videos, PDFs, Documents
-              </p>
-            </div>
-          )}
-        </label>
-      </div>
-
-      {/* Button to change file */}
-      {file && (
-        <div className="text-center">
-          <button
-            onClick={() => {
-              setFile(null);
-              setFilePreview(null);
-              setResult(null);
-              setError(null);
-              // Reset input
-              const input = document.getElementById('file-input') as HTMLInputElement;
-              if (input) input.value = '';
-            }}
-            className="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-          >
-            🗑️ Change file
-          </button>
-        </div>
-      )}
-
-      {/* Fields for registration */}
-      {isRegistration && (
-        <div className="space-y-4">
+            </div>        ) : (
+          // Initial state - no file selected
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              📝 Content description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your original content..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              👤 Creator ID
-            </label>
-            <input
-              type="text"
-              value={creatorId}
-              onChange={(e) => setCreatorId(e.target.value)}
-              placeholder="your-username-or-email"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              required
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Unique identifier to register authorship on XION
+            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-lg font-medium text-gray-700 dark:text-gray-300">
+              {isRegistration ? '📤 Register Content' : '🔍 Verify Content'}
+            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Drag and drop a file here, or click to select
+            </p>
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              Supports: Images, Videos, PDFs, Documents
             </p>
           </div>
-        </div>
-      )}
+        )}
+      </label>
+    </div>
 
-      {/* Source URL (verification only) */}
-      {isVerification && (
+    {/* File change button */}
+    {file && (
+      <div className="text-center">
+        <button
+          onClick={() => {
+            setFile(null);
+            setFilePreview(null);
+            setResult(null);
+            setError(null);
+            // Reset file input
+            const input = document.getElementById('file-input') as HTMLInputElement;
+            if (input) input.value = '';
+          }}
+          className="inline-flex items-center px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+        >
+          🗑️ Change file
+        </button>
+      </div>
+    )}
+
+    {/* Registration fields */}
+    {isRegistration && (
+      <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            🌐 Source URL (optional)
+            📝 Content description
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your original content..."
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            👤 Creator ID
           </label>
           <input
-            type="url"
-            value={sourceUrl}
-            onChange={(e) => setSourceUrl(e.target.value)}
-            placeholder="https://example.com/article"
+            type="text"
+            value={creatorId}
+            onChange={(e) => setCreatorId(e.target.value)}
+            placeholder="your-username-or-email"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            required
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            To verify web source with zkTLS
+            Unique identifier to register authorship on XION
           </p>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* Botón de acción */}
-      <button
-        onClick={processFile}
-        disabled={
-          !file || 
-          (isRegistration && (!description.trim() || !creatorId.trim())) ||
-          progress?.status === 'uploading' || 
-          progress?.status === 'processing' || 
-          progress?.status === 'verifying'
-        }
-        className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-md transition-colors"
-      >
-        {progress?.status === 'uploading' || progress?.status === 'processing' || progress?.status === 'verifying' ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            {progress.message}
-          </>
-        ) : (
-          <>
-            {isRegistration ? <Shield className="h-4 w-4 mr-2" /> : <FileCheck className="h-4 w-4 mr-2" />}
-            {isRegistration ? 'Register on XION' : 'Verify with XION'}
-          </>
-        )}
-      </button>
+    {/* Source URL field (verification only) */}
+    {isVerification && (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          🌐 Source URL (optional)
+        </label>
+        <input
+          type="url"
+          value={sourceUrl}
+          onChange={(e) => setSourceUrl(e.target.value)}
+          placeholder="https://example.com/article"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          To verify web source with zkTLS
+        </p>
+      </div>
+    )}
+
+    {/* Action button */}
+    <button
+      onClick={processFile}
+      disabled={
+        !file || 
+        (isRegistration && (!description.trim() || !creatorId.trim())) ||
+        progress?.status === 'uploading' || 
+        progress?.status === 'processing' || 
+        progress?.status === 'verifying'
+      }
+      className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium rounded-md transition-colors"
+    >
+      {progress?.status === 'uploading' || progress?.status === 'processing' || progress?.status === 'verifying' ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          {progress.message}
+        </>
+      ) : (
+        <>
+          {isRegistration ? <Shield className="h-4 w-4 mr-2" /> : <FileCheck className="h-4 w-4 mr-2" />}
+          {isRegistration ? 'Register on XION' : 'Verify with XION'}
+        </>
+      )}
+    </button>
 
       {/* Progress bar */}
       {progress && (

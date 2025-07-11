@@ -92,8 +92,8 @@ export function VerificationResult({ result }: VerificationResultProps) {
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Fecha de registro:</span>
                 <span className="ml-2 text-gray-900 dark:text-white">
-                  {result.registrationDate ? 
-                    new Date(result.registrationDate).toLocaleDateString('es-ES', {
+                  {result.registration_date ? 
+                    new Date(result.registration_date).toLocaleDateString('es-ES', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -103,11 +103,11 @@ export function VerificationResult({ result }: VerificationResultProps) {
                   }
                 </span>
               </div>
-              {result.transactionHash && (
+              {result.blockchain_tx && (
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Hash de transacción:</span>
                   <p className="mt-1 text-xs font-mono text-gray-600 dark:text-gray-400 break-all">
-                    {result.transactionHash}
+                    {result.blockchain_tx}
                   </p>
                 </div>
               )}
@@ -126,11 +126,11 @@ export function VerificationResult({ result }: VerificationResultProps) {
               <div className="flex items-center justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Blockchain:</span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  result.blockchainVerified 
+                  result.blockchain_verified 
                     ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                     : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                 }`}>
-                  {result.blockchainVerified ? 'Verificado' : 'Pendiente'}
+                  {result.blockchain_verified ? 'Verificado' : 'Pendiente'}
                 </span>
               </div>
               
@@ -141,15 +141,15 @@ export function VerificationResult({ result }: VerificationResultProps) {
                 </span>
               </div>
 
-              {result.sourceVerified !== undefined && (
+              {result.source_verification && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500 dark:text-gray-400">Fuente:</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    result.sourceVerified 
+                    result.source_verification.verified 
                       ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                       : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                   }`}>
-                    {result.sourceVerified ? 'Verificada' : 'No verificada'}
+                    {result.source_verification.verified ? 'Verificada' : 'No verificada'}
                   </span>
                 </div>
               )}

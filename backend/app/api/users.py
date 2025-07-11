@@ -219,3 +219,69 @@ async def record_user_activity(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error recording activity: {str(e)}"
         )
+
+@router.post("/test/create", response_model=UserResponse)
+async def create_test_user(
+    user_data: UserRegistrationRequest,
+    db: Session = Depends(get_db)
+):
+    """Create a test user (for development/testing only)"""
+    try:
+        user_service = UserService(db)
+        user = await user_service.register_user(
+            address=user_data.address,
+            username=user_data.username,
+            email=user_data.email
+        )
+        return UserResponse(**user.to_dict())
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating test user: {str(e)}"
+        )
+
+@router.delete("/test/{user_id}")
+async def delete_test_user(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """Delete a test user (for development/testing only)"""
+    try:
+        user_service = UserService(db)
+        success = await user_service.delete_user(user_id)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return {"message": "User deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting user: {str(e)}"
+        )
+
+@router.get("/test/list")
+async def list_all_users(
+    db: Session = Depends(get_db)
+):
+    """List all users (for development/testing only)"""
+    try:
+        user_service = UserService(db)
+        users = await user_service.get_all_users()
+        
+        return [UserResponse(**user.to_dict()) for user in users]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error listing users: {str(e)}"
+        )

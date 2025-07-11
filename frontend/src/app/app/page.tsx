@@ -8,8 +8,7 @@
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AuthScreen } from '@/components/AuthScreen';
 import { UserDashboard } from '@/components/UserDashboard';
-import { AbstraxionProvider } from '@burnt-labs/abstraxion';
-import { getXIONConfig } from '@/config/xion';
+import { SafeXIONProvider } from '@/components/SafeXIONProvider';
 
 // Main App Component with Authentication
 function MainApp() {
@@ -36,12 +35,10 @@ function MainApp() {
 // Root component with providers
 export default function AppPage() {
   return (
-    <AbstraxionProvider
-      config={getXIONConfig()}
-    >
+    <SafeXIONProvider>
       <AuthProvider>
         <MainApp />
       </AuthProvider>
-    </AbstraxionProvider>
+    </SafeXIONProvider>
   );
 }

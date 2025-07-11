@@ -1,8 +1,15 @@
 /**
- * User Dashboard
+ * User Dashboard Component
  * 
  * Main dashboard for authenticated users. Provides access to all NoirCheck
  * features including content registration, verification, history, and profile management.
+ * 
+ * Features:
+ * - Content registration and verification
+ * - User activity history
+ * - Statistics and analytics
+ * - Profile management
+ * - Real-time stats updates
  */
 
 'use client';
@@ -28,20 +35,27 @@ import { UserHistory } from './UserHistory';
 import { UserStats } from './UserStats';
 import { apiService, UserStats as UserStatsType } from '@/services/api';
 
+// Available dashboard tabs
 type DashboardTab = 'register' | 'verify' | 'history' | 'profile' | 'stats';
 
 export function UserDashboard() {
+  // Authentication and user context
   const { user, logout, refreshUser } = useAuth();
+  
+  // Component state
   const [activeTab, setActiveTab] = useState<DashboardTab>('register');
   const [userStats, setUserStats] = useState<UserStatsType | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
+  // Load user statistics on component mount and user change
   useEffect(() => {
     const loadUserStats = async () => {
       if (!user) return;
       
+      // Set loading state while fetching stats
       setIsLoadingStats(true);
       try {
+        // Fetch user statistics from API
         const stats = await apiService.getUserStats(user.id);
         setUserStats(stats);
       } catch (error) {
@@ -51,11 +65,16 @@ export function UserDashboard() {
       }
     };
 
+    // Load stats when user is available
     if (user) {
       loadUserStats();
     }
   }, [user?.id]);
 
+  /**
+   * Refresh user statistics manually
+   * Used when user performs actions that might change stats
+   */
   const refreshUserStats = async () => {
     if (!user) return;
     
@@ -70,64 +89,70 @@ export function UserDashboard() {
     }
   };
 
+  /**
+   * Handle user logout
+   * Clears authentication state and redirects to login
+   */
   const handleLogout = async () => {
     await logout();
   };
 
+  // Dashboard navigation tabs configuration
   const tabs = [
     {
       id: 'register' as DashboardTab,
-      label: 'Registrar Contenido',
+      label: 'Register Content',
       icon: <FileUp className="w-5 h-5" />,
-      description: 'Registra tu contenido original'
+      description: 'Register your original content'
     },
     {
       id: 'verify' as DashboardTab,
-      label: 'Verificar Contenido',
+      label: 'Verify Content',
       icon: <Search className="w-5 h-5" />,
-      description: 'Verifica la autenticidad'
+      description: 'Verify content authenticity'
     },
     {
       id: 'history' as DashboardTab,
-      label: 'Historial',
+      label: 'History',
       icon: <History className="w-5 h-5" />,
-      description: 'Tu actividad reciente'
+      description: 'Your recent activity'
     },
     {
       id: 'stats' as DashboardTab,
-      label: 'Estadísticas',
+      label: 'Statistics',
       icon: <TrendingUp className="w-5 h-5" />,
-      description: 'Métricas y análisis'
+      description: 'Metrics and analytics'
     },
     {
       id: 'profile' as DashboardTab,
-      label: 'Perfil',
+      label: 'Profile',
       icon: <User className="w-5 h-5" />,
-      description: 'Configuración de cuenta'
+      description: 'Account settings'
     }
   ];
 
+  // Quick statistics cards configuration
   const quickStats = [
     {
-      label: 'Contenido Registrado',
+      label: 'Registered Content',
       value: userStats?.totalRegistrations || 0,
       icon: <FileCheck className="w-6 h-6 text-blue-500" />,
       color: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
     },
     {
-      label: 'Verificaciones',
+      label: 'Verifications',
       value: userStats?.totalVerifications || 0,
       icon: <Shield className="w-6 h-6 text-green-500" />,
       color: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
     },
     {
-      label: 'Actividad Reciente',
+      label: 'Recent Activity',
       value: userStats?.recentActivity?.length || 0,
       icon: <Activity className="w-6 h-6 text-purple-500" />,
       color: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800'
     },
     {
-      label: 'Miembro desde',
+      label: 'Member since',
       value: user ? new Date(user.registeredAt).getFullYear() : new Date().getFullYear(),
       icon: <Calendar className="w-6 h-6 text-indigo-500" />,
       color: 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
@@ -136,11 +161,11 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+      {/* Main Header */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo and Title */}
+            {/* Logo and Application Title */}
             <div className="flex items-center space-x-4">
               <div className="p-2 bg-blue-600 rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
@@ -155,23 +180,25 @@ export function UserDashboard() {
               </div>
             </div>
 
-            {/* User Menu */}
+            {/* User Information and Actions */}
             <div className="flex items-center space-x-4">
+              {/* User Info Display */}
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user?.username || `Usuario ${user?.address.slice(-8)}`}
+                  {user?.username || `User ${user?.address.slice(-8)}`}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {user?.address.slice(0, 8)}...{user?.address.slice(-8)}
                 </p>
               </div>
               
+              {/* Logout Button */}
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Salir
+                Logout
               </button>
             </div>
           </div>
@@ -179,7 +206,7 @@ export function UserDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
+        {/* Quick Statistics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {quickStats.map((stat, index) => (
             <div
@@ -201,8 +228,9 @@ export function UserDashboard() {
           ))}
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Main Navigation and Content Area */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+          {/* Tab Navigation */}
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               {tabs.map((tab) => (
@@ -222,58 +250,62 @@ export function UserDashboard() {
             </nav>
           </div>
 
-          {/* Tab Content */}
+          {/* Dynamic Tab Content */}
           <div className="p-6">
+            {/* Content Registration Tab */}
             {activeTab === 'register' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Registrar Contenido Original
+                    Register Original Content
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Registra tu contenido original en blockchain para proteger tu propiedad intelectual
+                    Register your original content on blockchain to protect your intellectual property
                   </p>
                 </div>
                 <FileUpload mode="register" />
               </div>
             )}
 
+            {/* Content Verification Tab */}
             {activeTab === 'verify' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Verificar Autenticidad
+                    Verify Authenticity
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Verifica si el contenido es original o ha sido modificado
+                    Verify if content is original or has been modified
                   </p>
                 </div>
                 <FileUpload mode="verify" />
               </div>
             )}
 
+            {/* Activity History Tab */}
             {activeTab === 'history' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Historial de Actividad
+                    Activity History
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Revisa todas tus verificaciones y registros anteriores
+                    Review all your previous verifications and registrations
                   </p>
                 </div>
                 <UserHistory userId={user?.id || ''} />
               </div>
             )}
 
+            {/* Statistics and Analytics Tab */}
             {activeTab === 'stats' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Estadísticas y Métricas
+                    Statistics and Metrics
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Analiza tu actividad y contribución a la plataforma
+                    Analyze your activity and contribution to the platform
                   </p>
                 </div>
                 <UserStats 
@@ -284,14 +316,15 @@ export function UserDashboard() {
               </div>
             )}
 
+            {/* User Profile Tab */}
             {activeTab === 'profile' && (
               <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Configuración de Perfil
+                    Profile Settings
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Gestiona tu información personal y preferencias
+                    Manage your personal information and preferences
                   </p>
                 </div>
                 <UserProfile 

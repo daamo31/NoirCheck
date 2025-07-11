@@ -1,8 +1,16 @@
 /**
  * User Profile Component
  * 
- * Allows users to view and edit their profile information including
- * username, email, and other preferences.
+ * Displays and manages user profile information including personal details,
+ * XION wallet address, and account settings. Allows users to update their
+ * profile information and view their registration details.
+ * 
+ * Features:
+ * - Display user information and XION address
+ * - Edit username and email
+ * - View account registration date
+ * - Update profile with real-time validation
+ * - Integration with authentication context
  */
 
 'use client';
@@ -27,6 +35,9 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
     email: user?.email || ''
   });
 
+  /**
+   * Handle form submission for profile updates
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -44,12 +55,15 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
       onUpdateSuccess();
     } catch (error) {
       console.error('Profile update error:', error);
-      setError('Error al actualizar el perfil. Inténtalo de nuevo.');
+      setError('Failed to update profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Handle form cancellation and reset
+   */
   const handleCancel = () => {
     setFormData({
       username: user?.username || '',
@@ -63,7 +77,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          No se pudo cargar la información del usuario
+          Could not load user information
         </p>
       </div>
     );
@@ -79,10 +93,10 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {user.username || `Usuario ${user.address.slice(-8)}`}
+              {user.username || `User ${user.address.slice(-8)}`}
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              Miembro desde {new Date(user.registeredAt).toLocaleDateString()}
+              Member since {new Date(user.registeredAt).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -96,11 +110,11 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
 
         {/* Profile Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username */}
+          {/* Username Field */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <User className="w-4 h-4 mr-2" />
-              Nombre de Usuario
+              Username
             </label>
             {isEditing ? (
               <input
@@ -108,20 +122,20 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Ingresa tu nombre de usuario"
+                placeholder="Enter your username"
               />
             ) : (
               <p className="py-2 text-gray-900 dark:text-white">
-                {user.username || 'No configurado'}
+                {user.username || 'Not set'}
               </p>
             )}
           </div>
 
-          {/* Email */}
+          {/* Email Field */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Mail className="w-4 h-4 mr-2" />
-              Correo Electrónico
+              Email Address
             </label>
             {isEditing ? (
               <input
@@ -129,20 +143,20 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Ingresa tu correo electrónico"
+                placeholder="Enter your email address"
               />
             ) : (
               <p className="py-2 text-gray-900 dark:text-white">
-                {user.email || 'No configurado'}
+                {user.email || 'Not set'}
               </p>
             )}
           </div>
 
-          {/* Wallet Address (Read-only) */}
+          {/* XION Wallet Address (Read-only) */}
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Wallet className="w-4 h-4 mr-2" />
-              Dirección de Wallet
+              XION Wallet Address
             </label>
             <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
               <p className="text-sm font-mono text-gray-900 dark:text-white break-all">
@@ -150,7 +164,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
               </p>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Esta dirección no se puede modificar
+              This address cannot be modified
             </p>
           </div>
 
@@ -164,7 +178,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
                   className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Cancelar
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -174,12 +188,12 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      Guardando...
+                      Saving...
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Guardar Cambios
+                      Save Changes
                     </>
                   )}
                 </button>
@@ -191,7 +205,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <User className="w-4 h-4 mr-2" />
-                Editar Perfil
+                Edit Profile
               </button>
             )}
           </div>
@@ -201,7 +215,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
       {/* Account Statistics */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Estadísticas de Cuenta
+          Account Statistics
         </h4>
         
         <div className="grid grid-cols-2 gap-4">
@@ -210,7 +224,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
               {user.totalRegistrations}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Contenidos Registrados
+              Registered Content
             </p>
           </div>
           
@@ -219,7 +233,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
               {user.totalVerifications}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Verificaciones Realizadas
+              Verifications Made
             </p>
           </div>
         </div>

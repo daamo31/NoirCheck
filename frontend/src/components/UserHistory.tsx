@@ -3,6 +3,15 @@
  * 
  * Displays the user's activity history including content registrations
  * and verifications with detailed information and filtering options.
+ * 
+ * Features:
+ * - Display all user activities with timestamps
+ * - Filter by activity type (registration, verification)
+ * - Search activities by filename or hash
+ * - Visual indicators for activity status
+ * - Detailed activity information cards
+ * - Loading states and error handling
+ * - Real-time refresh capability
  */
 
 'use client';
@@ -34,6 +43,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Load user activities from API
   useEffect(() => {
     const loadActivity = async () => {
       setIsLoading(true);
@@ -44,7 +54,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
         setActivities(activityData);
       } catch (error) {
         console.error('Error loading user activity:', error);
-        setError('Error al cargar el historial de actividad');
+        setError('Error loading activity history');
       } finally {
         setIsLoading(false);
       }
@@ -55,16 +65,17 @@ export function UserHistory({ userId }: UserHistoryProps) {
     }
   }, [userId]);
 
+  // Filter activities based on type and search term
   useEffect(() => {
     const filterActivities = () => {
       let filtered = activities;
 
-      // Filter by type
+      // Filter by activity type
       if (filter !== 'all') {
         filtered = filtered.filter(activity => activity.type === filter);
       }
 
-      // Filter by search term
+      // Filter by search term (filename or hash)
       if (searchTerm) {
         filtered = filtered.filter(activity =>
           activity.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,6 +89,9 @@ export function UserHistory({ userId }: UserHistoryProps) {
     filterActivities();
   }, [activities, filter, searchTerm]);
 
+  /**
+   * Refresh activity data manually
+   */
   const refreshActivity = async () => {
     setIsLoading(true);
     setError(null);
@@ -87,12 +101,15 @@ export function UserHistory({ userId }: UserHistoryProps) {
       setActivities(activityData);
     } catch (error) {
       console.error('Error loading user activity:', error);
-      setError('Error al cargar el historial de actividad');
+      setError('Error loading activity history');
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * Get appropriate icon for activity type and status
+   */
   const getActivityIcon = (type: string, status: string) => {
     if (type === 'registration') {
       return <FileCheck className={`w-5 h-5 ${status === 'completed' ? 'text-green-500' : 'text-yellow-500'}`} />;
@@ -101,6 +118,9 @@ export function UserHistory({ userId }: UserHistoryProps) {
     }
   };
 
+  /**
+   * Get status color classes based on activity status
+   */
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -114,9 +134,12 @@ export function UserHistory({ userId }: UserHistoryProps) {
     }
   };
 
+  /**
+   * Format date string to localized format
+   */
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -129,7 +152,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          ID de usuario no válido
+          Invalid user ID
         </p>
       </div>
     );
@@ -137,22 +160,22 @@ export function UserHistory({ userId }: UserHistoryProps) {
 
   return (
     <div className="space-y-6">
-      {/* Filters and Search */}
+      {/* Filters and Search Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Search */}
+          {/* Search Input */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por nombre de archivo o hash..."
+              placeholder="Search by filename or hash..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
 
-          {/* Filter and Refresh */}
+          {/* Filter and Refresh Controls */}
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
@@ -161,9 +184,9 @@ export function UserHistory({ userId }: UserHistoryProps) {
                 onChange={(e) => setFilter(e.target.value as ActivityFilter)}
                 className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <option value="all">Todas las actividades</option>
-                <option value="registration">Solo registros</option>
-                <option value="verification">Solo verificaciones</option>
+                <option value="all">All Activities</option>
+                <option value="registration">Registrations Only</option>
+                <option value="verification">Verifications Only</option>
               </select>
             </div>
 
@@ -173,13 +196,13 @@ export function UserHistory({ userId }: UserHistoryProps) {
               className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Actualizar
+              Refresh
             </button>
           </div>
         </div>
       </div>
 
-      {/* Activity List */}
+      {/* Activity List Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
@@ -190,15 +213,15 @@ export function UserHistory({ userId }: UserHistoryProps) {
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">Cargando historial...</p>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">Loading history...</p>
           </div>
         ) : filteredActivities.length === 0 ? (
           <div className="p-8 text-center">
             <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
               {activities.length === 0 
-                ? 'No hay actividad registrada aún' 
-                : 'No se encontraron resultados con los filtros actuales'
+                ? 'No activity recorded yet' 
+                : 'No results found with current filters'
               }
             </p>
           </div>
@@ -222,7 +245,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
                         
                         <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-2">
                           <span className="capitalize">
-                            {activity.type === 'registration' ? 'Registro' : 'Verificación'}
+                            {activity.type === 'registration' ? 'Registration' : 'Verification'}
                           </span>
                           <span>•</span>
                           <span>{formatDate(activity.timestamp)}</span>
@@ -238,9 +261,9 @@ export function UserHistory({ userId }: UserHistoryProps) {
                       {/* Status and Actions */}
                       <div className="flex items-center space-x-3">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
-                          {activity.status === 'completed' ? 'Completado' :
-                           activity.status === 'pending' ? 'Pendiente' :
-                           activity.status === 'failed' ? 'Fallido' : activity.status}
+                          {activity.status === 'completed' ? 'Completed' :
+                           activity.status === 'pending' ? 'Pending' :
+                           activity.status === 'failed' ? 'Failed' : activity.status}
                         </span>
 
                         <div className="flex items-center space-x-1">
@@ -251,18 +274,18 @@ export function UserHistory({ userId }: UserHistoryProps) {
                               }
                             }}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Copiar hash"
+                            title="Copy hash"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                           
                           <button
                             onClick={() => {
-                              // Abrir detalles en modal o nueva página
-                              console.log('Ver detalles:', activity.id);
+                              // Open details in modal or new page
+                              console.log('View details:', activity.id);
                             }}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title="Ver detalles"
+                            title="View details"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </button>
@@ -277,11 +300,11 @@ export function UserHistory({ userId }: UserHistoryProps) {
         )}
       </div>
 
-      {/* Summary Stats */}
+      {/* Activity Summary Statistics */}
       {activities.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Resumen de Actividad
+            Activity Summary
           </h4>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -290,7 +313,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
                 {activities.length}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total Actividades
+                Total Activities
               </p>
             </div>
             
@@ -299,7 +322,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
                 {activities.filter(a => a.type === 'registration').length}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Registros
+                Registrations
               </p>
             </div>
             
@@ -308,7 +331,7 @@ export function UserHistory({ userId }: UserHistoryProps) {
                 {activities.filter(a => a.type === 'verification').length}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Verificaciones
+                Verifications
               </p>
             </div>
           </div>

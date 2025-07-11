@@ -61,6 +61,33 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
         lastActivity: new Date().toISOString()
       };
 
+      // Registrar usuario en el backend si no existe
+      try {
+        const response = await fetch('http://localhost:8000/users/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address: mockUser.address,
+            username: mockUser.username,
+            email: mockUser.email
+          })
+        });
+
+        if (response.ok) {
+          console.log('Usuario registrado en backend');
+        } else {
+          // Si el usuario ya existe (409), está bien
+          const errorData = await response.json();
+          if (response.status !== 409) {
+            console.warn('Error registrando usuario:', errorData);
+          }
+        }
+      } catch (error) {
+        console.warn('No se pudo conectar con el backend:', error);
+      }
+
       setState({
         user: mockUser,
         isAuthenticated: true,

@@ -1,8 +1,16 @@
 /**
  * User Stats Component
  * 
- * Displays comprehensive user statistics and analytics including
- * activity trends, contribution metrics, and performance insights.
+ * Displays comprehensive user statistics and analytics including charts,
+ * metrics, and insights about user activity on the NoirCheck platform.
+ * 
+ * Features:
+ * - Visual charts for activity trends
+ * - Key performance metrics
+ * - Activity breakdown by type
+ * - Recent activity summary
+ * - Interactive refresh functionality
+ * - Loading states and error handling
  */
 
 'use client';
@@ -54,14 +62,14 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       <div className="bg-white dark:bg-gray-800 rounded-lg p-8 border border-gray-200 dark:border-gray-700 text-center">
         <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-500 dark:text-gray-400 mb-4">
-          No se pudieron cargar las estadísticas
+          Could not load statistics
         </p>
         <button
           onClick={onRefresh}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          Intentar de nuevo
+          Try again
         </button>
       </div>
     );
@@ -69,7 +77,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
 
   const mainStats = [
     {
-      label: 'Contenido Registrado',
+      label: 'Registered Content',
       value: userStats.totalRegistrations,
       icon: <FileCheck className="w-6 h-6" />,
       color: 'text-blue-500',
@@ -79,7 +87,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       trend: 'up'
     },
     {
-      label: 'Verificaciones Realizadas',
+      label: 'Verifications Made',
       value: userStats.totalVerifications,
       icon: <Shield className="w-6 h-6" />,
       color: 'text-green-500',
@@ -89,7 +97,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       trend: 'up'
     },
     {
-      label: 'Actividad Reciente',
+      label: 'Recent Activity',
       value: userStats.recentActivity.length,
       icon: <Calendar className="w-6 h-6" />,
       color: 'text-purple-500',
@@ -99,7 +107,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       trend: 'up'
     },
     {
-      label: 'Puntuación de Confianza',
+      label: 'Trust Score',
       value: Math.round((userStats.totalRegistrations + userStats.totalVerifications) * 0.95),
       icon: <Award className="w-6 h-6" />,
       color: 'text-yellow-500',
@@ -112,26 +120,26 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
 
   const achievements = [
     {
-      title: 'Primer Registro',
-      description: 'Registraste tu primer contenido',
+      title: 'First Registration',
+      description: 'You registered your first content',
       earned: userStats.totalRegistrations > 0,
       icon: '🎯'
     },
     {
-      title: 'Verificador Activo',
-      description: 'Realizaste más de 10 verificaciones',
+      title: 'Active Verifier',
+      description: 'Made more than 10 verifications',
       earned: userStats.totalVerifications >= 10,
       icon: '🔍'
     },
     {
-      title: 'Contribuidor',
-      description: 'Registraste más de 5 contenidos',
+      title: 'Contributor',
+      description: 'Registered more than 5 contents',
       earned: userStats.totalRegistrations >= 5,
       icon: '📝'
     },
     {
-      title: 'Usuario Veterano',
-      description: 'Miembro por más de 30 días',
+      title: 'Veteran User',
+      description: 'Member for more than 30 days',
       earned: new Date().getTime() - new Date(userStats.joinDate).getTime() > 30 * 24 * 60 * 60 * 1000,
       icon: '⭐'
     }
@@ -147,7 +155,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       {/* Header with Time Range Selector */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          Análisis de Actividad
+          Activity Analysis
         </h3>
         
         <div className="flex items-center space-x-3">
@@ -156,9 +164,9 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
             onChange={(e) => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
             className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
           >
-            <option value="week">Última semana</option>
-            <option value="month">Último mes</option>
-            <option value="year">Último año</option>
+            <option value="week">Last week</option>
+            <option value="month">Last month</option>
+            <option value="year">Last year</option>
           </select>
           
           <button
@@ -166,7 +174,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
             className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
-            Actualizar
+            Refresh
           </button>
         </div>
       </div>
@@ -209,20 +217,20 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       {/* Activity Breakdown */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Distribución de Actividad
+          Activity Distribution
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Activity Types */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Por Tipo de Actividad
+              By Activity Type
             </h5>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Registros</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Registrations</span>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {recentActivityByType.registration || 0}
@@ -232,7 +240,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Verificaciones</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Verifications</span>
                 </div>
                 <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {recentActivityByType.verification || 0}
@@ -244,7 +252,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
           {/* Activity Timeline */}
           <div>
             <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Actividad Reciente
+              Recent Activity
             </h5>
             <div className="space-y-2">
               {userStats.recentActivity.slice(0, 5).map((activity, index) => (
@@ -270,7 +278,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       {/* Achievements */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Logros y Reconocimientos
+          Achievements and Recognition
         </h4>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -315,7 +323,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
       {/* Goals and Progress */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Objetivos y Progreso
+          Goals and Progress
         </h4>
         
         <div className="space-y-4">
@@ -323,7 +331,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Registros (Objetivo: 10)
+                Registrations (Goal: 10)
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {userStats.totalRegistrations}/10
@@ -341,7 +349,7 @@ export function UserStats({ userStats, isLoading, onRefresh }: UserStatsProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Verificaciones (Objetivo: 25)
+                Verifications (Goal: 25)
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {userStats.totalVerifications}/25

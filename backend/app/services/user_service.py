@@ -163,6 +163,28 @@ class UserService:
         if user:
             user.last_activity = datetime.utcnow()
             self.db.commit()
+    
+    async def delete_user(self, user_id: str) -> bool:
+        """Delete a user and all their activities"""
+        try:
+            # Delete user activities first (foreign key constraint)
+            self.db.query(UserActivity).filter(UserActivity.user_id == user_id).delete()
+            
+            # Delete user
+            user = self.db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return False
+            
+            self.db.delete(user)
+            self.db.commit()
+            return True
+        except Exception as e:
+            self.db.rollback()
+            raise e
+    
+    async def get_all_users(self) -> List[User]:
+        """Get all users (for testing purposes)"""
+        return self.db.query(User).order_by(desc(User.registered_at)).all()
 
 def get_user_service(db: Session = None) -> UserService:
     """Get user service instance"""
