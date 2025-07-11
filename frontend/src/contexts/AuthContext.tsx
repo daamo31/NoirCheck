@@ -110,8 +110,24 @@ const initialState: AuthState = {
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const { data: account } = useAbstraxionAccount(); // XION account hook
-  const [, setShowModal] = useModal(); // XION modal control
+  
+  // Safely access XION hooks only when available
+  let account = null;
+  let setShowModal = null;
+  let xionAvailable = false;
+  
+  try {
+    // Only try to use XION hooks if AbstraxionProvider is in context
+    const xionAccount = useAbstraxionAccount();
+    const xionModal = useModal();
+    account = xionAccount?.data;
+    setShowModal = xionModal?.[1];
+    xionAvailable = true;
+  } catch (error) {
+    // XION not available - this is expected when AbstraxionProvider is not loaded
+    console.info('XION hooks not available, running without XION functionality');
+    xionAvailable = false;
+  }
 
   // Initialize authentication state when component mounts or account changes
   useEffect(() => {
@@ -119,12 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', payload: true });
       
       try {
-        if (account?.bech32Address) {
-          // Check if user already exists in our database
+        if (xionAvailable && account?.bech32Address) {
+          // XION is available and user is connected
           const userData = await apiService.getUser(account.bech32Address);
           
           if (userData) {
-            // User exists, set authentication state
             dispatch({ type: 'SET_USER', payload: userData });
           } else {
             // New user - auto-register with XION address
@@ -135,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_USER', payload: newUser });
           }
         } else {
-          // No XION account connected
+          // No XION account or XION not available - start in anonymous mode
           dispatch({ type: 'SET_USER', payload: null });
         }
       } catch (error) {
@@ -146,10 +161,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initializeAuth();
-  }, [account?.bech32Address]);
+  }, [account?.bech32Address, xionAvailable]);
 
   /**
-   * Login function
    * Opens XION authentication modal for user to connect their wallet
    */
   const login = async () => {
@@ -157,13 +171,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
-      // Show XION Abstraxion modal for wallet connection
-      setShowModal(true);
-      // The actual login is handled by Abstraxion modal
-      // User data will be updated through the account effect above
+      if (xionAvailable && setShowModal) {
+        // XION is available - show modal
+        setShowModal(true);
+        // The actual login is handled by Abstraxion modal
+        // User data will be updated through the account effect above
+      } else {
+        // XION not available - provide instructions
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: 'XION wallet connection not available. Click "Connect XION Wallet" to enable blockchain features.' 
+        });
+      }
     } catch (error) {
       console.error('Login error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Login failed' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
