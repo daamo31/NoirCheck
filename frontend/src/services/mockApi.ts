@@ -13,6 +13,8 @@ import {
 } from './api';
 
 export class MockAPIService {
+  private registeredHashes = new Map<string, any>(); // Store registered content by hash
+
   private delay(ms: number = 500): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -25,6 +27,14 @@ export class MockAPIService {
 
   private generateMockTxHash(): string {
     return 'xion' + this.generateMockHash().substring(0, 58);
+  }
+
+  // Calculate real SHA-256 hash from file content
+  private async calculateFileHash(file: File): Promise<string> {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   async checkHealth(): Promise<HealthCheck> {
@@ -69,8 +79,11 @@ export class MockAPIService {
 
     await this.delay(500);
 
-    const hash = this.generateMockHash();
-    return {
+    // Calculate real hash for the file
+    const hash = await this.calculateFileHash(file);
+    
+    // Store this registration
+    const registration = {
       id: `mock-reg-${Date.now()}`,
       hash,
       filename: file.name,
@@ -80,44 +93,58 @@ export class MockAPIService {
       timestamp: new Date().toISOString(),
       status: 'confirmed'
     };
+
+    this.registeredHashes.set(hash, {
+      ...registration,
+      userAddress,
+      creator_id: userAddress
+    });
+
+    return registration;
   }
 
   async verifyContent(file: File): Promise<ContentVerification> {
     await this.delay(800);
 
-    const hash = this.generateMockHash();
-    const exists = Math.random() > 0.3; // 70% chance of existing content
+    // Calculate real hash for the file
+    const hash = await this.calculateFileHash(file);
+    
+    // Check if this hash exists in our registered content
+    const registeredContent = this.registeredHashes.get(hash);
+    const exists = !!registeredContent;
 
     const baseResult = {
       hash,
       exists,
-      filename: file.name,
-      file_type: file.type,
-      file_size: file.size,
-      verification_timestamp: new Date().toISOString()
+      original: exists,
+      confidence: exists ? 0.95 : 0.0,
+      blockchain_verified: exists,
+      filename: file.name
     };
 
-    if (exists) {
+    if (exists && registeredContent) {
       return {
         ...baseResult,
-        registration_data: {
-          id: `mock-reg-${Date.now() - 86400000}`, // Day ago
-          blockchain_tx: this.generateMockTxHash(),
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          original_filename: file.name,
-          registered_by: 'mock-user-456'
+        blockchain_tx: registeredContent.blockchain_tx,
+        registration_date: registeredContent.timestamp,
+        creator_id: registeredContent.creator_id,
+        description: `Original content registered as ${registeredContent.filename}`,
+        source_verification: {
+          verified: true,
+          confidence: 0.95
         },
-        confidence_score: 0.95,
-        authenticity_details: {
-          blockchain_verified: true,
-          hash_match: true,
-          metadata_consistent: true,
-          source_verified: true
-        }
+        modifications: []
       };
     }
 
-    return baseResult;
+    return {
+      ...baseResult,
+      source_verification: {
+        verified: false,
+        confidence: 0.0
+      },
+      modifications: ['Content not found in blockchain registry']
+    };
   }
 
   async getUserStats(userId: string): Promise<UserStats> {
@@ -126,15 +153,24 @@ export class MockAPIService {
     return {
       totalRegistrations: 12,
       totalVerifications: 34,
-      successfulVerifications: 28,
-      failedVerifications: 6,
-      lastActivity: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      memberSince: new Date(Date.now() - 30 * 24 * 3600000).toISOString(), // 30 days ago
-      monthlyActivity: [
-        { month: '2024-11', registrations: 3, verifications: 8 },
-        { month: '2024-12', registrations: 5, verifications: 12 },
-        { month: '2025-01', registrations: 4, verifications: 14 }
-      ]
+      recentActivity: [
+        {
+          id: 'mock-1',
+          type: 'registration',
+          filename: 'document.pdf',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          status: 'completed',
+          hash: this.generateMockHash()
+        },
+        {
+          id: 'mock-2',
+          type: 'verification',
+          filename: 'image.jpg',
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          status: 'completed'
+        }
+      ],
+      joinDate: new Date(Date.now() - 30 * 24 * 3600000).toISOString() // 30 days ago
     };
   }
 
@@ -154,14 +190,8 @@ export class MockAPIService {
         type,
         status,
         timestamp: new Date(Date.now() - (i * 3600000)).toISOString(), // Hours ago
-        filename: `documento_${i + 1}.pdf`,
-        hash: this.generateMockHash(),
-        ...(type === 'registration' && {
-          blockchain_tx: this.generateMockTxHash()
-        }),
-        ...(type === 'verification' && {
-          verification_result: status === 'completed' ? 'authentic' : 'not_found'
-        })
+        filename: `document_${i + 1}.pdf`,
+        hash: this.generateMockHash()
       });
     }
 

@@ -1,6 +1,13 @@
 /**
  * NoirCheck - Dev User Dashboard
- * Dashboard for development mode with mock authentication
+ * Dashbo  const tabs = [
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'upload', label: 'Upload File', icon: Upload },
+    { id: 'verify', label: 'Verify', icon: CheckCircle },
+    { id: 'history', label: 'History', icon: History },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];development mode with mock authentication
  */
 
 'use client';
@@ -65,7 +72,7 @@ export function DevUserDashboard() {
                 NoirCheck <span className="text-red-400">[DEV]</span>
               </h1>
               <span className="px-3 py-1 bg-green-600/20 text-green-400 text-sm rounded-full border border-green-600/30">
-                Modo Desarrollo
+                Development Mode
               </span>
             </div>
             
@@ -78,7 +85,7 @@ export function DevUserDashboard() {
                 onClick={logout}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
               >
-                Cerrar Sesión
+                Logout
               </button>
             </div>
           </div>
@@ -126,7 +133,7 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-white">Panel de Control</h2>
+        <h2 className="text-2xl font-bold text-white">Dashboard</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 animate-pulse">
@@ -141,15 +148,15 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Panel de Control</h2>
+      <h2 className="text-2xl font-bold text-white">Dashboard</h2>
       
       {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-6">
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Archivos Registrados</p>
-              <p className="text-3xl font-bold text-white">{userStats?.total_registrations || 0}</p>
+              <p className="text-gray-400 text-sm">Registered Files</p>
+              <p className="text-3xl font-bold text-white">{userStats?.totalRegistrations || 0}</p>
             </div>
             <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center">
               <Upload className="w-6 h-6 text-blue-400" />
@@ -160,8 +167,8 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Verificaciones</p>
-              <p className="text-3xl font-bold text-white">{userStats?.total_verifications || 0}</p>
+              <p className="text-gray-400 text-sm">Verifications</p>
+              <p className="text-3xl font-bold text-white">{userStats?.totalVerifications || 0}</p>
             </div>
             <div className="w-12 h-12 bg-green-600/20 rounded-xl flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-green-400" />
@@ -172,9 +179,9 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Última Actividad</p>
+              <p className="text-gray-400 text-sm">Last Activity</p>
               <p className="text-lg font-bold text-white">
-                {userStats?.last_activity ? new Date(userStats.last_activity).toLocaleDateString() : 'N/A'}
+                {userStats?.lastActivity ? new Date(userStats.lastActivity).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
@@ -186,24 +193,24 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
 
       {/* Quick Actions */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-        <h3 className="text-xl font-bold text-white mb-4">Acciones Rápidas</h3>
+        <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <button className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-xl text-blue-400 hover:bg-blue-600/30 transition-colors text-left">
             <Upload className="w-6 h-6 mb-2" />
-            <h4 className="font-semibold">Registrar Nuevo Archivo</h4>
-            <p className="text-sm text-blue-300/70">Sube y registra contenido original en blockchain</p>
+            <h4 className="font-semibold">Register New File</h4>
+            <p className="text-sm text-blue-300/70">Upload and register original content on blockchain</p>
           </button>
           
           <button className="p-4 bg-green-600/20 border border-green-600/30 rounded-xl text-green-400 hover:bg-green-600/30 transition-colors text-left">
             <CheckCircle className="w-6 h-6 mb-2" />
-            <h4 className="font-semibold">Verificar Contenido</h4>
-            <p className="text-sm text-green-300/70">Verifica la autenticidad de un archivo</p>
+            <h4 className="font-semibold">Verify Content</h4>
+            <p className="text-sm text-green-300/70">Verify the authenticity of a file</p>
           </button>
         </div>
         
         <div className="mt-4 p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
           <p className="text-green-400 text-sm">
-            ✅ Modo de desarrollo con backend real: Los archivos se procesan y registran en blockchain de prueba
+            ✅ Development mode with simulated data: Files are processed with mock responses
           </p>
         </div>
       </div>
@@ -215,12 +222,12 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
 function UploadTab({ user }: { user: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Registrar Archivo</h2>
+      <h2 className="text-2xl font-bold text-white">Register File</h2>
       
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="mb-4 p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
           <p className="text-blue-400 text-sm">
-            🧪 Modo de desarrollo: Los archivos se procesarán con datos simulados
+            🧪 Development mode: Files will be processed with simulated data
           </p>
         </div>
         
@@ -260,12 +267,12 @@ function VerifyTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Verificar Autenticidad</h2>
+      <h2 className="text-2xl font-bold text-white">Verify Authenticity</h2>
       
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
           <p className="text-green-400 text-sm">
-            🔍 Verificación simulada: Se mostrarán resultados de ejemplo para testing
+            🔍 Simulated verification: Example results will be shown for testing
           </p>
         </div>
 
@@ -275,8 +282,8 @@ function VerifyTab() {
               <CheckCircle className="w-12 h-12 text-green-400" />
             </div>
             
-            <h3 className="text-xl font-bold text-white mb-2">Selecciona un archivo para verificar</h3>
-            <p className="text-gray-400 mb-6">Verificaremos su autenticidad usando blockchain y fuentes web</p>
+            <h3 className="text-xl font-bold text-white mb-2">Select a file to verify</h3>
+            <p className="text-gray-400 mb-6">We'll verify its authenticity using blockchain and web sources</p>
             
             <input
               type="file"
@@ -289,7 +296,7 @@ function VerifyTab() {
               htmlFor="verify-file-input"
               className="inline-block px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors cursor-pointer"
             >
-              Seleccionar Archivo
+              Select File
             </label>
           </div>
         ) : (
@@ -313,10 +320,10 @@ function VerifyTab() {
                 {isVerifying ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2 inline-block" />
-                    Verificando...
+                    Verifying...
                   </>
                 ) : (
-                  'Verificar Autenticidad'
+                  'Verify Authenticity'
                 )}
               </button>
               
@@ -327,7 +334,7 @@ function VerifyTab() {
                 }}
                 className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-colors"
               >
-                Seleccionar Otro
+                Select Another
               </button>
             </div>
           </div>
@@ -348,7 +355,7 @@ function HistoryTab({ userHistory, loading }: { userHistory: any[]; loading: boo
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-white">Historial de Actividad</h2>
+        <h2 className="text-2xl font-bold text-white">Activity History</h2>
         <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden">
           <div className="p-6">
             <div className="animate-pulse space-y-4">
@@ -370,19 +377,19 @@ function HistoryTab({ userHistory, loading }: { userHistory: any[]; loading: boo
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Historial de Actividad</h2>
+      <h2 className="text-2xl font-bold text-white">Activity History</h2>
       
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden">
         <div className="p-6 border-b border-gray-700/50">
-          <h3 className="text-lg font-semibold text-white">Actividades Recientes</h3>
-          <p className="text-gray-400 text-sm">Datos reales del backend</p>
+          <h3 className="text-lg font-semibold text-white">Recent Activities</h3>
+          <p className="text-gray-400 text-sm">Simulated data from mock backend</p>
         </div>
         
         {userHistory.length === 0 ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-400">No hay actividad registrada aún</p>
-            <p className="text-gray-500 text-sm">Registra o verifica archivos para ver tu historial</p>
+            <p className="text-gray-400">No activity recorded yet</p>
+            <p className="text-gray-500 text-sm">Register or verify files to see your history</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-700/50">
@@ -390,22 +397,22 @@ function HistoryTab({ userHistory, loading }: { userHistory: any[]; loading: boo
               <div key={index} className="p-6 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
-                    {item.action_type === 'register' ? (
+                    {item.type === 'registration' ? (
                       <Upload className="w-5 h-5 text-blue-400" />
                     ) : (
                       <CheckCircle className="w-5 h-5 text-green-400" />
                     )}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{item.file_name || 'Archivo'}</p>
+                    <p className="text-white font-medium">{item.filename || 'File'}</p>
                     <p className="text-gray-400 text-sm">
-                      {item.action_type === 'register' ? 'Registrado' : 'Verificado'} • 
+                      {item.type === 'registration' ? 'Registered' : 'Verified'} • 
                       {new Date(item.timestamp).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <span className="px-3 py-1 bg-green-600/20 text-green-400 text-sm rounded-full">
-                  Exitoso
+                  {item.status === 'completed' ? 'Success' : 'Failed'}
                 </span>
               </div>
             ))}
@@ -422,7 +429,7 @@ function ProfileTab() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Perfil de Usuario</h2>
+      <h2 className="text-2xl font-bold text-white">User Profile</h2>
       
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="flex items-center space-x-6 mb-6">
@@ -433,7 +440,7 @@ function ProfileTab() {
             <h3 className="text-2xl font-bold text-white">{user?.username}</h3>
             <p className="text-gray-400">{user?.email}</p>
             <span className="px-3 py-1 bg-green-600/20 text-green-400 text-sm rounded-full">
-              Usuario de Desarrollo
+              Development User
             </span>
           </div>
         </div>
@@ -441,7 +448,7 @@ function ProfileTab() {
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">
-              Nombre de Usuario
+              Username
             </label>
             <input
               type="text"
@@ -453,7 +460,7 @@ function ProfileTab() {
           
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2">
-              Correo Electrónico
+              Email Address
             </label>
             <input
               type="email"
@@ -472,16 +479,16 @@ function ProfileTab() {
 function SettingsTab() {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Configuración</h2>
+      <h2 className="text-2xl font-bold text-white">Settings</h2>
       
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-        <h3 className="text-lg font-semibold text-white mb-4">Configuración de Desarrollo</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Development Settings</h3>
         
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium">Modo de Desarrollo</p>
-              <p className="text-gray-400 text-sm">Usar datos simulados en lugar de blockchain</p>
+              <p className="text-white font-medium">Development Mode</p>
+              <p className="text-gray-400 text-sm">Use simulated data instead of blockchain</p>
             </div>
             <div className="w-12 h-6 bg-green-600 rounded-full flex items-center justify-end px-1">
               <div className="w-4 h-4 bg-white rounded-full"></div>
@@ -490,8 +497,8 @@ function SettingsTab() {
           
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium">Logs Detallados</p>
-              <p className="text-gray-400 text-sm">Mostrar información de debug en consola</p>
+              <p className="text-white font-medium">Detailed Logs</p>
+              <p className="text-gray-400 text-sm">Show debug information in console</p>
             </div>
             <div className="w-12 h-6 bg-green-600 rounded-full flex items-center justify-end px-1">
               <div className="w-4 h-4 bg-white rounded-full"></div>
@@ -501,7 +508,7 @@ function SettingsTab() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white font-medium">Mock API</p>
-              <p className="text-gray-400 text-sm">Usar respuestas simuladas del backend</p>
+              <p className="text-gray-400 text-sm">Use simulated backend responses</p>
             </div>
             <div className="w-12 h-6 bg-green-600 rounded-full flex items-center justify-end px-1">
               <div className="w-4 h-4 bg-white rounded-full"></div>
