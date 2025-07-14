@@ -10,7 +10,7 @@ import { useMockAuth } from '@/contexts/MockAuthContext';
 import { User, BarChart3, History, Settings, Upload, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 import { FileUpload } from '@/components/FileUpload';
 import { VerificationResult } from '@/components/VerificationResult';
-import { apiService } from '@/services/api';
+import { mockApiService } from '@/services/mockApi';
 
 export function DevUserDashboard() {
   const { user, logout } = useMockAuth();
@@ -27,12 +27,12 @@ export function DevUserDashboard() {
       try {
         setLoading(true);
         
-        // Cargar estadísticas del usuario
-        const stats = await apiService.getUserStats(user.id);
+        // Cargar estadísticas del usuario (mock)
+        const stats = await mockApiService.getUserStats(user.id);
         setUserStats(stats);
         
-        // Cargar historial del usuario
-        const history = await apiService.getUserActivity(user.id);
+        // Cargar historial del usuario (mock)
+        const history = await mockApiService.getUserActivity(user.id);
         setUserHistory(history);
         
       } catch (error) {
@@ -220,11 +220,11 @@ function UploadTab({ user }: { user: any }) {
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="mb-4 p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
           <p className="text-blue-400 text-sm">
-            📡 Conectado al backend real: Los archivos se procesarán y registrarán en blockchain de prueba
+            🧪 Modo de desarrollo: Los archivos se procesarán con datos simulados
           </p>
         </div>
         
-        <FileUpload mode="register" />
+        <FileUpload mode="register" useMockApi={true} />
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ function VerifyTab() {
 
     setIsVerifying(true);
     try {
-      const result = await apiService.verifyContent(selectedFile);
+      const result = await mockApiService.verifyContent(selectedFile);
       setVerificationResult(result);
     } catch (error) {
       console.error('Error verifying file:', error);
@@ -265,7 +265,7 @@ function VerifyTab() {
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <div className="mb-6 p-4 bg-green-600/20 border border-green-600/30 rounded-lg">
           <p className="text-green-400 text-sm">
-            🔍 Verificación real: Se consultará blockchain y fuentes web para verificar autenticidad
+            🔍 Verificación simulada: Se mostrarán resultados de ejemplo para testing
           </p>
         </div>
 

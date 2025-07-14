@@ -20,13 +20,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Upload, FileCheck, Shield, AlertTriangle } from 'lucide-react';
 import { apiService } from '@/services/api';
+import { mockApiService } from '@/services/mockApi';
 import type { ContentRegistration, ContentVerification, UploadProgress } from '@/types';
 
 interface FileUploadProps {
   mode: 'register' | 'verify';
+  useMockApi?: boolean; // Nueva prop para controlar el uso del API mock
 }
 
-export function FileUpload({ mode }: FileUploadProps) {
+export function FileUpload({ mode, useMockApi = false }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState('');
@@ -35,6 +37,9 @@ export function FileUpload({ mode }: FileUploadProps) {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [result, setResult] = useState<ContentRegistration | ContentVerification | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Seleccionar el servicio API correcto basado en el modo
+  const currentApiService = useMockApi ? mockApiService : apiService;
 
   const generateFilePreview = useCallback((selectedFile: File) => {
     // Clean previous preview
@@ -112,7 +117,19 @@ export function FileUpload({ mode }: FileUploadProps) {
         
         // Step 2: Call backend API to register content with XION integration
         // This will: calculate hash, store file, register on blockchain, create DB record
-        const registration = await apiService.registerContent(file, description, creatorId);
+        const registration = useMockApi 
+          ? await mockApiService.registerContent(
+              file, 
+              creatorId, 
+              (progressPercent) => {
+                setProgress({
+                  percentage: 50 + (progressPercent * 0.4), // 50% to 90%
+                  status: 'processing',
+                  message: 'Registering on XION blockchain...',
+                });
+              }
+            )
+          : await apiService.registerContent(file, description, creatorId);
         
         // Step 3: Complete registration and show success
         setProgress({
@@ -133,13 +150,15 @@ export function FileUpload({ mode }: FileUploadProps) {
         
         // Step 2: Call backend API to verify content authenticity
         // This will: calculate hash, check blockchain, analyze modifications, verify source
-        const verification = await apiService.verifyContent(file, sourceUrl || undefined);
+        const verification = useMockApi 
+          ? await mockApiService.verifyContent(file)
+          : await apiService.verifyContent(file, sourceUrl || undefined);
         
         // Step 3: Complete verification and show results
         setProgress({
           percentage: 100,
           status: 'complete',
-          message: verification.blockchain_verified 
+          message: (verification as any).authenticity_details?.blockchain_verified || (verification as any).blockchain_verified
             ? 'Verified on XION blockchain' 
             : 'Verification completed',
         });
