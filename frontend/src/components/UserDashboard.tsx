@@ -35,7 +35,7 @@ import { UserProfile } from './UserProfile';
 import { UserHistory } from './UserHistory';
 import { UserStats } from './UserStats';
 import { WalletInfo } from './WalletInfo';
-import { apiService, UserStats as UserStatsType } from '@/services/api';
+import { apiService, UserStats as UserStatsData } from '@/services/api';
 
 // Available dashboard tabs
 type DashboardTab = 'register' | 'verify' | 'history' | 'profile' | 'stats' | 'wallet';
@@ -46,7 +46,7 @@ export function UserDashboard() {
   
   // Component state
   const [activeTab, setActiveTab] = useState<DashboardTab>('register');
-  const [userStats, setUserStats] = useState<UserStatsType | null>(null);
+  const [userStats, setUserStats] = useState<UserStatsData | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Load user statistics on component mount and user change

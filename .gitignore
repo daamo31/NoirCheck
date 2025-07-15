@@ -152,3 +152,5 @@ sales_pipeline.xlsx
 # Documentation builds
 docs/build/
 docs/dist/
+#documentation/
+strategy_revenue.md

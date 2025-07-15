@@ -49,10 +49,17 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
       // Simulate login delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create mock user
+      // Create mock user with realistic XION address
+      const randomBytes = new Uint8Array(20);
+      crypto.getRandomValues(randomBytes);
+      const addressSuffix = Array.from(randomBytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .substring(0, 39);
+      
       const mockUser: MockUser = {
         id: 'mock-user-123',
-        address: 'xion1mockaddress123456789',
+        address: `xion1${addressSuffix}`,
         username: 'Usuario Demo',
         email: 'demo@noircheck.com',
         registeredAt: new Date().toISOString(),

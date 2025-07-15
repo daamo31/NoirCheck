@@ -1,13 +1,6 @@
 /**
  * NoirCheck - Dev User Dashboard
- * Dashbo  const tabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'upload', label: 'Upload File', icon: Upload },
-    { id: 'verify', label: 'Verify', icon: CheckCircle },
-    { id: 'history', label: 'History', icon: History },
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ];development mode with mock authentication
+ * Dashboard completo para desarrollo con autenticación mock
  */
 
 'use client';
@@ -18,6 +11,7 @@ import { User, BarChart3, History, Settings, Upload, CheckCircle, FileText, Aler
 import { FileUpload } from '@/components/FileUpload';
 import { VerificationResult } from '@/components/VerificationResult';
 import { mockApiService } from '@/services/mockApi';
+import { XIONWalletDisplay } from './XIONWalletDisplay';
 
 export function DevUserDashboard() {
   const { user, logout } = useMockAuth();
@@ -149,6 +143,16 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Dashboard</h2>
+      
+      {/* XION Wallet Information */}
+      <div className="mb-6">
+        <XIONWalletDisplay 
+          showFullAddress={true}
+          showBalance={true}
+          showZkTLS={true}
+          compact={false}
+        />
+      </div>
       
       {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-6">
