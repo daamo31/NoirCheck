@@ -201,10 +201,10 @@ export function UserDashboard() {
               {/* User Info Display */}
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user?.username || `User ${user?.address.slice(-8)}`}
+                  {user?.username || (user?.address ? `User ${user.address.slice(-8)}` : 'Cargando usuario...')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {user?.address.slice(0, 8)}...{user?.address.slice(-8)}
+                  {user?.address ? `${user.address.slice(0, 8)}...${user.address.slice(-8)}` : 'Conectando...'}
                 </p>
               </div>
               
@@ -222,6 +222,47 @@ export function UserDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* User Info Card */}
+        {user && (
+          <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {user.username || 'Usuario Demo'}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 font-mono text-sm">
+                    {user.address}
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-500 text-xs">
+                    Registrado: {new Date(user.registeredAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex space-x-4 mb-2">
+                  <div className="bg-green-500/20 px-4 py-2 rounded-lg border border-green-500/30">
+                    <p className="text-green-600 dark:text-green-400 text-sm font-medium">
+                      Registros: {user.totalRegistrations}
+                    </p>
+                  </div>
+                  <div className="bg-blue-500/20 px-4 py-2 rounded-lg border border-blue-500/30">
+                    <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">
+                      Verificaciones: {user.totalVerifications}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-gray-500 dark:text-gray-500 text-xs">
+                  Última actividad: {new Date(user.lastActivity).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Statistics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {quickStats.map((stat, index) => (
@@ -279,7 +320,7 @@ export function UserDashboard() {
                     Register your original content on blockchain to protect your intellectual property
                   </p>
                 </div>
-                <FileUpload mode="register" />
+                <FileUpload mode="register" onOperationComplete={refreshUserStats} />
               </div>
             )}
 
@@ -294,7 +335,7 @@ export function UserDashboard() {
                     Verify if content is original or has been modified
                   </p>
                 </div>
-                <FileUpload mode="verify" />
+                <FileUpload mode="verify" onOperationComplete={refreshUserStats} />
               </div>
             )}
 

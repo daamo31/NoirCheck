@@ -14,6 +14,7 @@ import {
 
 export class MockAPIService {
   private registeredHashes = new Map<string, any>(); // Store registered content by hash
+  private userStats = new Map<string, any>(); // Store user stats locally
 
   private delay(ms: number = 500): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -100,10 +101,22 @@ export class MockAPIService {
       creator_id: userAddress
     });
 
+    // Update local user stats
+    if (userAddress) {
+      const currentStats = this.userStats.get(userAddress) || { 
+        totalRegistrations: 0, 
+        totalVerifications: 0 
+      };
+      currentStats.totalRegistrations += 1;
+      this.userStats.set(userAddress, currentStats);
+      
+      console.log('Mock API: Updated registration stats for user:', userAddress, currentStats);
+    }
+
     return registration;
   }
 
-  async verifyContent(file: File): Promise<ContentVerification> {
+  async verifyContent(file: File, sourceUrl?: string, userId?: string): Promise<ContentVerification> {
     await this.delay(800);
 
     // Calculate real hash for the file
@@ -121,6 +134,25 @@ export class MockAPIService {
       blockchain_verified: exists,
       filename: file.name
     };
+
+    // In a real implementation, we would save the verification activity to backend here
+    // For now, we just console.log it and update local stats
+    if (userId) {
+      console.log('Mock API: Logging verification activity for user:', userId, {
+        content_hash: hash,
+        filename: file.name,
+        exists,
+        sourceUrl
+      });
+      
+      // Update local user stats
+      const currentStats = this.userStats.get(userId) || { 
+        totalRegistrations: 0, 
+        totalVerifications: 0 
+      };
+      currentStats.totalVerifications += 1;
+      this.userStats.set(userId, currentStats);
+    }
 
     if (exists && registeredContent) {
       return {
@@ -150,9 +182,15 @@ export class MockAPIService {
   async getUserStats(userId: string): Promise<UserStats> {
     await this.delay(300);
     
+    // Get local stats or create default ones
+    const localStats = this.userStats.get(userId) || {
+      totalRegistrations: 0,
+      totalVerifications: 0
+    };
+    
     return {
-      totalRegistrations: 12,
-      totalVerifications: 34,
+      totalRegistrations: localStats.totalRegistrations,
+      totalVerifications: localStats.totalVerifications,
       recentActivity: [
         {
           id: 'mock-1',

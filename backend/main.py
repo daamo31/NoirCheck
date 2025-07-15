@@ -38,8 +38,9 @@ from services.hash_service import HashService
 from services.file_service import FileService
 from services.xion_simple_service import XIONService
 
-# Import user API routes
+# Import user API routes and services
 from app.api.users import router as users_router
+from app.services.user_service import UserService
 
 # FastAPI application configuration
 app = FastAPI(
@@ -270,6 +271,23 @@ async def register_content(
         db.commit()  # Persist to database
         db.refresh(content_record)  # Refresh to get generated fields
 
+        # Register user activity for content registration
+        user_service = UserService(db)
+        try:
+            await user_service.log_user_activity(
+                user_id=creator_id,
+                activity_type="registration",
+                details={
+                    "content_hash": content_hash,
+                    "filename": file.filename,
+                    "file_size": len(file_content),
+                    "blockchain_tx": blockchain_tx["transaction_hash"]
+                }
+            )
+        except Exception as activity_error:
+            # Log activity error but don't fail the main operation
+            print(f"Warning: Could not log user activity: {activity_error}")
+
         # Return successful registration response with all relevant details
         return {
             "success": True,
@@ -297,6 +315,7 @@ async def register_content(
 async def verify_content(
     file: UploadFile = File(...),
     source_url: Optional[str] = Form(None),
+    user_id: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
@@ -402,6 +421,25 @@ async def verify_content(
             verification_result["verification_status"] = "not_found"
             verification_result["message"] = "No matching content found in blockchain records"
 
+        # Register user activity for content verification (if user_id provided)
+        if user_id:
+            user_service = UserService(db)
+            try:
+                await user_service.log_user_activity(
+                    user_id=user_id,
+                    activity_type="verification",
+                    details={
+                        "content_hash": content_hash,
+                        "filename": file.filename,
+                        "verification_status": verification_result["verification_status"],
+                        "confidence": verification_result["confidence"],
+                        "exists": verification_result["exists"]
+                    }
+                )
+            except Exception as activity_error:
+                # Log activity error but don't fail the main operation
+                print(f"Warning: Could not log user activity: {activity_error}")
+
         return verification_result
 
     except Exception as e:
@@ -415,6 +453,7 @@ async def verify_content(
 async def mobile_verify_content(
     file: UploadFile = File(...),
     quick_mode: bool = Form(True),
+    user_id: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
@@ -493,6 +532,25 @@ async def mobile_verify_content(
                     "status": "Full blockchain verification completed"
                 }
             )
+
+        # Register user activity for mobile verification (if user_id provided)
+        if user_id:
+            user_service = UserService(db)
+            try:
+                await user_service.log_user_activity(
+                    user_id=user_id,
+                    activity_type="verification",
+                    details={
+                        "content_hash": content_hash,
+                        "filename": file.filename,
+                        "quick_mode": quick_mode,
+                        "verification_score": mobile_result["score"],
+                        "verified": mobile_result["verified"]
+                    }
+                )
+            except Exception as activity_error:
+                # Log activity error but don't fail the main operation
+                print(f"Warning: Could not log user activity: {activity_error}")
 
         return mobile_result
 

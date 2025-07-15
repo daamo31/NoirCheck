@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface MockUser {
   id: string;
@@ -42,6 +42,25 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
     error: null
   });
 
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('mockUser');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+      } catch (error) {
+        console.error('Error loading saved user:', error);
+        localStorage.removeItem('mockUser');
+      }
+    }
+  }, []);
+
   const login = async () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
@@ -49,26 +68,49 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
       // Simulate login delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create mock user with realistic XION address
-      const randomBytes = new Uint8Array(20);
-      crypto.getRandomValues(randomBytes);
-      const addressSuffix = Array.from(randomBytes)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('')
-        .substring(0, 39);
+      // Check if we have a saved user, otherwise create a new one
+      let mockUser: MockUser;
+      const savedUser = localStorage.getItem('mockUser');
       
-      const mockUser: MockUser = {
-        id: 'mock-user-123',
-        address: `xion1${addressSuffix}`,
-        username: 'Usuario Demo',
-        email: 'demo@noircheck.com',
-        registeredAt: new Date().toISOString(),
-        totalRegistrations: 5,
-        totalVerifications: 12,
-        lastActivity: new Date().toISOString()
-      };
+      if (savedUser) {
+        mockUser = JSON.parse(savedUser);
+        // Update last activity
+        mockUser.lastActivity = new Date().toISOString();
+      } else {
+        // Create new mock user with consistent data
+        const randomBytes = new Uint8Array(20);
+        crypto.getRandomValues(randomBytes);
+        const addressSuffix = Array.from(randomBytes)
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+          .substring(0, 39);
+        
+        mockUser = {
+          id: `user-${Date.now()}`,
+          address: `xion1${addressSuffix}`,
+          username: 'Usuario Demo',
+          email: 'demo@noircheck.com',
+          registeredAt: new Date().toISOString(),
+          totalRegistrations: 0,
+          totalVerifications: 0,
+          lastActivity: new Date().toISOString()
+        };
+      }
 
-      // Registrar usuario en el backend si no existe
+      // Try to get updated stats from backend
+      try {
+        const response = await fetch(`http://localhost:8000/users/${mockUser.id}/stats`);
+        if (response.ok) {
+          const stats = await response.json();
+          mockUser.totalRegistrations = stats.totalRegistrations || 0;
+          mockUser.totalVerifications = stats.totalVerifications || 0;
+          console.log('Stats actualizados desde backend:', stats);
+        }
+      } catch (error) {
+        console.warn('No se pudieron obtener stats del backend:', error);
+      }
+
+      // Register user in backend if it doesn't exist
       try {
         const response = await fetch('http://localhost:8000/users/register', {
           method: 'POST',
@@ -83,17 +125,19 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (response.ok) {
-          console.log('Usuario registrado en backend');
+          console.log('Usuario registrado/actualizado en backend');
+        } else if (response.status === 409) {
+          console.log('Usuario ya existe en backend');
         } else {
-          // Si el usuario ya existe (409), está bien
           const errorData = await response.json();
-          if (response.status !== 409) {
-            console.warn('Error registrando usuario:', errorData);
-          }
+          console.warn('Error registrando usuario:', errorData);
         }
       } catch (error) {
         console.warn('No se pudo conectar con el backend:', error);
       }
+
+      // Save user to localStorage
+      localStorage.setItem('mockUser', JSON.stringify(mockUser));
 
       setState({
         user: mockUser,
@@ -111,6 +155,7 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    localStorage.removeItem('mockUser');
     setState({
       user: null,
       isAuthenticated: false,
@@ -122,14 +167,41 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (data: Partial<MockUser>) => {
     if (!state.user) return;
     
+    const updatedUser = { ...state.user, ...data };
+    localStorage.setItem('mockUser', JSON.stringify(updatedUser));
+    
     setState(prev => ({
       ...prev,
-      user: prev.user ? { ...prev.user, ...data } : null
+      user: updatedUser
     }));
   };
 
   const refreshUser = async () => {
-    // Mock refresh - no action needed
+    if (!state.user) return;
+    
+    try {
+      // Try to get updated stats from backend
+      const response = await fetch(`http://localhost:8000/users/${state.user.id}/stats`);
+      if (response.ok) {
+        const stats = await response.json();
+        const updatedUser = {
+          ...state.user,
+          totalRegistrations: stats.totalRegistrations || 0,
+          totalVerifications: stats.totalVerifications || 0,
+          lastActivity: new Date().toISOString()
+        };
+        
+        localStorage.setItem('mockUser', JSON.stringify(updatedUser));
+        setState(prev => ({
+          ...prev,
+          user: updatedUser
+        }));
+        
+        console.log('Usuario actualizado con stats del backend:', stats);
+      }
+    } catch (error) {
+      console.warn('Error al refrescar datos del usuario:', error);
+    }
   };
 
   const value: MockAuthContextType = {
@@ -153,4 +225,19 @@ export function useMockAuth() {
     throw new Error('useMockAuth must be used within a MockAuthProvider');
   }
   return context;
+}
+
+// Hook seguro que no lanza error si no está en un provider
+export function useMockAuthSafe() {
+  const context = useContext(MockAuthContext);
+  return context || {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    error: null,
+    login: async () => {},
+    logout: async () => {},
+    updateProfile: async () => {},
+    refreshUser: async () => {}
+  };
 }

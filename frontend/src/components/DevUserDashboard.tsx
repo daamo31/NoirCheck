@@ -14,35 +14,35 @@ import { mockApiService } from '@/services/mockApi';
 import { XIONWalletDisplay } from './XIONWalletDisplay';
 
 export function DevUserDashboard() {
-  const { user, logout } = useMockAuth();
+  const { user, logout, refreshUser } = useMockAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [userStats, setUserStats] = useState<any>(null);
   const [userHistory, setUserHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Cargar datos reales del usuario
-  useEffect(() => {
-    const loadUserData = async () => {
-      if (!user?.id) return;
+  const loadUserData = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
       
-      try {
-        setLoading(true);
-        
-        // Cargar estadísticas del usuario (mock)
-        const stats = await mockApiService.getUserStats(user.id);
-        setUserStats(stats);
-        
-        // Cargar historial del usuario (mock)
-        const history = await mockApiService.getUserActivity(user.id);
-        setUserHistory(history);
-        
-      } catch (error) {
-        console.error('Error loading user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Cargar estadísticas del usuario (mock)
+      const stats = await mockApiService.getUserStats(user.id);
+      setUserStats(stats);
+      
+      // Cargar historial del usuario (mock)
+      const history = await mockApiService.getUserActivity(user.id);
+      setUserHistory(history);
+      
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadUserData();
   }, [user?.id]);
 
@@ -87,6 +87,39 @@ export function DevUserDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* User Info Card */}
+        {user && (
+          <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{user.username || 'Usuario Demo'}</h2>
+                  <p className="text-gray-400 text-sm font-mono">{user.address}</p>
+                  <p className="text-gray-500 text-xs">
+                    Registrado: {new Date(user.registeredAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex space-x-4">
+                  <div className="bg-green-500/20 px-3 py-1 rounded-lg border border-green-500/30">
+                    <p className="text-green-400 text-sm font-medium">Registros: {user.totalRegistrations}</p>
+                  </div>
+                  <div className="bg-blue-500/20 px-3 py-1 rounded-lg border border-blue-500/30">
+                    <p className="text-blue-400 text-sm font-medium">Verificaciones: {user.totalVerifications}</p>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-xs mt-2">
+                  Última actividad: {new Date(user.lastActivity).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="flex space-x-1 bg-gray-800/30 backdrop-blur-sm rounded-xl p-1 mb-8">
           {tabs.map((tab) => {
@@ -243,6 +276,7 @@ function UploadTab({ user }: { user: any }) {
 
 // Verify Tab
 function VerifyTab() {
+  const { user, refreshUser } = useMockAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -260,8 +294,13 @@ function VerifyTab() {
 
     setIsVerifying(true);
     try {
-      const result = await mockApiService.verifyContent(selectedFile);
+      const result = await mockApiService.verifyContent(selectedFile, undefined, user?.id);
       setVerificationResult(result);
+      
+      // Refresh user stats after verification
+      if (refreshUser) {
+        await refreshUser();
+      }
     } catch (error) {
       console.error('Error verifying file:', error);
     } finally {

@@ -21,14 +21,17 @@ import { useState, useCallback, useEffect } from 'react';
 import { Upload, FileCheck, Shield, AlertTriangle } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { mockApiService } from '@/services/mockApi';
+import { useMockAuthSafe } from '@/contexts/MockAuthContext';
 import type { ContentRegistration, ContentVerification, UploadProgress } from '@/types';
 
 interface FileUploadProps {
   mode: 'register' | 'verify';
   useMockApi?: boolean; // Nueva prop para controlar el uso del API mock
+  onOperationComplete?: () => void; // Callback para refrescar datos del dashboard
 }
 
-export function FileUpload({ mode, useMockApi = false }: FileUploadProps) {
+export function FileUpload({ mode, useMockApi = false, onOperationComplete }: FileUploadProps) {
+  const { user, refreshUser } = useMockAuthSafe();
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [sourceUrl, setSourceUrl] = useState('');
@@ -139,6 +142,16 @@ export function FileUpload({ mode, useMockApi = false }: FileUploadProps) {
         });
         
         setResult(registration);
+        
+        // Refresh user stats after registration
+        if (refreshUser) {
+          await refreshUser();
+        }
+        
+        // Call callback to refresh dashboard
+        if (onOperationComplete) {
+          onOperationComplete();
+        }
       } else {
         // VERIFICATION FLOW
         // Step 1: Update progress to show verification starting
@@ -152,7 +165,7 @@ export function FileUpload({ mode, useMockApi = false }: FileUploadProps) {
         // This will: calculate hash, check blockchain, analyze modifications, verify source
         const verification = useMockApi 
           ? await mockApiService.verifyContent(file)
-          : await apiService.verifyContent(file, sourceUrl || undefined);
+          : await apiService.verifyContent(file, sourceUrl || undefined, user?.id);
         
         // Step 3: Complete verification and show results
         setProgress({
@@ -164,6 +177,16 @@ export function FileUpload({ mode, useMockApi = false }: FileUploadProps) {
         });
         
         setResult(verification);
+        
+        // Refresh user stats after verification
+        if (refreshUser) {
+          await refreshUser();
+        }
+        
+        // Call callback to refresh dashboard
+        if (onOperationComplete) {
+          onOperationComplete();
+        }
       }
     } catch (err) {
       // Error handling: log error and update UI state

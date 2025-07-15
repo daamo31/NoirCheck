@@ -35,39 +35,19 @@ export function UserLogin({ onBack, onLogin }: UserLoginProps) {
 
     try {
       // Import XION dynamically
-      const { AbstraxionProvider, useAbstraxionAccount, useModal } = await import('@burnt-labs/abstraxion');
+      const { useAbstraxionAccount, useModal } = await import('@burnt-labs/abstraxion');
       
-      // Simulate wallet connection process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Show XION modal for real authentication
+      // This should open the actual XION connection modal
+      setError('Please use the XION connection button to authenticate with your existing wallet.');
+      setStep(1);
       
-      // Check if user exists in our system
-      const mockUserAddress = `xion1${Math.random().toString(36).substr(2, 38)}`;
-      
-      // Simulate user lookup
-      const userData = {
-        id: Math.random().toString(36).substr(2, 9),
-        address: mockUserAddress,
-        username: `user_${mockUserAddress.slice(-8)}`,
-        email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        registeredAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-        totalRegistrations: Math.floor(Math.random() * 50),
-        totalVerifications: Math.floor(Math.random() * 100),
-        lastActivity: new Date().toISOString()
-      };
-
-      setStep(3);
-      
-      // Simulate final auth check
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Complete login
-      onLogin(userData);
+      // For now, we'll use a simplified approach
+      // The user should connect through the actual XION interface
       
     } catch (error) {
       console.error('XION login error:', error);
-      setError('Failed to connect to XION wallet. Please try again.');
+      setError('Failed to load XION wallet connection. Please refresh the page and try again.');
       setStep(1);
     } finally {
       setIsLoading(false);

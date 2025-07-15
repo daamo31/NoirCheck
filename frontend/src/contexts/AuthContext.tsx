@@ -150,8 +150,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_USER', payload: newUser });
           }
         } else {
-          // No XION account or XION not available - start in anonymous mode
-          dispatch({ type: 'SET_USER', payload: null });
+          // No XION account - check for saved mock user
+          const savedMockUser = localStorage.getItem('noircheck_mock_user');
+          if (savedMockUser) {
+            try {
+              const mockUser = JSON.parse(savedMockUser);
+              dispatch({ type: 'SET_USER', payload: mockUser });
+            } catch (parseError) {
+              console.error('Error parsing saved mock user:', parseError);
+              localStorage.removeItem('noircheck_mock_user');
+              dispatch({ type: 'SET_USER', payload: null });
+            }
+          } else {
+            // No saved user - start in anonymous mode
+            dispatch({ type: 'SET_USER', payload: null });
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -177,11 +190,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // The actual login is handled by Abstraxion modal
         // User data will be updated through the account effect above
       } else {
-        // XION not available - provide instructions
-        dispatch({ 
-          type: 'SET_ERROR', 
-          payload: 'XION wallet connection not available. Click "Connect XION Wallet" to enable blockchain features.' 
-        });
+        // XION not available - create mock user for development
+        console.log('XION not available, creating mock user for development');
+        
+        // Check if we have a saved user, otherwise create one
+        let savedUser = localStorage.getItem('noircheck_mock_user');
+        let mockUser: User;
+        
+        if (savedUser) {
+          mockUser = JSON.parse(savedUser);
+        } else {
+          // Create new mock user
+          const randomBytes = new Uint8Array(20);
+          crypto.getRandomValues(randomBytes);
+          const addressSuffix = Array.from(randomBytes)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('')
+            .substring(0, 39);
+          
+          mockUser = {
+            id: `mock-user-${Date.now()}`,
+            address: `xion1${addressSuffix}`,
+            username: 'Usuario Demo',
+            email: 'demo@noircheck.com',
+            registeredAt: new Date().toISOString(),
+            totalRegistrations: 0,
+            totalVerifications: 0,
+            lastActivity: new Date().toISOString()
+          };
+          
+          // Save to localStorage
+          localStorage.setItem('noircheck_mock_user', JSON.stringify(mockUser));
+        }
+        
+        // Try to register/update user in backend
+        try {
+          const response = await apiService.registerUser({
+            address: mockUser.address,
+            username: mockUser.username,
+            email: mockUser.email
+          });
+          
+          // Update with backend data if successful
+          if (response) {
+            mockUser = { ...mockUser, ...response };
+            localStorage.setItem('noircheck_mock_user', JSON.stringify(mockUser));
+          }
+        } catch (backendError) {
+          console.warn('Backend not available, using local mock user:', backendError);
+        }
+        
+        dispatch({ type: 'SET_USER', payload: mockUser });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -201,6 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Clear any local storage data
       localStorage.removeItem('noircheck_user');
+      localStorage.removeItem('noircheck_mock_user');
       localStorage.removeItem('noircheck_enable_xion');
       localStorage.removeItem('noircheck_session');
       
@@ -254,12 +314,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!state.user) return;
     
     try {
+      // Try to get updated data from backend
       const userData = await apiService.getUser(state.user.address);
       if (userData) {
         dispatch({ type: 'SET_USER', payload: userData });
+        
+        // If this is a mock user, also update localStorage
+        if (state.user.id.startsWith('mock-user-')) {
+          localStorage.setItem('noircheck_mock_user', JSON.stringify(userData));
+        }
       }
     } catch (error) {
-      console.error('User refresh error:', error);
+      console.warn('Backend not available for user refresh, keeping current user data:', error);
+      
+      // If backend is not available but we have a mock user, update the activity timestamp
+      if (state.user.id.startsWith('mock-user-')) {
+        const updatedUser = {
+          ...state.user,
+          lastActivity: new Date().toISOString()
+        };
+        dispatch({ type: 'SET_USER', payload: updatedUser });
+        localStorage.setItem('noircheck_mock_user', JSON.stringify(updatedUser));
+      }
     }
   };
 

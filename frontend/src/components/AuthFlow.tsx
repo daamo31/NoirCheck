@@ -17,7 +17,7 @@
 import { useState, useEffect } from 'react';
 import { LandingPage } from './LandingPage';
 import { UserRegistration } from './UserRegistration';
-import { UserLogin } from './UserLogin';
+import { UserLoginNew } from './UserLoginNew';
 import { UserDashboard } from './UserDashboard';
 
 type AuthFlow = 'landing' | 'register' | 'login' | 'dashboard';
@@ -138,7 +138,7 @@ export function AuthFlow() {
 
     case 'login':
       return (
-        <UserLogin
+        <UserLoginNew
           onBack={handleBackToLanding}
           onLogin={handleLoginComplete}
         />

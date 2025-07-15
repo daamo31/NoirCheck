@@ -145,11 +145,14 @@ class APIService {
     return response.json();
   }
 
-  async verifyContent(file: File, sourceUrl?: string): Promise<ContentVerification> {
+  async verifyContent(file: File, sourceUrl?: string, userId?: string): Promise<ContentVerification> {
     const formData = new FormData();
     formData.append('file', file);
     if (sourceUrl) {
       formData.append('source_url', sourceUrl);
+    }
+    if (userId) {
+      formData.append('user_id', userId);
     }
 
     const response = await this.fetchWithFallback(`${this.baseURL}/content/verify`, {
