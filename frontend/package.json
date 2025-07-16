@@ -2,7 +2,7 @@
   "name": "noircheck-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "NoirCheck Frontend - Digital content authenticity verification platform",
+  "description": "NoirCheck Frontend - Digital content authenticity verification platform with multi-wallet support",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
@@ -12,12 +12,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "wallet-check": "node -e \"console.log('Checking wallet dependencies...'); require('@walletconnect/core'); require('@walletconnect/sign-client'); console.log('✅ WalletConnect dependencies OK');\""
   },
   "dependencies": {
     "@burnt-labs/abstraxion": "^1.0.0-alpha.65",
     "@burnt-labs/ui": "^0.1.0-alpha.17",
     "@tailwindcss/postcss": "^4.1.11",
+    "@walletconnect/core": "^2.21.4",
+    "@walletconnect/qrcode-modal": "^1.8.0",
+    "@walletconnect/sign-client": "^2.21.4",
     "autoprefixer": "^10.4.21",
     "lucide-react": "^0.525.0",
     "next": "15.3.5",

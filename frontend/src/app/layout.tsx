@@ -5,6 +5,7 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Navigation from "@/components/Navigation";
 
 // Load Inter font with Latin subset
 const inter = Inter({ subsets: ["latin"] });
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       {/* Apply Inter font and antialiasing to body */}
       <body className={`${inter.className} antialiased`}>
+        <Navigation />
         {children}
       </body>
     </html>

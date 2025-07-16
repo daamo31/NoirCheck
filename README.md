@@ -17,30 +17,48 @@ NoirCheck is an innovative digital content authenticity verification platform th
 - **TypeScript** for enhanced code robustness
 - **Turbopack** for ultra-fast builds
 
+### 🔗 Enhanced Wallet Integration
+- **Multi-wallet support**: XION, MetaMask, and WalletConnect v2
+- **Mobile-first approach** with deep linking for iOS/Android
+- **Real-time wallet detection** and status indicators
+- **Universal compatibility** - works on desktop and mobile browsers
+- **Smart app detection** - automatically detects installed wallet apps
+
 ### 🧹 Dependency Optimization
 - **Backend**: Reduced from 26+ to 9 essential dependencies (-65%)
-- **Frontend**: Optimized with 7 core dependencies plus optional ones
+- **Frontend**: Optimized with core dependencies plus wallet integrations
 - **60% faster installation** and reduced disk footprint
 - **Zero known security vulnerabilities**
 
-### 🔗 Enhanced XION Integration
-- **Simplified XION service** for stable development
-- **Real-time blockchain status** in UI
-- **Ready for real SDK** when dependencies become compatible
+### � Mobile-Ready Features
+- **Responsive design** optimized for all screen sizes
+- **Deep linking** to XION and MetaMask mobile apps
+- **WalletConnect integration** for 100+ wallet compatibility
+- **Wallet diagnostic tool** for troubleshooting connections
+- **Progressive Web App** ready for mobile installation
 
 ## 🚀 Main Features
 
 ### For Creators
 - **Original Content Registration**: Upload and authenticate your original content on blockchain
+- **Multi-wallet Support**: Connect with XION, MetaMask, or 100+ wallets via WalletConnect
 - **Identity Verification**: Integration with XION zkTLS for secure verification
 - **Authenticity Seal**: Generate unique QR codes and cryptographic seals
 - **Proof of Authorship**: Create immutable records of your creative work
 
 ### For Consumers
 - **Instant Verification**: Verify any digital content in seconds
+- **Cross-platform Access**: Use from any device - desktop, mobile, or tablet
 - **Modification Detection**: Identify if content has been altered
 - **Source Analysis**: Evaluate the reliability of the origin website
 - **Verification History**: Keep a record of all your verifications
+
+### For Mobile Users
+- **Native App Experience**: Deep linking to XION and MetaMask mobile apps
+- **Universal Wallet Support**: Connect any wallet through WalletConnect
+- **Responsive Design**: Optimized for touch interfaces
+- **Offline Capabilities**: Some features work without internet connection
+- **Wallet Diagnostics**: Built-in tools to troubleshoot wallet connections
 
 ## 🏗️ System Architecture
 
@@ -48,6 +66,15 @@ NoirCheck is an innovative digital content authenticity verification platform th
 - **RESTful API** for frontend interaction
 - **File handling** with validation and image processing
 - **Simplified XION integration** for stable development
+- **SQLite database** with SQLAlchemy ORM
+- **Cryptographic services** for content hashing
+
+### Frontend (Next.js + React)
+- **Modern web application** with TypeScript
+- **Multi-wallet integration**: XION, MetaMask, WalletConnect v2
+- **Mobile-responsive design** with Tailwind CSS
+- **Real-time status indicators** for all services
+- **Progressive Web App** capabilities for mobile installation
 - **SQLite database** with SQLAlchemy ORM
 - **SHA-256 hash services** and secure cryptography
 - **Port 8000** - Fully operational
@@ -111,12 +138,23 @@ curl http://localhost:3000
 - `cryptography==42.0.2` - Cryptography
 - `python-dotenv==1.0.1` - Environment variables
 
-#### Frontend Core (7 packages)
-- `next==15.3.5` - React framework
-- `react==19.0.0` - UI library
-- `lucide-react==0.525.0` - Icons
-- `tailwindcss==4` - CSS framework
-- `typescript==5` - Static typing
+#### Frontend Core Dependencies
+- `next==15.3.5` - React framework with App Router
+- `react==19.0.0` - UI library with latest features
+- `typescript==5` - Static typing for JavaScript
+- `tailwindcss==4` - Utility-first CSS framework
+- `lucide-react==0.525.0` - Beautiful SVG icons
+
+#### Wallet Integration Dependencies
+- `@walletconnect/core==2.x` - WalletConnect v2 core functionality
+- `@walletconnect/sign-client==2.x` - Signing client for wallet connections
+- `@walletconnect/qrcode-modal==2.x` - QR code modal for mobile pairing
+- `@burnt-labs/abstraxion` - XION wallet integration (when available)
+
+#### Development Dependencies
+- `@types/node` - Node.js type definitions
+- `@types/react` - React type definitions
+- `eslint-config-next` - ESLint configuration for Next.js
 
 ## 📱 Web App Features
 
@@ -198,16 +236,26 @@ NoirsCheck/
 ├── frontend/                   # Next.js + React + TypeScript
 │   ├── src/
 │   │   ├── app/               # Next.js App Router
-│   │   │   ├── layout.tsx     # Main layout
+│   │   │   ├── layout.tsx     # Main layout with navigation
 │   │   │   ├── page.tsx       # Home page
+│   │   │   ├── mobile/        # Mobile-specific pages
+│   │   │   │   └── page.tsx   # Mobile support information
+│   │   │   ├── wallet-diagnostic/ # Wallet troubleshooting
+│   │   │   │   └── page.tsx   # Diagnostic tools
 │   │   │   └── globals.css    # Global styles
 │   │   ├── components/        # React components
-│   │   │   ├── ConnectionStatus.tsx # XION status
-│   │   │   └── FileUpload.tsx # File upload
+│   │   │   ├── Navigation.tsx # Main navigation bar
+│   │   │   ├── ConnectionStatus.tsx # Service status indicators
+│   │   │   ├── FileUpload.tsx # File upload interface
+│   │   │   ├── UserRegistrationNew.tsx # Multi-step registration
+│   │   │   ├── UserLoginNew.tsx # Multi-method login
+│   │   │   └── WalletStatusChecker.tsx # Wallet status component
 │   │   ├── hooks/             # Custom hooks
-│   │   │   └── useXIONStatus.ts # XION status hook
-│   │   ├── services/          # API services
-│   │   │   └── api.ts         # API client
+│   │   │   ├── useXIONStatus.ts # XION status hook
+│   │   │   └── useWalletStatus.ts # Wallet status management
+│   │   ├── services/          # API and wallet services
+│   │   │   ├── api.ts         # Backend API client
+│   │   │   └── walletService.ts # Comprehensive wallet integration
 │   │   └── types/             # TypeScript types
 │   │       └── index.ts       # Type definitions
 │   ├── package.json           # Optimized dependencies
@@ -280,6 +328,27 @@ npm run lint
 - **Mobile Status**: http://localhost:8000/mobile/status
 - **API Docs**: http://localhost:8000/docs (FastAPI auto-docs)
 
+## 🌐 Available Endpoints and Pages
+
+### Frontend Pages
+- **`/`** - Main application dashboard with registration and verification
+- **`/mobile`** - Mobile-specific information and app store links
+- **`/wallet-diagnostic`** - Comprehensive wallet troubleshooting tools
+- **`/xion-callback`** - Callback endpoint for XION deep linking
+
+### Backend API Endpoints
+- **`GET /`** - API health check and status
+- **`POST /register`** - Register new content on blockchain
+- **`POST /verify`** - Verify content authenticity
+- **`GET /status`** - Get system and service status
+- **`GET /content/{content_id}`** - Retrieve specific content information
+
+### Wallet Connection URLs
+- **XION iOS**: `xion://connect?callback={app_url}&app=NoirCheck`
+- **XION Android**: `intent://connect?callback={app_url}#Intent;scheme=xion;package=com.xion.wallet;end`
+- **MetaMask Universal**: `https://metamask.app.link/dapp/{app_url}`
+- **WalletConnect**: QR code modal with automatic pairing
+
 ## 🌟 Advanced Technical Features
 
 ### 🔧 Modern Technology Stack
@@ -347,6 +416,62 @@ npm run lint
 - [ ] **Customizable themes** beyond dark mode
 - [ ] **Enhanced accessibility** (ARIA, screen readers)
 
+## 🚀 Upcoming Features and Roadmap
+
+### 🔄 Near-term Improvements (Next 30 days)
+- **Real XION SDK Integration**: Replace simulation with production-ready SDK
+- **Enhanced zkTLS Features**: Complete identity verification workflows
+- **Batch Content Registration**: Upload and verify multiple files simultaneously
+- **Advanced Content Analysis**: AI-powered detection of deepfakes and manipulations
+
+### 📱 Mobile App Development (Next 60 days)
+- **Native iOS App**: React Native app with enhanced mobile features
+- **Native Android App**: Optimized for Android-specific wallet integrations
+- **Offline Capabilities**: Verify content without internet connection
+- **Push Notifications**: Alerts for content verification results
+
+### 🌐 Platform Expansion (Next 90 days)
+- **Browser Extension**: One-click verification for any webpage
+- **Social Media Integration**: Direct verification from Twitter, Instagram, etc.
+- **API for Developers**: Public API for third-party integrations
+- **White-label Solutions**: Customizable versions for organizations
+
+### 🔒 Advanced Security Features
+- **Multi-signature Verification**: Require multiple parties to verify content
+- **Biometric Authentication**: Face/fingerprint verification for creators
+- **Tamper-evident Watermarks**: Invisible watermarks for registered content
+- **Blockchain Interoperability**: Support for multiple blockchain networks
+
+### 🎯 Target Integrations
+- **News Organizations**: Verify breaking news and reports
+- **Social Media Platforms**: Built-in authenticity verification
+- **Legal System**: Court-admissible proof of content authenticity
+- **Education Sector**: Verify academic work and research publications
+
+## 🤝 Contributing to NoirCheck
+
+### 🐛 Report Issues
+- Use GitHub Issues for bug reports
+- Include system information and wallet versions
+- Provide steps to reproduce the problem
+
+### 💡 Suggest Features
+- Submit feature requests via GitHub Discussions
+- Include use cases and implementation ideas
+- Consider mobile and accessibility implications
+
+### 🛠️ Development Contributions
+- Fork the repository and create feature branches
+- Follow TypeScript and ESLint conventions
+- Write tests for new wallet integrations
+- Update documentation for new features
+
+### 🧪 Testing New Features
+- Test wallet connections on multiple devices
+- Verify compatibility with different browsers
+- Report performance issues on mobile devices
+- Test with various file types and sizes
+
 ## 📋 Change History
 
 ### 🆕 v2.0.0 - July 2025 (Current)
@@ -364,43 +489,6 @@ npm run lint
 - XION integration with cosmpy (dependency conflicts)
 - Basic UI with dark theme
 - Basic hash and cryptography services
-
-## 🤝 Contributing
-
-NoirCheck is evolving towards a robust production platform. Contributions are especially welcome in the following areas:
-
-### 🎯 Priority Contribution Areas
-1. **Testing**: Implement complete test suites
-2. **Security**: Security audits and best practices
-3. **Performance**: Performance optimizations and scalability
-4. **UX/UI**: User experience improvements
-5. **Documentation**: Technical guides and tutorials
-
-### 📝 How to Contribute
-1. **Fork** the repository
-2. **Create feature branch** (`git checkout -b feature/new-functionality`)
-3. **Implement and test** your functionality
-4. **Commit with descriptive messages** following conventional commits
-5. **Push** to your fork (`git push origin feature/new-functionality`)
-6. **Open Pull Request** with detailed description
-
-### 🔧 Setup for Contributors
-```bash
-# Clone repository
-git clone https://github.com/your-user/NoirsCheck.git
-cd NoirsCheck
-
-# Setup backend
-cd backend && python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
-
-# Setup frontend  
-cd ../frontend && npm install
-
-# Verify functionality
-npm run type-check && echo "✅ Frontend OK"
-cd ../backend && python -c "import fastapi; print('✅ Backend OK')"
-```
 
 ## 📄 License
 
@@ -488,3 +576,86 @@ NoirCheck now includes **complete XION blockchain integration** for real content
 - **Development**: Uses simulated XION service for testing
 - **Production**: Real XION blockchain with Meta Account authentication
 - **Easy Switch**: Just configure environment variables
+
+## 🔗 Wallet Integration Features
+
+### 📱 Mobile-First Wallet Support
+- **XION Wallet**: Native zkTLS integration with deep linking
+- **MetaMask Mobile**: Direct app linking for iOS and Android
+- **WalletConnect v2**: Universal compatibility with 100+ wallets
+- **Smart Detection**: Automatically detects installed wallet apps
+- **Fallback Options**: Guides users to install missing wallets
+
+### 🖥️ Desktop Wallet Support
+- **Browser Extensions**: Direct integration with MetaMask and XION extensions
+- **WalletConnect**: QR code scanning for mobile wallet connections
+- **Multi-wallet Management**: Switch between different connected wallets
+- **Session Persistence**: Remember user's preferred wallet choice
+
+### 🔧 Wallet Diagnostic Tools
+- **Real-time Status**: Live monitoring of wallet connectivity
+- **Installation Detection**: Check if wallet apps are installed
+- **Compatibility Testing**: Verify WalletConnect v2 support
+- **Troubleshooting Guide**: Step-by-step help for connection issues
+- **Device Information**: Display relevant system and browser details
+
+### 🛡️ Security Features
+- **User Verification**: Prevents unauthorized automatic connections
+- **Secure Deep Linking**: Validates wallet app authenticity
+- **Timeout Protection**: Prevents hanging connection attempts
+- **Error Handling**: Graceful fallbacks for failed connections
+
+### 📋 Supported Wallet Operations
+- **Connection Management**: Connect, disconnect, and switch wallets
+- **Account Information**: Display wallet address and public key
+- **Transaction Signing**: Secure content registration on blockchain
+- **Identity Verification**: zkTLS integration for content creators
+
+## 📱 How to Use Wallet Features
+
+### 🔌 Connecting Your Wallet
+
+#### Option 1: XION Wallet (Recommended)
+1. **Desktop**: Install XION browser extension
+2. **Mobile**: Install XION app from App Store/Google Play
+3. Click "Connect XION Wallet" in NoirCheck
+4. Approve connection in your wallet app
+
+#### Option 2: MetaMask
+1. **Desktop**: Install MetaMask browser extension
+2. **Mobile**: Install MetaMask app from App Store/Google Play
+3. Click "Connect MetaMask" in NoirCheck
+4. Approve connection and select account
+
+#### Option 3: WalletConnect (Universal)
+1. Click "Connect with WalletConnect"
+2. Scan QR code with any supported wallet app
+3. Approve connection in your wallet
+4. Return to NoirCheck to complete setup
+
+### 🛠️ Troubleshooting Wallet Connections
+
+#### If Wallet App Doesn't Open
+1. Visit `/wallet-diagnostic` page in NoirCheck
+2. Check if your wallet app is properly installed
+3. Verify app permissions and deep linking settings
+4. Try the WalletConnect option as fallback
+
+#### Connection Timeout or Errors
+1. Ensure your wallet app is updated to latest version
+2. Check internet connection stability
+3. Clear browser cache and try again
+4. Use incognito/private browsing mode
+
+### 🔐 Security Best Practices
+- **Never share** your private keys or seed phrases
+- **Always verify** the website URL before connecting
+- **Use hardware wallets** for large amounts
+- **Keep your wallet apps updated**
+- **Log out** when using public computers
+
+### 📊 Wallet Status Indicators
+- **🟢 Green**: Wallet connected and ready
+- **🟡 Yellow**: Checking wallet status
+- **🔴 Red**: No wallet installed or connection failed
+- **🔄 Blue**: Connection in progress
