@@ -109,7 +109,6 @@ frontend/public/uploads/
 # XION blockchain keys and configs
 *.pem
 *.key
-*wallet*
 *private*
 *secret*
 config/blockchain/
