@@ -51,12 +51,23 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
               </h1>
               
               <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-                Digital Content Authenticity Verification Platform
+                Traditional sign-up with automatic blockchain wallet creation
               </p>
               
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 max-w-2xl mx-auto mb-8">
+                <div className="flex items-center justify-center mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
+                  <span className="text-green-300 font-medium">Simple Registration Process</span>
+                </div>
+                <p className="text-gray-300 text-sm">
+                  Create your account with email and password. We'll automatically generate 
+                  your XION blockchain wallet behind the scenes - no technical knowledge required!
+                </p>
+              </div>
+              
               <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-                Combat misinformation and verify the authenticity of digital content using 
-                blockchain technology and XION's zkTLS integration.
+                Combat misinformation and verify digital content authenticity using 
+                blockchain technology with seamless user experience.
               </p>
             </div>
 

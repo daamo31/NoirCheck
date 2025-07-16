@@ -1,0 +1,581 @@
+/**
+ * User Registration Component with Multiple Wallet Options
+ * 
+ * Registration flow:
+ * 1. Collect basic user information
+ * 2. Choose wallet option:
+ *    - Auto-create XION wallet (default)
+ *    - Link existing XION wallet
+ *    - Link existing MetaMask wallet
+ * 3. Complete registration with selected wallet
+ */
+
+'use client';
+
+import { useState } from 'react';
+import { UserPlus, ArrowLeft, Mail, Lock, User, Eye, EyeOff, CheckCircle, AlertCircle, Wallet, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone } from 'lucide-react';
+import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletService';
+
+interface UserRegistrationProps {
+  onBack: () => void;
+  onComplete: (userData: any) => void;
+}
+
+type RegistrationStep = 'form' | 'wallet' | 'creating' | 'success';
+type WalletOption = 'auto' | 'xion' | 'metamask';
+
+export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProps) {
+  const [step, setStep] = useState<RegistrationStep>('form');
+  const [walletOption, setWalletOption] = useState<WalletOption>('auto');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [connectedWallet, setConnectedWallet] = useState<any>(null);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setError('');
+    setStep('wallet');
+  };
+
+  const handleWalletSelection = async (option: WalletOption) => {
+    setWalletOption(option);
+    setError('');
+
+    if (option === 'auto') {
+      // Proceed directly to creation with auto wallet
+      await handleCreateAccount(null);
+    } else if (option === 'xion') {
+      // Connect XION wallet first
+      await connectXIONWallet();
+    } else if (option === 'metamask') {
+      // Connect MetaMask wallet first
+      await connectMetaMaskWallet();
+    }
+  };
+
+  const connectXIONWallet = async () => {
+    setIsLoading(true);
+    try {
+      const walletAccount = await WalletService.connectXIONWallet();
+      
+      const xionWallet = {
+        type: 'xion',
+        address: walletAccount.address,
+        publicKey: walletAccount.publicKey || '',
+        isExisting: true
+      };
+      
+      setConnectedWallet(xionWallet);
+    } catch (error: any) {
+      console.error('XION connection error:', error);
+      if (error?.message?.includes('User denied')) {
+        setError('Usuario canceló la conexión del wallet. Por favor intenta de nuevo.');
+      } else if (error?.message?.includes('not installed')) {
+        setError('XION wallet no encontrada. Por favor instala XION wallet o usa la opción de auto-crear.');
+      } else {
+        setError('Error al conectar XION wallet. Por favor intenta de nuevo o usa auto-crear.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const connectMetaMaskWallet = async () => {
+    setIsLoading(true);
+    try {
+      const walletAccount = await WalletService.connectMetaMask();
+      
+      const metaMaskWallet = {
+        type: 'metamask',
+        address: walletAccount.address,
+        isExisting: true
+      };
+      
+      setConnectedWallet(metaMaskWallet);
+    } catch (error: any) {
+      console.error('MetaMask connection error:', error);
+      if (error?.message?.includes('not installed')) {
+        setError('MetaMask no está instalada. Por favor instala MetaMask o usa la opción de auto-crear.');
+      } else if (error?.message?.includes('User denied')) {
+        setError('Usuario canceló la conexión. Por favor intenta de nuevo.');
+      } else {
+        setError('Error al conectar MetaMask. Por favor intenta de nuevo.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateAccount = async (wallet: any) => {
+    setStep('creating');
+    setIsLoading(true);
+
+    try {
+      // Simulate account creation process
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      let userWalletInfo;
+      
+      if (walletOption === 'auto') {
+        // Auto-create XION wallet
+        userWalletInfo = {
+          xionWallet: {
+            address: `xion1${Math.random().toString(36).substring(2, 15)}`,
+            publicKey: `02${Math.random().toString(16).substring(2, 66)}`,
+            createdAt: new Date().toISOString(),
+            isAutoCreated: true
+          }
+        };
+      } else if (walletOption === 'xion' && connectedWallet) {
+        // Use connected XION wallet
+        userWalletInfo = {
+          xionWallet: {
+            address: connectedWallet.address,
+            publicKey: connectedWallet.publicKey,
+            createdAt: new Date().toISOString(),
+            isAutoCreated: false
+          }
+        };
+      } else if (walletOption === 'metamask' && connectedWallet) {
+        // Use connected MetaMask wallet + create XION wallet
+        userWalletInfo = {
+          xionWallet: {
+            address: `xion1${Math.random().toString(36).substring(2, 15)}`,
+            publicKey: `02${Math.random().toString(16).substring(2, 66)}`,
+            createdAt: new Date().toISOString(),
+            isAutoCreated: true
+          },
+          metaMaskWallet: {
+            address: connectedWallet.address,
+            createdAt: new Date().toISOString()
+          }
+        };
+      }
+
+      const userData = {
+        id: `user_${Date.now()}`,
+        email: formData.email,
+        username: formData.email.split('@')[0],
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        registeredAt: new Date().toISOString(),
+        totalRegistrations: 0,
+        totalVerifications: 0,
+        lastActivity: new Date().toISOString(),
+        registrationMethod: walletOption,
+        ...userWalletInfo
+      };
+
+      setStep('success');
+      
+      // Complete registration after showing success
+      setTimeout(() => {
+        onComplete(userData);
+      }, 2000);
+
+    } catch (error) {
+      setError('Failed to create account. Please try again.');
+      setStep('wallet');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to home
+          </button>
+          
+          <div className="bg-blue-600 p-3 rounded-2xl w-fit mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-white" />
+          </div>
+          
+          {step === 'form' && (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+              <p className="text-gray-400">Join NoirCheck to verify digital content</p>
+            </>
+          )}
+          
+          {step === 'wallet' && (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-2">Choose Wallet</h1>
+              <p className="text-gray-400">Select how you want to manage your digital identity</p>
+            </>
+          )}
+          
+          {step === 'creating' && (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-2">Creating Account</h1>
+              <p className="text-gray-400">Setting up your secure wallet...</p>
+            </>
+          )}
+          
+          {step === 'success' && (
+            <>
+              <h1 className="text-3xl font-bold text-white mb-2">Welcome!</h1>
+              <p className="text-gray-400">Your account has been created successfully</p>
+            </>
+          )}
+        </div>
+
+        {/* Form Step */}
+        {step === 'form' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {/* Name Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    placeholder="John"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    placeholder="Doe"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    placeholder="john@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full pl-10 pr-12 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    placeholder="Create a secure password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full pl-10 pr-12 py-3 bg-white/5 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                    placeholder="Confirm your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+                  <p className="text-red-200 text-sm">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+              >
+                Continue to Wallet Setup
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Wallet Selection Step */}
+        {step === 'wallet' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-6">
+            {/* Mobile Detection Notice */}
+            {isMobile() && (
+              <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Smartphone className="w-5 h-5 text-blue-400 mt-0.5" />
+                  <div>
+                    <h3 className="text-blue-300 font-medium mb-1">Dispositivo Móvil Detectado</h3>
+                    <p className="text-blue-200 text-sm">
+                      {isIOS() && 'iOS detectado - MetaMask y XION funcionan perfectamente en iPhone/iPad'}
+                      {isAndroid() && 'Android detectado - MetaMask y XION son compatibles con tu dispositivo'}
+                      {!isIOS() && !isAndroid() && 'Dispositivo móvil detectado - Las wallets móviles son soportadas'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Wallet Options */}
+            <div className="space-y-4">
+              {/* Auto-create Option */}
+              <div 
+                onClick={() => handleWalletSelection('auto')}
+                className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 transition-all"
+              >
+                <div className="flex items-start space-x-3">
+                  <Plus className="w-6 h-6 text-blue-400 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="text-blue-300 font-medium mb-1">Auto-crear XION Wallet (Recomendado)</h3>
+                    <p className="text-blue-200 text-sm">
+                      Crearemos automáticamente un wallet XION seguro para ti. Perfecto para principiantes.
+                      {isMobile() && ' Funciona perfectamente en móviles.'}
+                    </p>
+                    <div className="mt-2">
+                      <span className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                        Recomendado
+                      </span>
+                      {isMobile() && (
+                        <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
+                          Móvil ✓
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Link XION Wallet */}
+              <div 
+                onClick={() => handleWalletSelection('xion')}
+                className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:bg-purple-500/30 transition-all"
+              >
+                <div className="flex items-start space-x-3">
+                  <LinkIcon className="w-6 h-6 text-purple-400 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="text-purple-300 font-medium mb-1">Conectar XION Wallet Existente</h3>
+                    <p className="text-purple-200 text-sm">
+                      Conecta tu wallet XION existente a esta cuenta.
+                      {isMobile() && (
+                        isIOS() ? ' Abrirá la app XION en iOS.' : 
+                        isAndroid() ? ' Abrirá la app XION en Android.' :
+                        ' Compatible con app móvil de XION.'
+                      )}
+                    </p>
+                    {isMobile() && (
+                      <div className="mt-2">
+                        <span className="inline-block bg-purple-600 text-white text-xs px-2 py-1 rounded">
+                          {isIOS() ? 'iOS App' : isAndroid() ? 'Android App' : 'Móvil App'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Link MetaMask */}
+              <div 
+                onClick={() => handleWalletSelection('metamask')}
+                className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 cursor-pointer hover:bg-orange-500/30 transition-all"
+              >
+                <div className="flex items-start space-x-3">
+                  <ExternalLink className="w-6 h-6 text-orange-400 mt-1" />
+                  <div className="flex-1">
+                    <h3 className="text-orange-300 font-medium mb-1">Conectar MetaMask Wallet</h3>
+                    <p className="text-orange-200 text-sm">
+                      Conecta tu wallet MetaMask. También crearemos un wallet XION para funciones blockchain.
+                      {isMobile() && (
+                        isIOS() ? ' MetaMask funciona perfectamente en iOS.' : 
+                        isAndroid() ? ' MetaMask es totalmente compatible con Android.' :
+                        ' MetaMask móvil soportado.'
+                      )}
+                    </p>
+                    {isMobile() && (
+                      <div className="mt-2 space-x-2">
+                        <span className="inline-block bg-orange-600 text-white text-xs px-2 py-1 rounded">
+                          {isIOS() ? 'iOS ✓' : isAndroid() ? 'Android ✓' : 'Móvil ✓'}
+                        </span>
+                        <span className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                          + XION Auto
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Connected Wallet Display */}
+            {connectedWallet && (
+              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <div>
+                    <h3 className="text-green-300 font-medium">Wallet Connected</h3>
+                    <p className="text-green-200 text-sm">
+                      {connectedWallet.type === 'xion' ? 'XION' : 'MetaMask'}: {connectedWallet.address.substring(0, 10)}...
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleCreateAccount(connectedWallet)}
+                  disabled={isLoading}
+                  className="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Connecting...
+                    </>
+                  ) : (
+                    'Complete Registration'
+                  )}
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
+                <div className="flex items-center text-red-200 text-sm">
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  {error}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep('form')}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+            >
+              Back to Form
+            </button>
+          </div>
+        )}
+
+        {/* Creating Step */}
+        {step === 'creating' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 text-center">
+            <div className="mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <h3 className="text-xl font-semibold text-white mb-2">Creating Your Account</h3>
+              <p className="text-gray-400">
+                {walletOption === 'auto' && 'Generating your secure XION wallet...'}
+                {walletOption === 'xion' && 'Linking your XION wallet...'}
+                {walletOption === 'metamask' && 'Linking MetaMask and creating XION wallet...'}
+              </p>
+            </div>
+            
+            <div className="space-y-2 text-left">
+              <div className="flex items-center text-green-400">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                <span className="text-sm">Account information saved</span>
+              </div>
+              <div className="flex items-center text-green-400">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                <span className="text-sm">Wallet configuration</span>
+              </div>
+              <div className="flex items-center text-gray-400">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></div>
+                <span className="text-sm">Finalizing setup...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Step */}
+        {step === 'success' && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 text-center">
+            <div className="mb-6">
+              <div className="bg-green-600 p-4 rounded-full w-fit mx-auto mb-4">
+                <CheckCircle className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Account Created!</h3>
+              <p className="text-gray-400">
+                Welcome to NoirCheck, {formData.firstName}! Your account and wallet are ready.
+              </p>
+            </div>
+            
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-left">
+              <h4 className="text-green-300 font-medium mb-2">What's Next?</h4>
+              <ul className="text-green-200 text-sm space-y-1">
+                <li>• Start verifying digital content</li>
+                <li>• Register your original content</li>
+                <li>• Explore blockchain verification features</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

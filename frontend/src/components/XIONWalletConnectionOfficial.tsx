@@ -25,7 +25,6 @@ import {
   useAbstraxionAccount,
   useAbstraxionSigningClient,
   useAbstraxionClient,
-  useModal,
 } from "@burnt-labs/abstraxion";
 
 export function XIONWalletConnectionOfficial() {
@@ -33,9 +32,9 @@ export function XIONWalletConnectionOfficial() {
   const { data: account, isConnected, isConnecting } = useAbstraxionAccount();
   const { client, signArb, logout } = useAbstraxionSigningClient();
   const { client: queryClient } = useAbstraxionClient();
-  const [showModal, setShowModal] = useModal();
-
-  // Local state
+  
+  // Local state for modal management
+  const [showModal, setShowModal] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -273,7 +272,9 @@ export function XIONWalletConnectionOfficial() {
       </div>
 
       {/* XION Modal */}
-      <Abstraxion onClose={() => setShowModal(false)} />
+      {showModal && (
+        <Abstraxion onClose={() => setShowModal(false)} />
+      )}
     </div>
   );
 }

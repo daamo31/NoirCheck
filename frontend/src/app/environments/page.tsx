@@ -59,11 +59,27 @@ export default function EnvironmentPage() {
                 </div>
               </Link>
 
-              {/* XION Wallet */}
-              <Link href="/wallet" className="group">
+              {/* Mobile Support */}
+              <Link href="/mobile" className="group">
                 <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-green-500/50 transition-all duration-300 hover:transform hover:scale-105">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mr-4">
+                      <Blocks className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">Mobile Support</h3>
+                  </div>
+                  <p className="text-gray-300 mb-4">
+                    Learn about wallet support for iOS and Android devices
+                  </p>
+                  <div className="text-green-400 font-medium">View Mobile Info →</div>
+                </div>
+              </Link>
+
+              {/* XION Wallet */}
+              <Link href="/wallet" className="group">
+                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105">
+                  <div className="flex items-center mb-6">
+                    <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mr-4">
                       <Wallet className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold text-white">XION Wallet</h3>
@@ -71,23 +87,7 @@ export default function EnvironmentPage() {
                   <p className="text-gray-300 mb-4">
                     Connect and manage your XION wallet with gasless transactions
                   </p>
-                  <div className="text-green-400 font-medium">Connect Wallet →</div>
-                </div>
-              </Link>
-
-              {/* Development Environment */}
-              <Link href="/dev" className="group">
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105">
-                  <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mr-4">
-                      <Code className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white">Development</h3>
-                  </div>
-                  <p className="text-gray-300 mb-4">
-                    Simulated environment for testing and development
-                  </p>
-                  <div className="text-purple-400 font-medium">Enter Dev Mode →</div>
+                  <div className="text-purple-400 font-medium">Connect Wallet →</div>
                 </div>
               </Link>
             </div>
