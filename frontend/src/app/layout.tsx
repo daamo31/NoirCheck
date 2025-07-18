@@ -1,11 +1,13 @@
 "use client";
 
 // Root layout for NoirCheck web application
-// Sets up global styles, font, and metadata for SEO and accessibility
+// Sets up global styles, font, metadata, and XION integration
 
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "../styles/xion-overrides.css";
 import Navigation from "@/components/Navigation";
+import SimpleXIONProvider from "@/components/SimpleXIONProvider";
 
 // Load Inter font with Latin subset
 const inter = Inter({ subsets: ["latin"] });
@@ -21,8 +23,10 @@ export default function RootLayout({
     <html lang="en" className="dark">
       {/* Apply Inter font and antialiasing to body */}
       <body className={`${inter.className} antialiased`}>
-        <Navigation />
-        {children}
+        <SimpleXIONProvider>
+          <Navigation />
+          {children}
+        </SimpleXIONProvider>
       </body>
     </html>
   );

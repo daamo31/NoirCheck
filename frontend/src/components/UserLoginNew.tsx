@@ -13,6 +13,10 @@
 import { useState } from 'react';
 import { Lock, ArrowLeft, User, Mail, Eye, EyeOff, LogIn, Wallet, ExternalLink, AlertTriangle, Smartphone } from 'lucide-react';
 import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletService';
+import { UserStorageService } from '../services/userStorageService';
+import { useXIONAuth } from '../services/useXIONAuth';
+import { useModal } from '@burnt-labs/abstraxion';
+import FullyCustomXIONModal from './FullyCustomXIONModal';
 
 interface UserLoginProps {
   onBack: () => void;
@@ -20,6 +24,10 @@ interface UserLoginProps {
 }
 
 export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
+  const { account, isConnected, login: xionLogin, logout: xionLogout } = useXIONAuth();
+  const [, setShowModal] = useModal();
+  const [showModal, setShowModalState] = useState(false);
+  
   const [loginMethod, setLoginMethod] = useState<'traditional' | 'xion' | 'metamask'>('traditional');
   const [formData, setFormData] = useState({
     email: '',
@@ -35,31 +43,31 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
     setError('');
 
     try {
-      // Simulated login - replace with real authentication
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Validación básica de credenciales
+      if (!formData.email || !formData.password) {
+        throw new Error('Please enter both email and password');
+      }
 
-      // For now, create demo user data
-      const userData = {
-        id: `user_${Date.now()}`,
-        email: formData.email,
-        username: formData.email.split('@')[0],
-        firstName: '',
-        lastName: '',
-        registeredAt: new Date().toISOString(),
-        totalRegistrations: 0,
-        totalVerifications: 0,
-        lastActivity: new Date().toISOString(),
-        // XION wallet info (created during registration)
-        xionWallet: {
-          address: `xion1${Math.random().toString(36).substring(2, 15)}`,
-          publicKey: `02${Math.random().toString(16).substring(2, 66)}`,
-          createdAt: new Date().toISOString()
-        }
-      };
+      // Validar formato de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
 
+      // Autenticación real usando UserStorageService
+      const userData = UserStorageService.authenticateUser(formData.email, formData.password);
+      
+      if (!userData) {
+        throw new Error('Invalid email or password. Please check your credentials.');
+      }
+
+      console.log('Login successful for:', userData.email);
+      
+      // El userData ya viene con toda la información necesaria del UserStorageService
       onLogin(userData);
     } catch (error) {
-      setError('Invalid credentials. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Invalid credentials. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -70,37 +78,63 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
     setError('');
 
     try {
-      const walletAccount = await WalletService.connectXIONWallet();
+      console.log('User initiated XION wallet login');
       
-      // Simular búsqueda del usuario por dirección de wallet
-      const userData = {
-        id: 'user_xion_123',
-        email: 'user@noircheck.com',
-        username: 'xion_user',
-        firstName: 'XION',
-        lastName: 'User',
-        registeredAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        totalRegistrations: 3,
-        totalVerifications: 7,
-        lastActivity: new Date().toISOString(),
-        xionWallet: {
-          address: walletAccount.address,
-          publicKey: walletAccount.publicKey || '',
-          createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        loginMethod: 'xion'
-      };
+      // Check if already connected
+      if (isConnected && account) {
+        console.log('XION wallet already connected:', account);
+        
+        // Find registered user with this wallet address
+        const userData = UserStorageService.findUserByWalletAddress(account.address);
+        
+        if (!userData) {
+          throw new Error('Esta wallet XION no está registrada. Por favor crea una cuenta primero.');
+        }
 
-      onLogin(userData);
+        console.log('XION wallet login successful:', userData);
+        onLogin(userData);
+        return;
+      }
+      
+      // If not connected, show the modal and attempt to connect
+      console.log('Opening XION connection modal...');
+      setShowModalState(true);
+      
+      // Use the xionLogin function from our hook
+      await xionLogin();
+      
+      // The connection will be handled by the useEffect in the hook
+      // We'll check for successful connection in a timeout
+      const checkConnection = () => {
+        if (isConnected && account) {
+          // Find registered user with this wallet address
+          const userData = UserStorageService.findUserByWalletAddress(account.address);
+          
+          if (!userData) {
+            throw new Error('Esta wallet XION no está registrada. Por favor crea una cuenta primero.');
+          }
+
+          console.log('XION wallet login successful:', userData);
+          onLogin(userData);
+          setIsLoading(false);
+        } else {
+          // Check again in a moment
+          setTimeout(checkConnection, 1000);
+        }
+      };
+      
+      // Start checking for connection
+      setTimeout(checkConnection, 1000);
+      
     } catch (error: any) {
       console.error('XION login error:', error);
-      if (error?.message?.includes('not installed')) {
-        setError('XION wallet no encontrada o no registrada. Por favor crea una cuenta primero.');
-      } else {
-        setError('XION wallet no conectada o no registrada. Por favor crea una cuenta primero.');
-      }
-    } finally {
       setIsLoading(false);
+      
+      if (error?.message?.includes('no está registrada')) {
+        setError(error.message);
+      } else {
+        setError('Error connecting to XION wallet. Please try again.');
+      }
     }
   };
 
@@ -111,29 +145,21 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
     try {
       const walletAccount = await WalletService.connectMetaMask();
 
-      // Simular búsqueda del usuario por dirección de MetaMask
-      const userData = {
-        id: 'user_metamask_456',
-        email: 'metamask@noircheck.com',
-        username: 'metamask_user',
-        firstName: 'MetaMask',
-        lastName: 'User',
-        registeredAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        totalRegistrations: 5,
-        totalVerifications: 12,
-        lastActivity: new Date().toISOString(),
-        metaMaskWallet: {
-          address: walletAccount.address,
-          createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        loginMethod: 'metamask'
-      };
+      // Buscar usuario registrado con esta dirección de MetaMask
+      const userData = UserStorageService.findUserByWalletAddress(walletAccount.address);
+      
+      if (!userData) {
+        throw new Error('Esta wallet MetaMask no está registrada. Por favor crea una cuenta primero.');
+      }
 
+      console.log('MetaMask wallet login successful:', userData);
       onLogin(userData);
     } catch (error: any) {
       console.error('MetaMask login error:', error);
       if (error?.message?.includes('not installed')) {
         setError('MetaMask no está instalada. Por favor instala MetaMask o crea una cuenta.');
+      } else if (error?.message?.includes('no está registrada')) {
+        setError(error.message);
       } else {
         setError('MetaMask wallet no conectada o no registrada. Por favor crea una cuenta primero.');
       }
@@ -142,28 +168,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
     }
   };
 
-  // Quick demo login
-  const handleDemoLogin = () => {
-    const demoUserData = {
-      id: 'demo-user',
-      email: 'demo@noircheck.com',
-      username: 'demo',
-      firstName: 'Demo',
-      lastName: 'User',
-      registeredAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      totalRegistrations: 5,
-      totalVerifications: 12,
-      lastActivity: new Date().toISOString(),
-      xionWallet: {
-        address: 'xion1demo7user8wallet9address0example123',
-        publicKey: '02demo1234567890abcdef1234567890abcdef1234567890abcdef123456',
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      loginMethod: 'demo'
-    };
-
-    onLogin(demoUserData);
-  };
+  // ELIMINADO: Ya no necesitamos login demo, ahora usamos usuarios reales
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -334,6 +339,11 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     Connecting XION Wallet...
                   </>
+                ) : isConnected && account ? (
+                  <>
+                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    Connected: {account.address.slice(0, 6)}...{account.address.slice(-4)}
+                  </>
                 ) : (
                   <>
                     <Wallet className="w-5 h-5 mr-2" />
@@ -403,17 +413,6 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
             </div>
           </div>
 
-          {/* Demo Login */}
-          <div className="border-t border-gray-600 pt-4">
-            <button
-              onClick={handleDemoLogin}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
-            >
-              <User className="w-5 h-5 mr-2" />
-              Demo Login (Development)
-            </button>
-          </div>
-
           {/* Footer */}
           <div className="text-center">
             <p className="text-gray-400 text-sm mb-4">
@@ -428,6 +427,12 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
           </div>
         </div>
       </div>
+      
+      {/* Custom XION Modal */}
+      <FullyCustomXIONModal 
+        isOpen={showModal} 
+        onClose={() => setShowModalState(false)} 
+      />
     </div>
   );
 }

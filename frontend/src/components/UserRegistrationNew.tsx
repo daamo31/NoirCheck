@@ -4,7 +4,7 @@
  * Registration flow:
  * 1. Collect basic user information
  * 2. Choose wallet option:
- *    - Auto-create XION wallet (default)
+ *    - Create new XION wallet (requires XION extension/app)
  *    - Link existing XION wallet
  *    - Link existing MetaMask wallet
  * 3. Complete registration with selected wallet
@@ -15,6 +15,8 @@
 import { useState } from 'react';
 import { UserPlus, ArrowLeft, Mail, Lock, User, Eye, EyeOff, CheckCircle, AlertCircle, Wallet, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone } from 'lucide-react';
 import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletService';
+import { UserStorageService } from '../services/userStorageService';
+import { useXIONAuth } from '../services/useXIONAuth';
 
 interface UserRegistrationProps {
   onBack: () => void;
@@ -22,11 +24,11 @@ interface UserRegistrationProps {
 }
 
 type RegistrationStep = 'form' | 'wallet' | 'creating' | 'success';
-type WalletOption = 'auto' | 'xion' | 'metamask';
+type WalletOption = 'create' | 'xion' | 'metamask';
 
 export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProps) {
   const [step, setStep] = useState<RegistrationStep>('form');
-  const [walletOption, setWalletOption] = useState<WalletOption>('auto');
+  const [walletOption, setWalletOption] = useState<WalletOption>('create');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -39,6 +41,9 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectedWallet, setConnectedWallet] = useState<any>(null);
+  
+  // XION authentication hook
+  const { account: xionAccount, isConnected: xionConnected, login: xionLogin, logout: xionLogout, isLoading: xionLoading, error: xionError } = useXIONAuth();
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +67,9 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     setWalletOption(option);
     setError('');
 
-    if (option === 'auto') {
-      // Proceed directly to creation with auto wallet
-      await handleCreateAccount(null);
+    if (option === 'create') {
+      // Create new XION wallet through XION service
+      await createXIONWallet();
     } else if (option === 'xion') {
       // Connect XION wallet first
       await connectXIONWallet();
@@ -74,27 +79,63 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     }
   };
 
+  const createXIONWallet = async () => {
+    setIsLoading(true);
+    try {
+      // Create new XION wallet using XION Abstraxion
+      await xionLogin();
+      
+      if (xionAccount) {
+        const xionWallet = {
+          type: 'xion',
+          address: xionAccount.address,
+          publicKey: xionAccount.publicKey || '',
+          isExisting: false,
+          isNewlyCreated: true
+        };
+        
+        setConnectedWallet(xionWallet);
+        
+        // Proceed to create account with the new wallet
+        await handleCreateAccount(xionWallet);
+      }
+    } catch (error: any) {
+      console.error('XION wallet creation error:', error);
+      if (error?.message?.includes('User denied') || error?.message?.includes('cancelled')) {
+        setError('User cancelled wallet creation. Please try again.');
+      } else if (error?.message?.includes('not installed')) {
+        setError('XION wallet not found. Please install XION wallet extension or app first.');
+      } else {
+        setError('Error creating XION wallet. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const connectXIONWallet = async () => {
     setIsLoading(true);
     try {
-      const walletAccount = await WalletService.connectXIONWallet();
+      await xionLogin();
       
-      const xionWallet = {
-        type: 'xion',
-        address: walletAccount.address,
-        publicKey: walletAccount.publicKey || '',
-        isExisting: true
-      };
-      
-      setConnectedWallet(xionWallet);
+      if (xionAccount) {
+        const xionWallet = {
+          type: 'xion',
+          address: xionAccount.address,
+          publicKey: xionAccount.publicKey || '',
+          isExisting: true
+        };
+        
+        setConnectedWallet(xionWallet);
+      }
     } catch (error: any) {
       console.error('XION connection error:', error);
-      if (error?.message?.includes('User denied')) {
-        setError('Usuario canceló la conexión del wallet. Por favor intenta de nuevo.');
+      if (error?.message?.includes('User denied') || error?.message?.includes('cancelled')) {
+        setError('User cancelled wallet connection. Please try again.');
       } else if (error?.message?.includes('not installed')) {
-        setError('XION wallet no encontrada. Por favor instala XION wallet o usa la opción de auto-crear.');
+        setError('XION wallet not found. Please install XION wallet or use auto-create option.');
       } else {
-        setError('Error al conectar XION wallet. Por favor intenta de nuevo o usa auto-crear.');
+        setError('Error connecting XION wallet. Please try again or use auto-create.');
       }
     } finally {
       setIsLoading(false);
@@ -132,19 +173,30 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     setIsLoading(true);
 
     try {
-      // Simulate account creation process
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Validar que todos los campos estén completos
+      if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+        throw new Error('All fields are required');
+      }
+
+      // Verificar si el email ya está registrado
+      const existingUser = UserStorageService.findUserByEmail(formData.email);
+      if (existingUser) {
+        throw new Error('Email already registered. Please use a different email or go to login.');
+      }
+
+      console.log('Creating user account...');
 
       let userWalletInfo;
       
-      if (walletOption === 'auto') {
-        // Auto-create XION wallet
+      if (walletOption === 'create') {
+        // Create new XION wallet - wallet is already created by this point
         userWalletInfo = {
           xionWallet: {
-            address: `xion1${Math.random().toString(36).substring(2, 15)}`,
-            publicKey: `02${Math.random().toString(16).substring(2, 66)}`,
+            address: connectedWallet.address,
+            publicKey: connectedWallet.publicKey,
             createdAt: new Date().toISOString(),
-            isAutoCreated: true
+            isAutoCreated: false,
+            isNewlyCreated: true
           }
         };
       } else if (walletOption === 'xion' && connectedWallet) {
@@ -173,26 +225,28 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
         };
       }
 
-      const userData = {
-        id: `user_${Date.now()}`,
+      // Crear usuario real en el sistema de almacenamiento
+      const userData = UserStorageService.registerUser({
         email: formData.email,
+        password: formData.password, // In production, this would be hashed
         username: formData.email.split('@')[0],
         firstName: formData.firstName,
         lastName: formData.lastName,
-        registeredAt: new Date().toISOString(),
         totalRegistrations: 0,
         totalVerifications: 0,
-        lastActivity: new Date().toISOString(),
         registrationMethod: walletOption,
+        // Primary address for dashboard display
+        address: userWalletInfo?.xionWallet?.address || userWalletInfo?.metaMaskWallet?.address,
         ...userWalletInfo
-      };
+      });
 
+      console.log('User account created successfully:', userData.email);
       setStep('success');
       
-      // Complete registration after showing success
+      // Complete registration immediately after showing success briefly
       setTimeout(() => {
         onComplete(userData);
-      }, 2000);
+      }, 500); // Reducido de 2000ms a 500ms
 
     } catch (error) {
       setError('Failed to create account. Please try again.');
@@ -388,26 +442,30 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
             {/* Wallet Options */}
             <div className="space-y-4">
-              {/* Auto-create Option */}
+              {/* Create New XION Wallet Option */}
               <div 
-                onClick={() => handleWalletSelection('auto')}
+                onClick={() => handleWalletSelection('create')}
                 className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 transition-all"
               >
                 <div className="flex items-start space-x-3">
                   <Plus className="w-6 h-6 text-blue-400 mt-1" />
                   <div className="flex-1">
-                    <h3 className="text-blue-300 font-medium mb-1">Auto-crear XION Wallet (Recomendado)</h3>
+                    <h3 className="text-blue-300 font-medium mb-1">Create New XION Wallet (Recommended)</h3>
                     <p className="text-blue-200 text-sm">
-                      Crearemos automáticamente un wallet XION seguro para ti. Perfecto para principiantes.
-                      {isMobile() && ' Funciona perfectamente en móviles.'}
+                      Create a new XION wallet using official Abstraxion service. 
+                      Real blockchain integration with Meta Account authentication.
+                      {isMobile() && ' Optimized for mobile experience.'}
                     </p>
                     <div className="mt-2">
                       <span className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                        Recomendado
+                        Real XION
+                      </span>
+                      <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
+                        Testnet
                       </span>
                       {isMobile() && (
                         <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
-                          Móvil ✓
+                          Mobile ✓
                         </span>
                       )}
                     </div>
@@ -423,13 +481,13 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                 <div className="flex items-start space-x-3">
                   <LinkIcon className="w-6 h-6 text-purple-400 mt-1" />
                   <div className="flex-1">
-                    <h3 className="text-purple-300 font-medium mb-1">Conectar XION Wallet Existente</h3>
+                    <h3 className="text-purple-300 font-medium mb-1">Connect Existing XION Wallet</h3>
                     <p className="text-purple-200 text-sm">
-                      Conecta tu wallet XION existente a esta cuenta.
+                      Connect your existing XION wallet to this account.
                       {isMobile() && (
-                        isIOS() ? ' Abrirá la app XION en iOS.' : 
-                        isAndroid() ? ' Abrirá la app XION en Android.' :
-                        ' Compatible con app móvil de XION.'
+                        isIOS() ? ' Will open XION app on iOS.' : 
+                        isAndroid() ? ' Will open XION app on Android.' :
+                        ' Compatible with XION mobile app.'
                       )}
                     </p>
                     {isMobile() && (
@@ -529,7 +587,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
               <h3 className="text-xl font-semibold text-white mb-2">Creating Your Account</h3>
               <p className="text-gray-400">
-                {walletOption === 'auto' && 'Generating your secure XION wallet...'}
+                {walletOption === 'create' && 'Creating your secure XION wallet...'}
                 {walletOption === 'xion' && 'Linking your XION wallet...'}
                 {walletOption === 'metamask' && 'Linking MetaMask and creating XION wallet...'}
               </p>

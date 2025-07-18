@@ -1,6 +1,6 @@
 /**
  * Wallet Service for Mobile and Desktop
- * Handles XION, MetaMask, and WalletConnect integrations
+ * Handles XION (using @burnt-labs/abstraxion), MetaMask, and WalletConnect integrations
  */
 
 // Utility to detect mobile devices
@@ -37,15 +37,23 @@ export interface WalletAccount {
 }
 
 export class WalletService {
+  // XION Configuration based on official documentation
+  private static readonly XION_CONFIG = {
+    treasury: "xion1r0tt64mdld2svywzeaf4pa7ezsg6agkyajk48ea398njywdl28rs3jhvry",
+    gasPrice: "0.001uxion",
+    rpcUrl: "https://rpc.xion-testnet-2.burnt.com:443",
+    restUrl: "https://api.xion-testnet-2.burnt.com:443",
+    callbackUrl: "noircheck://", // Should match your app's scheme
+  };
+
   static async connectXIONWallet(): Promise<WalletAccount> {
     try {
-      // En móvil, usar deep linking o redirección a XION app
+      // Import XION libraries dynamically based on environment
       if (isMobile()) {
         return this.connectXIONMobile();
+      } else {
+        return this.connectXIONDesktop();
       }
-
-      // En desktop, usar extensión del navegador
-      return this.connectXIONDesktop();
     } catch (error) {
       console.error('XION connection failed:', error);
       throw new Error('Failed to connect XION wallet');
@@ -54,54 +62,34 @@ export class WalletService {
 
   private static async connectXIONDesktop(): Promise<WalletAccount> {
     try {
-      // Intentar usar @burnt-labs/abstraxion
-      const { Abstraxion, useAbstraxionAccount } = await import('@burnt-labs/abstraxion');
+      // For web/desktop Next.js apps, we need to use the Abstraxion hooks
+      // This method should be called from a React component that has access to the hooks
       
-      // Verificar si hay una cuenta conectada
-      if (window.abstraxion) {
-        const accounts = await window.abstraxion.getAccounts();
-        if (accounts && accounts.length > 0) {
-          return {
-            address: accounts[0].address,
-            publicKey: accounts[0].pubkey,
-            type: 'xion'
-          };
-        }
-      }
-
-      throw new Error('XION wallet not connected');
+      console.log('XION desktop connection - use useAbstraxionAccount and useAbstraxionSigningClient hooks');
+      
+      // For now, throw error to indicate this should be handled by React components
+      throw new Error('XION integration should be handled by React components using useAbstraxionAccount and useAbstraxionSigningClient hooks. See updated implementation in components.');
+      
     } catch (error) {
-      // Fallback: simular conexión para desarrollo
-      console.warn('XION desktop connection failed, using simulation:', error);
-      return {
-        address: `xion1${Math.random().toString(36).substring(2, 15)}`,
-        publicKey: `02${Math.random().toString(16).substring(2, 66)}`,
-        type: 'xion'
-      };
+      console.error('XION desktop connection failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`XION wallet connection failed: ${errorMessage}`);
     }
   }
 
   private static async connectXIONMobile(): Promise<WalletAccount> {
     try {
-      // Para móvil, usamos deep linking a la app de XION
-      const isXIONAppInstalled = await this.checkXIONAppInstalled();
+      // For mobile web apps, we can still use the same Abstraxion hooks
+      // The provider will handle the mobile authentication flow
       
-      if (!isXIONAppInstalled) {
-        // Redirigir a instalación de XION app
-        this.redirectToXIONAppStore();
-        throw new Error('XION app not installed');
-      }
-
-      // Usar deep linking para conectar
-      const connectionResult = await this.connectViaDeeperLink();
-      return connectionResult;
+      console.log('XION mobile connection - use useAbstraxionAccount hook in React components');
+      
+      // For now, throw error to indicate this should be handled by React components
+      throw new Error('XION mobile integration should be handled by React components using useAbstraxionAccount hook. See updated implementation in components.');
+      
     } catch (error) {
-      console.warn('XION mobile connection failed, using simulation:', error);
-      return {
-        address: `xion1mobile${Math.random().toString(36).substring(2, 10)}`,
-        publicKey: `02mobile${Math.random().toString(16).substring(2, 58)}`,
-        type: 'xion'
-      };
+      console.error('XION mobile connection failed:', error);
+      throw error;
     }
   }
 
@@ -144,29 +132,29 @@ export class WalletService {
   }
 
   private static async connectMetaMaskMobile(): Promise<WalletAccount> {
-    // En móvil, verificar si MetaMask app está instalada
+    // On mobile, check if MetaMask app is installed
     const isMetaMaskInstalled = await this.checkMetaMaskMobileApp();
     
     if (!isMetaMaskInstalled) {
-      // Redirigir a instalación de MetaMask
+      // Redirect to MetaMask installation
       this.redirectToMetaMaskAppStore();
       throw new Error('MetaMask app not installed');
     }
 
-    // Usar deep linking para MetaMask móvil
+    // Use deep linking for MetaMask mobile
     return this.connectMetaMaskViaDeepLink();
   }
 
-  // WalletConnect v2 para máxima compatibilidad móvil
+  // WalletConnect v2 for maximum mobile compatibility
   static async connectWalletConnect(): Promise<WalletAccount> {
     try {
       // Importar WalletConnect v2 dinámicamente
       const { SignClient } = await import('@walletconnect/sign-client');
       const QRCodeModal = (await import('@walletconnect/qrcode-modal')).default;
 
-      // Configurar cliente WalletConnect v2
+      // Configure WalletConnect v2 client
       const signClient = await SignClient.init({
-        projectId: 'c88b2e1b7e0a4b8c9d3e4f5a6b7c8d9e', // Reemplazar con tu Project ID real
+        projectId: 'c88b2e1b7e0a4b8c9d3e4f5a6b7c8d9e', // Replace with your real Project ID
         metadata: {
           name: 'NoirCheck',
           description: 'Digital content authenticity verification platform',
@@ -275,24 +263,29 @@ export class WalletService {
     return false;
   }
 
-  // Método para verificar si el usuario ya está autenticado
+  // Method to check if user is authenticated with XION
   static isWalletConnected(type: 'xion' | 'metamask'): boolean {
     if (type === 'xion') {
-      return !!window.abstraxion;
+      // For XION, check if there's an active Abstraxion session
+      // This would need to be implemented based on your app's state management
+      return false; // Placeholder - implement based on your auth state
     } else if (type === 'metamask') {
       return !!window.ethereum;
     }
     return false;
   }
 
-  // Método para desconectar wallet
+  // Method to disconnect wallet
   static async disconnectWallet(type: 'xion' | 'metamask' | 'walletconnect'): Promise<void> {
     try {
-      if (type === 'xion' && window.abstraxion) {
-        await window.abstraxion.disconnect();
+      if (type === 'xion') {
+        // For XION, disconnect through Abstraxion
+        const { Abstraxion } = await import('@burnt-labs/abstraxion');
+        // Implementation depends on how you store the Abstraxion instance
+        console.log('XION disconnect - implement based on your state management');
       }
-      // MetaMask y WalletConnect no tienen método disconnect directo
-      // Se maneja a nivel de aplicación
+      // MetaMask and WalletConnect don't have direct disconnect methods
+      // They are handled at the application level
     } catch (error) {
       console.error('Disconnect failed:', error);
     }

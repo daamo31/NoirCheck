@@ -18,6 +18,8 @@
   "dependencies": {
     "@burnt-labs/abstraxion": "^1.0.0-alpha.65",
     "@burnt-labs/ui": "^0.1.0-alpha.17",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-icons": "^1.3.2",
     "@tailwindcss/postcss": "^4.1.11",
     "@walletconnect/core": "^2.21.4",
     "@walletconnect/qrcode-modal": "^1.8.0",
