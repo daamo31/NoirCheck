@@ -185,6 +185,21 @@ class UserService:
     async def get_all_users(self) -> List[User]:
         """Get all users (for testing purposes)"""
         return self.db.query(User).order_by(desc(User.registered_at)).all()
+    
+    async def clear_all_users(self) -> bool:
+        """Clear all users and their activities (for development/testing only)"""
+        try:
+            # Delete all user activities first (foreign key constraint)
+            self.db.query(UserActivity).delete()
+            
+            # Delete all users
+            self.db.query(User).delete()
+            
+            self.db.commit()
+            return True
+        except Exception as e:
+            self.db.rollback()
+            raise e
 
 def get_user_service(db: Session = None) -> UserService:
     """Get user service instance"""

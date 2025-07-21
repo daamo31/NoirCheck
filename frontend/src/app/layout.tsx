@@ -10,6 +10,7 @@ import "../styles/xion-accessibility.css";
 import Navigation from "@/components/layout/Navigation";
 import SimpleXIONProvider from "@/components/wallet/SimpleXIONProvider";
 import GlobalWarningsSuppressor from "@/components/wallet/GlobalWarningsSuppressor";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Load Inter font with Latin subset
 const inter = Inter({ subsets: ["latin"] });
@@ -27,8 +28,10 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <GlobalWarningsSuppressor />
         <SimpleXIONProvider>
-          <Navigation />
-          {children}
+          <AuthProvider>
+            <Navigation />
+            {children}
+          </AuthProvider>
         </SimpleXIONProvider>
       </body>
     </html>

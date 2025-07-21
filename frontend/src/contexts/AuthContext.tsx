@@ -50,6 +50,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;                   // Logout and clear session
   updateProfile: (data: Partial<User>) => Promise<void>; // Update user profile
   refreshUser: () => Promise<void>;              // Refresh user data
+  clearUserData: () => void;                     // Clear all user data (dev only)
 }
 
 // Create authentication context
@@ -129,73 +130,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     xionAvailable = false;
   }
 
-  // Initialize authentication state when component mounts or account changes
+  // Initialize authentication state when component mounts
+  // NOTE: Removed automatic XION user loading to prevent auto-login
   useEffect(() => {
     const initializeAuth = async () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       
       try {
-        if (xionAvailable && account?.bech32Address) {
-          // XION is available and user is connected
-          console.log('🔍 Looking for user with XION address:', account.bech32Address);
-          
+        // Only check for saved mock user, don't auto-load XION users
+        console.log('� Initializing auth (no auto-login)...');
+        
+        // Check for saved mock user in localStorage
+        const savedMockUser = localStorage.getItem('noircheck_mock_user');
+        if (savedMockUser) {
           try {
-            const userData = await apiService.getUser(account.bech32Address);
-            
-            if (userData) {
-              console.log('✅ User found:', userData);
-              dispatch({ type: 'SET_USER', payload: userData });
-            } else {
-              console.log('👤 User not found, creating new user');
-              // New user - auto-register with XION address
-              const newUser = await apiService.registerUser({
-                address: account.bech32Address,
-                username: `user_${account.bech32Address.slice(-8)}`,
-              });
-              dispatch({ type: 'SET_USER', payload: newUser });
-            }
-          } catch (userError) {
-            console.warn('⚠️ Error fetching user from backend:', userError);
-            // Fallback to local storage or create mock user
-            console.log('🔄 Creating mock user for development');
-            const mockUser = {
-              id: `xion_${account.bech32Address.slice(-8)}`,
-              address: account.bech32Address,
-              username: `user_${account.bech32Address.slice(-8)}`,
-              email: `${account.bech32Address.slice(-8)}@xion.dev`,
-              registeredAt: new Date().toISOString(),
-              totalRegistrations: 0,
-              totalVerifications: 0,
-              lastActivity: new Date().toISOString()
-            };
+            const mockUser = JSON.parse(savedMockUser);
+            console.log('📱 Found saved mock user:', mockUser.email);
             dispatch({ type: 'SET_USER', payload: mockUser });
-          }
-        } else {
-          // No XION account - check for saved mock user
-          const savedMockUser = localStorage.getItem('noircheck_mock_user');
-          if (savedMockUser) {
-            try {
-              const mockUser = JSON.parse(savedMockUser);
-              dispatch({ type: 'SET_USER', payload: mockUser });
-            } catch (parseError) {
-              console.error('Error parsing saved mock user:', parseError);
-              localStorage.removeItem('noircheck_mock_user');
-              dispatch({ type: 'SET_USER', payload: null });
-            }
-          } else {
-            // No saved user - start in anonymous mode
+          } catch (parseError) {
+            console.error('Error parsing saved mock user:', parseError);
+            localStorage.removeItem('noircheck_mock_user');
             dispatch({ type: 'SET_USER', payload: null });
           }
+        } else {
+          // No saved user - start in anonymous mode
+          console.log('👤 No saved user found - starting in anonymous mode');
+          dispatch({ type: 'SET_USER', payload: null });
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Authentication initialization failed' });
         dispatch({ type: 'SET_USER', payload: null });
       }
+      
+      dispatch({ type: 'SET_LOADING', payload: false });
     };
 
     initializeAuth();
-  }, [account?.bech32Address, xionAvailable]);
+  }, []); // Removed dependency on account?.bech32Address
 
   /**
    * Opens XION authentication modal for user to connect their wallet
@@ -298,6 +270,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      console.log('🚪 User logged out successfully');
+      
       // Force page reload to ensure clean state
       setTimeout(() => {
         window.location.href = '/';
@@ -306,7 +280,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Logout failed' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  /**
+   * Clear all stored user data (for development)
+   */
+  const clearUserData = () => {
+    // Clear all possible localStorage keys
+    localStorage.removeItem('noircheck_mock_user');
+    localStorage.removeItem('noircheck_user');
+    localStorage.removeItem('noircheck_enable_xion');
+    localStorage.removeItem('noircheck_session');
+    
+    // Clear any XION-related storage
+    localStorage.removeItem('abstraxion-account');
+    localStorage.removeItem('abstraxion-client');
+    localStorage.removeItem('abstraxion-signer');
+    
+    // Clear user state
+    dispatch({ type: 'SET_USER', payload: null });
+    console.log('🗑️ All user data cleared');
   };
 
   /**
@@ -366,7 +362,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     updateProfile,
-    refreshUser
+    refreshUser,
+    clearUserData
   };
 
   return (

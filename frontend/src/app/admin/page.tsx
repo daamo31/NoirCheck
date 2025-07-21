@@ -6,8 +6,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Plus, Trash2, RefreshCw, AlertCircle, UserPlus } from 'lucide-react';
+import { User, Plus, Trash2, RefreshCw, AlertCircle, UserPlus, X } from 'lucide-react';
 import Link from 'next/link';
+
+// Import API service for user management
+import { apiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TestUser {
   id: string;
@@ -30,6 +34,9 @@ export default function AdminPage() {
     username: '',
     email: ''
   });
+
+  // Get clearUserData from auth context
+  const { clearUserData } = useAuth();
 
   // Cargar usuarios
   const loadUsers = async () => {
@@ -97,6 +104,84 @@ export default function AdminPage() {
     }
   };
 
+  // Eliminar usuario específico de XION
+  const deleteXionUser = async () => {
+    const address = 'xion18272dvf4kh3w4yt9ruwhddypddrfp70raf5jlwpud6s20vslt2cqtl090q';
+    
+    if (!confirm(`¿Eliminar usuario con dirección ${address}?`)) {
+      return;
+    }
+
+    try {
+      const success = await apiService.deleteUser(address);
+      
+      if (success) {
+        alert('Usuario XION eliminado exitosamente');
+        loadUsers();
+      } else {
+        alert('Error eliminando usuario XION');
+      }
+    } catch (error) {
+      console.error('Error deleting XION user:', error);
+      alert('Error conectando con el backend');
+    }
+  };
+
+  // Limpiar todos los usuarios
+  const clearAllUsers = async () => {
+    if (!confirm('¿ELIMINAR TODOS LOS USUARIOS? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    if (!confirm('¿Estás SEGURO? Se eliminarán TODOS los usuarios.')) {
+      return;
+    }
+
+    try {
+      const success = await apiService.clearAllUsers();
+      
+      if (success) {
+        alert('Todos los usuarios han sido eliminados');
+        loadUsers();
+      } else {
+        alert('Error eliminando usuarios');
+      }
+    } catch (error) {
+      console.error('Error clearing users:', error);
+      alert('Error conectando con el backend');
+    }
+  };
+
+  // Limpiar completamente el localStorage y estado de XION
+  const clearCompletelyAndReload = () => {
+    if (!confirm('¿LIMPIAR COMPLETAMENTE TODO? Esto eliminará todos los datos locales y recargará la página.')) {
+      return;
+    }
+
+    try {
+      // Use auth context to clear user data properly
+      clearUserData();
+      
+      // Additional cleanup
+      sessionStorage.clear();
+      
+      // Limpiar cookies específicas de XION si existen
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      console.log('🧹 Estado completamente limpiado');
+      
+      // Recargar la página para estado limpio
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    } catch (error) {
+      console.error('Error clearing state:', error);
+      alert('Error limpiando estado');
+    }
+  };
+
   // Generar dirección XION aleatoria
   const generateRandomAddress = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -157,6 +242,30 @@ export default function AdminPage() {
             >
               <Plus className="w-4 h-4" />
               <span>Crear Usuario</span>
+            </button>
+
+            <button
+              onClick={deleteXionUser}
+              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span>Eliminar XION</span>
+            </button>
+
+            <button
+              onClick={clearAllUsers}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Limpiar Todos</span>
+            </button>
+
+            <button
+              onClick={clearCompletelyAndReload}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Reset Completo</span>
             </button>
           </div>
         </div>

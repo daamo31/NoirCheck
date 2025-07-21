@@ -246,6 +246,33 @@ class APIService {
     }
     return response.json();
   }
+
+  // Development helper methods
+  async deleteUser(address: string): Promise<boolean> {
+    try {
+      const response = await this.fetchWithFallback(`${this.baseURL}/users/${address}`, {
+        method: 'DELETE'
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Delete user error:', error);
+      return false;
+    }
+  }
+
+  async clearAllUsers(): Promise<boolean> {
+    try {
+      const response = await this.fetchWithFallback(`${this.baseURL}/users/clear`, {
+        method: 'DELETE'
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Clear users error:', error);
+      return false;
+    }
+  }
 }
 
 export const apiService = new APIService();

@@ -39,21 +39,19 @@ export function AuthFlow() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing user session on mount
+  // Check for existing user session on mount - DISABLED for manual login only
   useEffect(() => {
     const checkExistingSession = async () => {
       try {
-        // Check local storage for saved user
-        const savedUser = localStorage.getItem('noircheck_user');
-        if (savedUser) {
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-          setCurrentFlow('dashboard');
-        }
-      } catch (error) {
-        console.error('Error checking existing session:', error);
-        // Clear invalid data
+        // NOTE: Auto-login is disabled - users must manually log in
+        console.log('🚫 Auto-login disabled - requiring manual authentication');
+        
+        // Clear any existing session data to prevent auto-login
         localStorage.removeItem('noircheck_user');
+        localStorage.removeItem('noircheck_enable_xion');
+        
+      } catch (error) {
+        console.error('Error during session cleanup:', error);
       } finally {
         setIsLoading(false);
       }
