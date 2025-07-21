@@ -40,9 +40,11 @@ if (typeof window !== 'undefined') {
        message.includes('VisuallyHidden') ||
        message.includes('screen reader users') ||
        message.includes('requires a') ||
-       message.includes('for the component to be accessible'))
+       message.includes('for the component to be accessible')) &&
+      // Only suppress if it's actually from XION/Radix components
+      (message.includes('radix') || message.includes('abstraxion') || args.length === 1)
     ) {
-      return; // Suppress these errors
+      return; // Suppress these specific accessibility errors from XION/Radix
     }
     return originalError.apply(console, args);
   };

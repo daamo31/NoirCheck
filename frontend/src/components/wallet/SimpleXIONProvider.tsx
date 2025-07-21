@@ -59,10 +59,10 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
   return (
     <AbstraxionProvider
       config={{
-        treasury: "xion1h7x7sl56h9zrvaafg6rfnx6hec7x4y8zfc3jl5",
+        treasury: process.env.NEXT_PUBLIC_TREASURY_CONTRACT_ADDRESS || "xion1hcuf8dv4n2h6gffez3e0y70gjm20g72mtmcl3qf7t4q0laz5ef0shfm50z",
         gasPrice: "0.001uxion",
-        rpcUrl: "https://rpc.xion-testnet-2.burnt.com:443",
-        restUrl: "https://api.xion-testnet-2.burnt.com",
+        rpcUrl: process.env.NEXT_PUBLIC_RPC_ENDPOINT || "https://rpc.xion-testnet-2.burnt.com:443",
+        restUrl: process.env.NEXT_PUBLIC_REST_ENDPOINT || "https://api.xion-testnet-2.burnt.com",
         callbackUrl: typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000",
       }}
     >

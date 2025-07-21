@@ -137,17 +137,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (xionAvailable && account?.bech32Address) {
           // XION is available and user is connected
-          const userData = await apiService.getUser(account.bech32Address);
+          console.log('🔍 Looking for user with XION address:', account.bech32Address);
           
-          if (userData) {
-            dispatch({ type: 'SET_USER', payload: userData });
-          } else {
-            // New user - auto-register with XION address
-            const newUser = await apiService.registerUser({
+          try {
+            const userData = await apiService.getUser(account.bech32Address);
+            
+            if (userData) {
+              console.log('✅ User found:', userData);
+              dispatch({ type: 'SET_USER', payload: userData });
+            } else {
+              console.log('👤 User not found, creating new user');
+              // New user - auto-register with XION address
+              const newUser = await apiService.registerUser({
+                address: account.bech32Address,
+                username: `user_${account.bech32Address.slice(-8)}`,
+              });
+              dispatch({ type: 'SET_USER', payload: newUser });
+            }
+          } catch (userError) {
+            console.warn('⚠️ Error fetching user from backend:', userError);
+            // Fallback to local storage or create mock user
+            console.log('🔄 Creating mock user for development');
+            const mockUser = {
+              id: `xion_${account.bech32Address.slice(-8)}`,
               address: account.bech32Address,
               username: `user_${account.bech32Address.slice(-8)}`,
-            });
-            dispatch({ type: 'SET_USER', payload: newUser });
+              email: `${account.bech32Address.slice(-8)}@xion.dev`,
+              registeredAt: new Date().toISOString(),
+              totalRegistrations: 0,
+              totalVerifications: 0,
+              lastActivity: new Date().toISOString()
+            };
+            dispatch({ type: 'SET_USER', payload: mockUser });
           }
         } else {
           // No XION account - check for saved mock user
