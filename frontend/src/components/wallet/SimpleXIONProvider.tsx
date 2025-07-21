@@ -34,7 +34,11 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
            message.includes('VisuallyHidden') ||
            message.includes('screen reader users') ||
            message.includes('Missing keypair or granter') ||
-           message.includes('cannot authenticate'))
+           message.includes('cannot authenticate') ||
+           message.includes('Error querying params') ||
+           message.includes('decoding bech32 failed') ||
+           message.includes('invalid checksum') ||
+           message.includes('Login is already in progress'))
         ) {
           return;
         }
@@ -52,7 +56,11 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
            message.includes('VisuallyHidden') ||
            message.includes('screen reader users') ||
            message.includes('Missing keypair or granter') ||
-           message.includes('cannot authenticate'))
+           message.includes('cannot authenticate') ||
+           message.includes('Error querying params') ||
+           message.includes('decoding bech32 failed') ||
+           message.includes('invalid checksum') ||
+           message.includes('Login is already in progress'))
         ) {
           return;
         }
@@ -70,7 +78,7 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
   return (
     <AbstraxionProvider
       config={{
-        treasury: "xion1h4ux0f4eay9xr5l4jur26na52qzgptmgj6dcep8xhg1r4jwl5fpszekr5s",
+        treasury: "xion13uwmwzdes7urtjyv7mye8ty6uk0vsgdrh2a2k94tp0yxx9vv3e9qazapyu", // Official XION example treasury
         gasPrice: "0.001uxion",
         rpcUrl: "https://rpc.xion-testnet-2.burnt.com/",
         restUrl: "https://api.xion-testnet-2.burnt.com/",

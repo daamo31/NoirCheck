@@ -33,8 +33,14 @@ export function useXIONAuth() {
     }
   }, [isConnected, account, abstraxionAccount?.isConnecting, isConnecting]);
 
-  // Improved login function
+  // Improved login function with duplicate prevention
   const login = async (): Promise<void> => {
+    // Prevent multiple simultaneous login attempts
+    if (isConnecting) {
+      console.warn('🚫 Login already in progress, skipping duplicate attempt');
+      return;
+    }
+
     try {
       setIsConnecting(true);
       setConnectionError(null);

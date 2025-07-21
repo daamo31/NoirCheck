@@ -270,6 +270,30 @@ async def delete_test_user(
             detail=f"Error deleting user: {str(e)}"
         )
 
+@router.delete("/clear")
+async def clear_all_users(
+    db: Session = Depends(get_db)
+):
+    """Clear all users (for development/testing only)"""
+    try:
+        user_service = UserService(db)
+        success = await user_service.clear_all_users()
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to clear users"
+            )
+        
+        return {"message": "All users cleared successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error clearing users: {str(e)}"
+        )
+
 @router.delete("/{address}")
 async def delete_user_by_address(
     address: str,
@@ -301,30 +325,6 @@ async def delete_user_by_address(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting user: {str(e)}"
-        )
-
-@router.delete("/clear")
-async def clear_all_users(
-    db: Session = Depends(get_db)
-):
-    """Clear all users (for development/testing only)"""
-    try:
-        user_service = UserService(db)
-        success = await user_service.clear_all_users()
-        
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to clear users"
-            )
-        
-        return {"message": "All users cleared successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error clearing users: {str(e)}"
         )
 
 @router.get("/test/list")

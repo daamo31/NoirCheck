@@ -24,8 +24,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { UserPlus, ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { UserPlus, ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone, Loader2 } from 'lucide-react';
 import { WalletService, isMobile, isIOS, isAndroid } from '@/services/walletService';
 import { UserStorageService } from '@/services/userStorageService';
 import { useXIONAuth } from '@/services/useXIONAuth';
@@ -66,6 +66,51 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   const [error, setError] = useState('');
   const [connectedWallet, setConnectedWallet] = useState<{address: string; type: string} | null>(null);
   const [isManualXIONProcess, setIsManualXIONProcess] = useState(false);
+  
+  // Debounce refs for preventing double clicks
+  const lastClickTime = useRef<number>(0);
+  const clickDebounceMs = 1000; // 1 segundo de debounce (reducido)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const componentMounted = useRef<boolean>(false);
+  
+  // Mark component as mounted
+  useEffect(() => {
+    componentMounted.current = true;
+    return () => {
+      componentMounted.current = false;
+    };
+  }, []);
+  
+  // Auto-reset debounce if loading state gets stuck
+  useEffect(() => {
+    if (isLoading) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      // Set a timeout to reset loading state after 30 seconds (safety fallback)
+      timeoutRef.current = setTimeout(() => {
+        console.warn('⚠️ Loading state reset after timeout - safety fallback');
+        setIsLoading(false);
+        setIsManualXIONProcess(false);
+        lastClickTime.current = 0;
+      }, 30000);
+    } else {
+      // Clear timeout when loading completes normally
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoading]);
   
   // XION authentication hook
   const { account: xionAccount, login: xionLogin } = useXIONAuth();
@@ -201,7 +246,35 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     setStep('wallet');
   };
 
+  // Debounce helper function
+  const canProceedWithClick = (): boolean => {
+    // Si ya estamos cargando, no permitir más clics
+    if (isLoading) {
+      console.warn('🚫 Action blocked - operation already in progress');
+      return false;
+    }
+    
+    // Solo aplicar debounce después del primer clic
+    const now = Date.now();
+    if (lastClickTime.current > 0 && now - lastClickTime.current < clickDebounceMs) {
+      console.warn('🚫 Action blocked by debounce - please wait between clicks');
+      return false;
+    }
+    
+    lastClickTime.current = now;
+    return true;
+  };
+
   const handleWalletSelection = async (option: WalletOption) => {
+    console.log('🚀 handleWalletSelection called with option:', option);
+    
+    // Solo verificar el debounce si no estamos cargando
+    if (!canProceedWithClick()) {
+      console.log('❌ canProceedWithClick returned false');
+      return;
+    }
+
+    console.log('✅ Proceeding with wallet selection:', option);
     setWalletOption(option);
     setError('');
 
@@ -218,6 +291,12 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   };
 
   const createXIONWallet = async () => {
+    // Prevent multiple simultaneous attempts
+    if (isLoading) {
+      console.warn('🚫 XION wallet creation already in progress');
+      return;
+    }
+
     setIsLoading(true);
     setIsManualXIONProcess(true); // Marcar que estamos en proceso manual
     try {
@@ -251,6 +330,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
           setError('User cancelled wallet creation. Please try again.');
         } else if (error.message.includes('not installed') || error.message.includes('not found')) {
           setError('XION wallet not available. This is a development version - wallet creation is simulated.');
+        } else if (error.message.includes('Login is already in progress')) {
+          setError('XION connection is in progress. Please wait a moment and try again.');
         } else {
           setError(`Error creating XION wallet: ${error.message}`);
         }
@@ -264,6 +345,12 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   };
 
   const connectXIONWallet = async () => {
+    // Prevent multiple simultaneous attempts
+    if (isLoading) {
+      console.warn('🚫 XION wallet connection already in progress');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await xionLogin();
@@ -287,6 +374,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
           setError('User cancelled wallet connection. Please try again.');
         } else if (error.message.includes('not installed')) {
           setError('XION wallet not found. Please install XION wallet or use auto-create option.');
+        } else if (error.message.includes('Login is already in progress')) {
+          setError('XION connection is in progress. Please wait a moment and try again.');
         } else {
           setError('Error connecting XION wallet. Please try again or use auto-create.');
         }
@@ -633,13 +722,34 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
             <div className="space-y-4">
               {/* Create New XION Wallet Option */}
               <div 
-                onClick={() => handleWalletSelection('create')}
-                className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 cursor-pointer hover:bg-blue-500/30 transition-all"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🔵 Create XION Wallet button clicked, isLoading:', isLoading);
+                  if (!isLoading) {
+                    handleWalletSelection('create');
+                  } else {
+                    console.log('❌ Blocked by isLoading');
+                  }
+                }}
+                className={`bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 transition-all ${
+                  isLoading 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer hover:bg-blue-500/30'
+                }`}
               >
                 <div className="flex items-start space-x-3">
-                  <Plus className="w-6 h-6 text-blue-400 mt-1" />
+                  {isLoading && walletOption === 'create' ? (
+                    <Loader2 className="w-6 h-6 text-blue-400 mt-1 animate-spin" />
+                  ) : (
+                    <Plus className="w-6 h-6 text-blue-400 mt-1" />
+                  )}
                   <div className="flex-1">
-                    <h3 className="text-blue-300 font-medium mb-1">Create New XION Wallet (Recommended)</h3>
+                    <h3 className="text-blue-300 font-medium mb-1">
+                      Create New XION Wallet (Recommended)
+                      {isLoading && walletOption === 'create' && (
+                        <span className="ml-2 text-xs text-blue-400">Creating...</span>
+                      )}
+                    </h3>
                     <p className="text-blue-200 text-sm">
                       Create a new XION wallet using official Abstraxion service. 
                       Real blockchain integration with Meta Account authentication.
@@ -664,13 +774,31 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
               {/* Link XION Wallet */}
               <div 
-                onClick={() => handleWalletSelection('xion')}
-                className="bg-purple-500/20 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:bg-purple-500/30 transition-all"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!isLoading) {
+                    handleWalletSelection('xion');
+                  }
+                }}
+                className={`bg-purple-500/20 border border-purple-500/50 rounded-lg p-4 transition-all ${
+                  isLoading 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer hover:bg-purple-500/30'
+                }`}
               >
                 <div className="flex items-start space-x-3">
-                  <LinkIcon className="w-6 h-6 text-purple-400 mt-1" />
+                  {isLoading && walletOption === 'xion' ? (
+                    <Loader2 className="w-6 h-6 text-purple-400 mt-1 animate-spin" />
+                  ) : (
+                    <LinkIcon className="w-6 h-6 text-purple-400 mt-1" />
+                  )}
                   <div className="flex-1">
-                    <h3 className="text-purple-300 font-medium mb-1">Connect Existing XION Wallet</h3>
+                    <h3 className="text-purple-300 font-medium mb-1">
+                      Connect Existing XION Wallet
+                      {isLoading && walletOption === 'xion' && (
+                        <span className="ml-2 text-xs text-purple-400">Connecting...</span>
+                      )}
+                    </h3>
                     <p className="text-purple-200 text-sm">
                       Connect your existing XION wallet to this account.
                       {isMobile() && (
@@ -692,13 +820,31 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
               {/* Link MetaMask */}
               <div 
-                onClick={() => handleWalletSelection('metamask')}
-                className="bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 cursor-pointer hover:bg-orange-500/30 transition-all"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!isLoading) {
+                    handleWalletSelection('metamask');
+                  }
+                }}
+                className={`bg-orange-500/20 border border-orange-500/50 rounded-lg p-4 transition-all ${
+                  isLoading 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer hover:bg-orange-500/30'
+                }`}
               >
                 <div className="flex items-start space-x-3">
-                  <ExternalLink className="w-6 h-6 text-orange-400 mt-1" />
+                  {isLoading && walletOption === 'metamask' ? (
+                    <Loader2 className="w-6 h-6 text-orange-400 mt-1 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-6 h-6 text-orange-400 mt-1" />
+                  )}
                   <div className="flex-1">
-                    <h3 className="text-orange-300 font-medium mb-1">Conectar MetaMask Wallet</h3>
+                    <h3 className="text-orange-300 font-medium mb-1">
+                      Conectar MetaMask Wallet
+                      {isLoading && walletOption === 'metamask' && (
+                        <span className="ml-2 text-xs text-orange-400">Connecting...</span>
+                      )}
+                    </h3>
                     <p className="text-orange-200 text-sm">
                       Conecta tu wallet MetaMask. También crearemos un wallet XION para funciones blockchain.
                       {isMobile() && (

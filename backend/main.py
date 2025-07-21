@@ -18,6 +18,7 @@ Key Features:
 from typing import Dict, List, Optional, Union, Any
 from datetime import datetime, timezone
 import uvicorn
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -42,13 +43,37 @@ from services.xion_simple_service import XIONService
 from app.api.users import router as users_router
 from app.services.user_service import UserService
 
-# FastAPI application configuration
+# Import models to register them with SQLAlchemy
+from app.models.user import User, UserActivity
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan event handler
+    
+    Manages startup and shutdown operations for the FastAPI application.
+    """
+    # Startup operations
+    print("🚀 Starting NoirCheck Backend...")
+    init_db()  # Initialize SQLite database and create tables
+    print("✅ Database initialized successfully")
+    print("✅ NoirCheck Backend is ready to serve requests")
+    
+    yield
+    
+    # Shutdown operations (if needed)
+    print("🛑 Shutting down NoirCheck Backend...")
+
+
+# FastAPI application configuration with lifespan
 app = FastAPI(
     title="NoirCheck API",
     description="API for digital content authenticity verification using blockchain and cryptography",
     version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Configure CORS middleware for frontend development
@@ -102,32 +127,8 @@ async def mobile_optimization_middleware(request, call_next):
 # Apply mobile optimization middleware to all requests
 app.middleware("http")(mobile_optimization_middleware)
 
-# Import models to register them with SQLAlchemy
-from app.models.user import User, UserActivity
-
 # Include API routers
 app.include_router(users_router)
-
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database tables on application startup"""
-    init_db()
-
-
-# Application lifecycle events
-@app.on_event("startup")
-async def startup_event():
-    """
-    Application startup event handler
-    
-    Initializes the database and prepares all services for operation.
-    This runs once when the FastAPI application starts.
-    """
-    print("🚀 Starting NoirCheck Backend...")
-    init_db()  # Initialize SQLite database and create tables
-    print("✅ Database initialized successfully")
-    print("✅ NoirCheck Backend is ready to serve requests")
 
 
 # Health check endpoint for monitoring and status verification
