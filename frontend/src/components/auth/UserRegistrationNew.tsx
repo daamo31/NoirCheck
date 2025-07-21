@@ -65,22 +65,23 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [connectedWallet, setConnectedWallet] = useState<{address: string; type: string} | null>(null);
+  const [isManualXIONProcess, setIsManualXIONProcess] = useState(false);
   
   // XION authentication hook
   const { account: xionAccount, login: xionLogin } = useXIONAuth();
 
-  // Auto-process XION registration when account becomes available
+  // Auto-process XION registration when account becomes available (for auto-detection, not manual process)
   useEffect(() => {
     const handleXIONConnection = async () => {
       // Only proceed if:
       // 1. We have a XION account
       // 2. We don't already have a connected wallet (to avoid double processing)
-      // 3. We're not currently loading
+      // 3. We're not in a manual XION process (to avoid conflicts)
       // 4. We have the required form data
       if (
         xionAccount?.bech32Address && 
         !connectedWallet && 
-        !isLoading && 
+        !isManualXIONProcess &&
         formData.email && 
         formData.firstName && 
         formData.password
@@ -160,7 +161,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     };
 
     handleXIONConnection();
-  }, [xionAccount, connectedWallet, isLoading, formData, onComplete]);
+  }, [xionAccount, connectedWallet, isManualXIONProcess, formData, onComplete]);
 
   // Helper function to generate valid XION addresses for development
   const generateValidXionAddress = (): string => {
@@ -218,13 +219,14 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
   const createXIONWallet = async () => {
     setIsLoading(true);
+    setIsManualXIONProcess(true); // Marcar que estamos en proceso manual
     try {
       console.log('Attempting to create XION wallet...');
       
       // Create new XION wallet using XION Abstraxion
       await xionLogin();
       
-      if (xionAccount) {
+      if (xionAccount && xionAccount.bech32Address) {
         console.log('XION account created successfully:', xionAccount.bech32Address);
         
         const xionWallet = {
@@ -238,9 +240,9 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
         setConnectedWallet(xionWallet);
         
         // Proceed to create account with the new wallet
-        await handleCreateAccount();
+        await handleCreateAccount(xionWallet);
       } else {
-        throw new Error('XION account creation failed - no account returned');
+        throw new Error('XION account creation failed - no valid address returned');
       }
     } catch (error: unknown) {
       console.error('XION wallet creation error:', error);
@@ -257,6 +259,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       }
     } finally {
       setIsLoading(false);
+      setIsManualXIONProcess(false); // Reset manual process flag
     }
   };
 
@@ -265,7 +268,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     try {
       await xionLogin();
       
-      if (xionAccount) {
+      if (xionAccount && xionAccount.bech32Address) {
         const xionWallet = {
           type: 'xion',
           address: xionAccount.bech32Address,
@@ -274,6 +277,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
         };
         
         setConnectedWallet(xionWallet);
+      } else {
+        throw new Error('XION connection failed - no valid address returned');
       }
     } catch (error: unknown) {
       console.error('XION connection error:', error);
@@ -323,7 +328,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     }
   };
 
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = async (walletInfo?: {address: string; type: string}) => {
     setStep('creating');
     setIsLoading(true);
 
@@ -341,11 +346,15 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
       console.log('Creating user account...');
       console.log('Connected wallet:', connectedWallet);
+      console.log('Wallet info passed:', walletInfo);
       console.log('XION account:', xionAccount);
       console.log('Wallet option:', walletOption);
 
+      // Usar walletInfo si se proporciona, sino usar connectedWallet
+      const currentWallet = walletInfo || connectedWallet;
+      
       // Verificar que tenemos una wallet conectada
-      if (!connectedWallet) {
+      if (!currentWallet) {
         throw new Error('No wallet connected. Please connect a wallet first.');
       }
 
@@ -354,7 +363,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       if (walletOption === 'create') {
         // Create new XION wallet - use the real XION address from xionAccount
         // The wallet is already created by this point through xionLogin()
-        const xionAddress = xionAccount?.bech32Address || connectedWallet.address;
+        const xionAddress = xionAccount?.bech32Address || currentWallet.address;
         userWalletInfo = {
           xionWallet: {
             address: xionAddress,
@@ -364,9 +373,9 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
             isNewlyCreated: true
           }
         };
-      } else if (walletOption === 'xion' && connectedWallet) {
+      } else if (walletOption === 'xion' && currentWallet) {
         // Use connected XION wallet - use the real XION address from xionAccount
-        const xionAddress = xionAccount?.bech32Address || connectedWallet.address;
+        const xionAddress = xionAccount?.bech32Address || currentWallet.address;
         userWalletInfo = {
           xionWallet: {
             address: xionAddress,
@@ -375,7 +384,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
             isAutoCreated: false
           }
         };
-      } else if (walletOption === 'metamask' && connectedWallet) {
+      } else if (walletOption === 'metamask' && currentWallet) {
         // Use connected MetaMask wallet + create XION wallet
         // For MetaMask, we create a mock XION address since it's not a real XION connection
         userWalletInfo = {
@@ -386,7 +395,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
             isAutoCreated: true
           },
           metaMaskWallet: {
-            address: connectedWallet.address,
+            address: currentWallet.address,
             createdAt: new Date().toISOString()
           }
         };

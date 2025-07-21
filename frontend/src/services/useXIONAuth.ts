@@ -56,10 +56,25 @@ export function useXIONAuth() {
       
     } catch (error) {
       console.error('❌ XION login failed:', error);
-      setConnectionError(error instanceof Error ? error.message : 'Login failed');
+      
+      // Enhanced error handling for network issues
+      let errorMessage = 'Login failed';
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+        } else if (error.message.includes('User denied') || error.message.includes('cancelled')) {
+          errorMessage = 'User cancelled the login process.';
+        } else if (error.message.includes('not supported')) {
+          errorMessage = 'XION wallet is not supported on this device/browser.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setConnectionError(errorMessage);
       setIsConnecting(false);
       setIsShowingModal(false);
-      throw error;
+      throw new Error(errorMessage);
     }
   };
 

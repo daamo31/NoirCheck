@@ -32,7 +32,9 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
            message.includes('Missing Description') ||
            message.includes('aria-describedby') ||
            message.includes('VisuallyHidden') ||
-           message.includes('screen reader users'))
+           message.includes('screen reader users') ||
+           message.includes('Missing keypair or granter') ||
+           message.includes('cannot authenticate'))
         ) {
           return;
         }
@@ -48,7 +50,9 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
            message.includes('Missing Description') ||
            message.includes('aria-describedby') ||
            message.includes('VisuallyHidden') ||
-           message.includes('screen reader users'))
+           message.includes('screen reader users') ||
+           message.includes('Missing keypair or granter') ||
+           message.includes('cannot authenticate'))
         ) {
           return;
         }
@@ -66,10 +70,10 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
   return (
     <AbstraxionProvider
       config={{
-        treasury: process.env.NEXT_PUBLIC_TREASURY_CONTRACT_ADDRESS || "xion1hcuf8dv4n2h6gffez3e0y70gjm20g72mtmcl3qf7t4q0laz5ef0shfm50z",
+        treasury: "xion1h4ux0f4eay9xr5l4jur26na52qzgptmgj6dcep8xhg1r4jwl5fpszekr5s",
         gasPrice: "0.001uxion",
-        rpcUrl: process.env.NEXT_PUBLIC_RPC_ENDPOINT || "https://rpc.xion-testnet-2.burnt.com:443",
-        restUrl: process.env.NEXT_PUBLIC_REST_ENDPOINT || "https://api.xion-testnet-2.burnt.com",
+        rpcUrl: "https://rpc.xion-testnet-2.burnt.com/",
+        restUrl: "https://api.xion-testnet-2.burnt.com/",
         callbackUrl: typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000",
       }}
     >
