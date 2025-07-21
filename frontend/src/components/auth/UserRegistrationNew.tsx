@@ -24,7 +24,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPlus, ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone } from 'lucide-react';
 import { WalletService, isMobile, isIOS, isAndroid } from '@/services/walletService';
 import { UserStorageService } from '@/services/userStorageService';
@@ -68,6 +68,99 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   
   // XION authentication hook
   const { account: xionAccount, login: xionLogin } = useXIONAuth();
+
+  // Auto-process XION registration when account becomes available
+  useEffect(() => {
+    const handleXIONConnection = async () => {
+      // Only proceed if:
+      // 1. We have a XION account
+      // 2. We don't already have a connected wallet (to avoid double processing)
+      // 3. We're not currently loading
+      // 4. We have the required form data
+      if (
+        xionAccount?.bech32Address && 
+        !connectedWallet && 
+        !isLoading && 
+        formData.email && 
+        formData.firstName && 
+        formData.password
+      ) {
+        console.log('🚀 Auto-processing XION registration for:', xionAccount.bech32Address);
+        
+        try {
+          setIsLoading(true);
+          
+          // Set the connected wallet
+          const xionWallet = {
+            type: 'xion',
+            address: xionAccount.bech32Address,
+            publicKey: '',
+            isExisting: false,
+            isNewlyCreated: true
+          };
+          
+          setConnectedWallet(xionWallet);
+          
+          // Create the user account
+          const userData = {
+            email: formData.email.trim(),
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            password: formData.password, // This will be hashed by registerUser
+            username: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            totalRegistrations: 0,
+            totalVerifications: 0,
+            address: xionAccount.bech32Address,
+            registrationMethod: 'xion' as const,
+            xionWallet: {
+              address: xionAccount.bech32Address,
+              publicKey: '',
+              createdAt: new Date().toISOString(),
+              isAutoCreated: true,
+              isNewlyCreated: true
+            }
+          };
+          
+          // Save user locally
+          const newUser = UserStorageService.registerUser(userData);
+          
+          try {
+            // Try to register in backend
+            const response = await fetch('http://localhost:8000/users/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                address: newUser.address,
+                username: newUser.username,
+                email: newUser.email
+              }),
+            });
+            
+            if (response.ok) {
+              console.log('✅ User registered in backend successfully');
+            }
+          } catch (backendError) {
+            console.warn('⚠️ Backend registration failed, but continuing with local user:', backendError);
+          }
+          
+          console.log('✅ XION account registration completed successfully');
+          
+          // Trigger onComplete callback to redirect to dashboard
+          onComplete(newUser);
+          
+        } catch (error) {
+          console.error('❌ Auto XION registration failed:', error);
+          setError(error instanceof Error ? error.message : 'Registration failed');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    handleXIONConnection();
+  }, [xionAccount, connectedWallet, isLoading, formData, onComplete]);
 
   // Helper function to generate valid XION addresses for development
   const generateValidXionAddress = (): string => {

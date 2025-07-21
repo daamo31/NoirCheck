@@ -182,6 +182,74 @@ export default function AdminPage() {
     }
   };
 
+  // Reset nuclear - Limpieza extrema de XION
+  const handleNuclearReset = async () => {
+    if (!confirm('🧨 RESET NUCLEAR 🧨\n\n¿Eliminar ABSOLUTAMENTE TODO y cerrar navegador?\n\nEsto limpiará:\n- Todo localStorage\n- Todo sessionStorage\n- IndexedDB completo\n- Todas las cookies\n- Cache del navegador\n- Historia de navegación')) {
+      return;
+    }
+
+    if (!confirm('⚠️ ÚLTIMA ADVERTENCIA ⚠️\n\n¿Estás ABSOLUTAMENTE SEGURO?\n\nEsto será irreversible y cerrará tu navegador.')) {
+      return;
+    }
+
+    try {
+      console.log('🧨 INICIANDO RESET NUCLEAR...');
+      
+      // 1. Usar función de limpieza del contexto
+      await clearUserData();
+      
+      // 2. Limpiar EVERYTHING del localStorage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // 3. Limpiar IndexedDB agresivamente
+      if ('indexedDB' in window) {
+        const databases = ['abstraxion', 'xion', 'cosmos-kit', 'keychain', 'wallet', 'keplr'];
+        for (const dbName of databases) {
+          try {
+            indexedDB.deleteDatabase(dbName);
+            console.log(`🗑️ Deleted IndexedDB: ${dbName}`);
+          } catch (e) {
+            console.warn(`Could not delete ${dbName}:`, e);
+          }
+        }
+      }
+      
+      // 4. Limpiar todas las cookies del dominio
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/;domain=.localhost");
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/;domain=localhost"); 
+      });
+      
+      // 5. Limpiar cache del service worker si existe
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            caches.delete(name);
+            console.log(`🗑️ Deleted cache: ${name}`);
+          });
+        });
+      }
+      
+      console.log('🧨 RESET NUCLEAR COMPLETADO - CERRANDO NAVEGADOR...');
+      alert('🧨 Reset nuclear completado.\n\nEl navegador se cerrará en 3 segundos.\n\nAbre un nuevo navegador para continuar.');
+      
+      // 6. Cerrar ventana después de 3 segundos
+      setTimeout(() => {
+        window.close();
+        // Si no puede cerrar (por restricciones del navegador), redirigir a página en blanco
+        setTimeout(() => {
+          window.location.href = 'about:blank';
+        }, 1000);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('🧨 Error en reset nuclear:', error);
+      alert('Error en reset nuclear: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
   // Generar dirección XION aleatoria
   const generateRandomAddress = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -266,6 +334,14 @@ export default function AdminPage() {
             >
               <RefreshCw className="w-4 h-4" />
               <span>Reset Completo</span>
+            </button>
+
+            <button
+              onClick={handleNuclearReset}
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white rounded-lg transition-colors border-2 border-red-400/50"
+            >
+              <span className="text-lg">🧨</span>
+              <span>Reset Nuclear</span>
             </button>
           </div>
         </div>

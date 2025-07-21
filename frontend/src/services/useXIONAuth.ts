@@ -18,7 +18,8 @@ export function useXIONAuth() {
 
   // Handle connection state changes
   useEffect(() => {
-    if (isConnected && account) {
+    // Only log if this is a new connection, not an auto-restored session
+    if (isConnected && account && isConnecting) {
       setIsConnecting(false);
       setConnectionError(null);
       console.log('✅ XION wallet connected successfully:', account.bech32Address);
@@ -26,8 +27,11 @@ export function useXIONAuth() {
       setIsConnecting(true);
       setConnectionError(null);
       console.log('🔄 XION wallet connecting...');
+    } else if (isConnected && account && !isConnecting) {
+      // This is likely an auto-restored session - don't log it as a "successful connection"
+      console.log('🔄 XION session restored:', account.bech32Address);
     }
-  }, [isConnected, account, abstraxionAccount?.isConnecting]);
+  }, [isConnected, account, abstraxionAccount?.isConnecting, isConnecting]);
 
   // Improved login function
   const login = async (): Promise<void> => {

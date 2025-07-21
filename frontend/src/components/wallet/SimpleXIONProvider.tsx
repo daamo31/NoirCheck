@@ -15,42 +15,49 @@ interface SimpleXIONProviderProps {
 export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps) {
   // Suppress console warnings for development
   useEffect(() => {
+    // Only suppress warnings in development and if not already suppressed
+    if (process.env.NODE_ENV !== 'development') return;
+    
     const originalWarn = console.warn;
     const originalError = console.error;
 
-    console.warn = (...args) => {
-      const message = args[0];
-      if (
-        typeof message === 'string' &&
-        (message.includes('DialogContent') ||
-         message.includes('DialogTitle') ||
-         message.includes('Missing Description') ||
-         message.includes('aria-describedby') ||
-         message.includes('VisuallyHidden') ||
-         message.includes('screen reader users'))
-      ) {
-        return;
-      }
-      originalWarn.apply(console, args);
-    };
+    // Throttle console overrides to prevent timing issues
+    const timeoutId = setTimeout(() => {
+      console.warn = (...args) => {
+        const message = args[0];
+        if (
+          typeof message === 'string' &&
+          (message.includes('DialogContent') ||
+           message.includes('DialogTitle') ||
+           message.includes('Missing Description') ||
+           message.includes('aria-describedby') ||
+           message.includes('VisuallyHidden') ||
+           message.includes('screen reader users'))
+        ) {
+          return;
+        }
+        originalWarn.apply(console, args);
+      };
 
-    console.error = (...args) => {
-      const message = args[0];
-      if (
-        typeof message === 'string' &&
-        (message.includes('DialogContent') ||
-         message.includes('DialogTitle') ||
-         message.includes('Missing Description') ||
-         message.includes('aria-describedby') ||
-         message.includes('VisuallyHidden') ||
-         message.includes('screen reader users'))
-      ) {
-        return;
-      }
-      originalError.apply(console, args);
-    };
+      console.error = (...args) => {
+        const message = args[0];
+        if (
+          typeof message === 'string' &&
+          (message.includes('DialogContent') ||
+           message.includes('DialogTitle') ||
+           message.includes('Missing Description') ||
+           message.includes('aria-describedby') ||
+           message.includes('VisuallyHidden') ||
+           message.includes('screen reader users'))
+        ) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    }, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       console.warn = originalWarn;
       console.error = originalError;
     };

@@ -288,21 +288,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Clear all stored user data (for development)
    */
-  const clearUserData = () => {
-    // Clear all possible localStorage keys
-    localStorage.removeItem('noircheck_mock_user');
-    localStorage.removeItem('noircheck_user');
-    localStorage.removeItem('noircheck_enable_xion');
-    localStorage.removeItem('noircheck_session');
+  const clearUserData = async () => {
+    console.log('🧹 Starting complete cleanup...');
     
-    // Clear any XION-related storage
-    localStorage.removeItem('abstraxion-account');
-    localStorage.removeItem('abstraxion-client');
-    localStorage.removeItem('abstraxion-signer');
+    // Clear all localStorage keys
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      keysToRemove.push(localStorage.key(i));
+    }
+    keysToRemove.forEach(key => {
+      if (key) {
+        console.log('🗑️ Removing localStorage key:', key);
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Clear all sessionStorage keys  
+    const sessionKeysToRemove = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      sessionKeysToRemove.push(sessionStorage.key(i));
+    }
+    sessionKeysToRemove.forEach(key => {
+      if (key) {
+        console.log('🗑️ Removing sessionStorage key:', key);
+        sessionStorage.removeItem(key);
+      }
+    });
     
     // Clear user state
     dispatch({ type: 'SET_USER', payload: null });
-    console.log('🗑️ All user data cleared');
+    
+    // Clear XION specific data if available
+    try {
+      // Try to clear XION session data
+      if (typeof window !== 'undefined') {
+        // Clear all XION related keys specifically
+        const xionKeys = [
+          'abstraxion_session',
+          'abstraxion_account', 
+          'abstraxion_wallet',
+          'abstraxion-account',
+          'abstraxion-client',
+          'abstraxion-signer',
+          'xion_session',
+          'xion_account',
+          'xion_wallet',
+          'cosmos_kit_wallet',
+          'keplr_autoconnect',
+        ];
+        
+        xionKeys.forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+        
+        // Clear IndexedDB related to XION (if accessible)
+        if ('indexedDB' in window) {
+          try {
+            console.log('🗑️ Clearing IndexedDB databases...');
+            indexedDB.deleteDatabase('abstraxion');
+            indexedDB.deleteDatabase('xion');
+            indexedDB.deleteDatabase('cosmos-kit');
+          } catch (idbError) {
+            console.warn('Could not clear IndexedDB:', idbError);
+          }
+        }
+      }
+    } catch (xionError) {
+      console.warn('Error clearing XION data:', xionError);
+    }
+    
+    console.log('🗑️ Complete cleanup finished - RELOAD REQUIRED');
+    
+    // Force hard reload after cleanup
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
   };
 
   /**

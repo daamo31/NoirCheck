@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, FileCheck, Lock, Zap, Users, CheckCircle } from 'lucide-react';
 
 interface LandingPageProps {
@@ -26,9 +26,9 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
   const [isAnimated, setIsAnimated] = useState(false);
 
   // Trigger animation on mount
-  useState(() => {
+  useEffect(() => {
     setTimeout(() => setIsAnimated(true), 100);
-  });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
