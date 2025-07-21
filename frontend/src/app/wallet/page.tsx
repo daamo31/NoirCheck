@@ -5,7 +5,7 @@
  * Uses official Abstraxion library for seamless integration
  */
 
-import { XIONAbstraxionOfficial } from '@/components/XIONAbstraxionOfficial';
+import XIONTestComponent from '@/components/test/XIONTestComponent';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -37,7 +37,7 @@ export default function WalletPage() {
       {/* Main Content */}
       <main className="px-6 pb-12">
         <div className="max-w-4xl mx-auto">
-          <XIONAbstraxionOfficial />
+          <XIONTestComponent />
         </div>
       </main>
 

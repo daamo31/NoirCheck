@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import WalletStatusChecker from '@/components/WalletStatusChecker';
+// import WalletStatusChecker from '@/components/WalletStatusChecker'; // Comentado temporalmente - componente no existe
 import { WalletService, isMobile, getMobilePlatform } from '@/services/walletService';
 
 export default function WalletDiagnosticPage() {
-  const [xionInstalled, setXionInstalled] = useState<boolean | null>(null);
-  const [metamaskInstalled, setMetamaskInstalled] = useState<boolean | null>(null);
+  const [xionInstalled] = useState<boolean | null>(null);
+  const [metamaskInstalled] = useState<boolean | null>(null);
   const [walletConnectSupported, setWalletConnectSupported] = useState<boolean | null>(null);
 
   const checkWalletConnectSupport = async () => {
@@ -24,7 +24,7 @@ export default function WalletDiagnosticPage() {
     isMobile: isMobile(),
     platform: getMobilePlatform(),
     userAgent: navigator.userAgent,
-    isStandalone: (window.navigator as any).standalone,
+    isStandalone: (window.navigator as Navigator & { standalone?: boolean }).standalone || false,
     isPWA: window.matchMedia('(display-mode: standalone)').matches
   };
 
@@ -89,7 +89,7 @@ export default function WalletDiagnosticPage() {
 
         {/* Estado de las wallets */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <WalletStatusChecker 
+          {/* <WalletStatusChecker 
             walletType="xion"
             onStatusChange={setXionInstalled}
           >
@@ -109,7 +109,18 @@ export default function WalletDiagnosticPage() {
                 MetaMask es una alternativa popular para conexiones Web3 y transacciones.
               </div>
             )}
-          </WalletStatusChecker>
+          </WalletStatusChecker> */}
+          
+          {/* Contenido temporal mientras se restaura WalletStatusChecker */}
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">XION Wallet</h3>
+            <div className="text-gray-300">Estado: {xionInstalled === null ? 'Verificando...' : xionInstalled ? 'Instalado' : 'No instalado'}</div>
+          </div>
+          
+          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-2">MetaMask</h3>
+            <div className="text-gray-300">Estado: {metamaskInstalled === null ? 'Verificando...' : metamaskInstalled ? 'Instalado' : 'No instalado'}</div>
+          </div>
         </div>
 
         {/* WalletConnect */}

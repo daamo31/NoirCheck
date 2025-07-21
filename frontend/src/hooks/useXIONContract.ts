@@ -8,11 +8,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAbstraxionSigningClient } from '@burnt-labs/abstraxion';
 import { XIONContractService, type RegistrationResult, type VerificationResult } from '@/services/xionContract';
-import { useXIONAccount } from '@/components/XIONAuth';
+import { useXIONAuth } from '@/services/useXIONAuth';
 
 export function useXIONContract() {
   const { client } = useAbstraxionSigningClient();
-  const { address, isConnected } = useXIONAccount();
+  const { account, isConnected } = useXIONAuth();
+  const address = account?.bech32Address;
   const [contractService, setContractService] = useState<XIONContractService | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,12 +138,12 @@ export function useXIONContract() {
  * Useful for setup and debugging
  */
 export function useXIONContractConfig() {
-  const [config, setConfig] = useState({
+  const config = {
     contentRegistry: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || null,
     treasury: process.env.NEXT_PUBLIC_TREASURY_ADDRESS || null,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || null,
     restUrl: process.env.NEXT_PUBLIC_REST_URL || null,
-  });
+  };
 
   const isFullyConfigured = !!(
     config.contentRegistry && 

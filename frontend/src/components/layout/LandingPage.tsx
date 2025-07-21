@@ -60,7 +60,7 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
                   <span className="text-green-300 font-medium">Simple Registration Process</span>
                 </div>
                 <p className="text-gray-300 text-sm">
-                  Create your account with email and password. We'll automatically generate 
+                  Create your account with email and password. We&apos;ll automatically generate 
                   your XION blockchain wallet behind the scenes - no technical knowledge required!
                 </p>
               </div>
@@ -145,7 +145,7 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">XION Security</h3>
               <p className="text-gray-400">
-                Powered by XION's Meta Account technology for secure, private, and seamless user authentication.
+                Powered by XION&apos;s Meta Account technology for secure, private, and seamless user authentication.
               </p>
             </div>
 
@@ -183,7 +183,7 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
               </div>
               <h3 className="text-xl font-semibold text-white mb-4">Create Your Account</h3>
               <p className="text-gray-400">
-                Sign up with XION's secure Meta Account technology. No complex wallet setup required.
+                Sign up with XION&apos;s secure Meta Account technology. No complex wallet setup required.
               </p>
             </div>
 
@@ -205,7 +205,7 @@ export function LandingPage({ onCreateAccount, onLogin }: LandingPageProps) {
               </div>
               <h3 className="text-xl font-semibold text-white mb-4">Verify & Share</h3>
               <p className="text-gray-400">
-                Verify any content's authenticity and share your verified content with confidence.
+                Verify any content&apos;s authenticity and share your verified content with confidence.
               </p>
             </div>
           </div>

@@ -23,7 +23,6 @@ import {
   FileCheck,
   Shield,
   Award,
-  Target,
   BarChart3,
   RefreshCw
 } from 'lucide-react';

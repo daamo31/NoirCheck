@@ -286,7 +286,7 @@ export default function MobileSupportPage() {
                   <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
                   <div>
                     <p className="text-blue-200 text-sm">
-                      <strong>Para principiantes:</strong> Usa la opción "Auto-crear XION Wallet" - No necesitas instalar nada adicional
+                      <strong>Para principiantes:</strong> Usa la opción &quot;Auto-crear XION Wallet&quot; - No necesitas instalar nada adicional
                     </p>
                   </div>
                 </div>

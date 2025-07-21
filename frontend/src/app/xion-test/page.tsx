@@ -5,7 +5,7 @@
 
 "use client";
 
-import XIONConnectionTest from '@/components/XIONConnectionTest';
+import XIONTest from '@/components/test/XIONTest';
 
 export default function XIONTestPage() {
   return (
@@ -21,7 +21,7 @@ export default function XIONTestPage() {
         </div>
         
         <div className="flex justify-center">
-          <XIONConnectionTest />
+          <XIONTest />
         </div>
         
         <div className="mt-12 max-w-2xl mx-auto">
@@ -32,7 +32,7 @@ export default function XIONTestPage() {
             <ul className="space-y-3 text-gray-700 dark:text-gray-300">
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-sm font-medium">1</span>
-                <span>Click "Connect XION Wallet" to open the Abstraxion authentication modal</span>
+                <span>Click &quot;Connect XION Wallet&quot; to open the Abstraxion authentication modal</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-sm font-medium">2</span>

@@ -7,9 +7,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "../styles/xion-overrides.css";
 import "../styles/xion-accessibility.css";
-import Navigation from "@/components/Navigation";
-import SimpleXIONProvider from "@/components/SimpleXIONProvider";
-import GlobalWarningsSuppressor from "@/components/GlobalWarningsSuppressor";
+import Navigation from "@/components/layout/Navigation";
+import SimpleXIONProvider from "@/components/wallet/SimpleXIONProvider";
+import GlobalWarningsSuppressor from "@/components/wallet/GlobalWarningsSuppressor";
 
 // Load Inter font with Latin subset
 const inter = Inter({ subsets: ["latin"] });

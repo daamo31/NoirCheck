@@ -11,20 +11,25 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, ArrowLeft, User, Mail, Eye, EyeOff, LogIn, Wallet, ExternalLink, AlertTriangle, Smartphone } from 'lucide-react';
-import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletService';
-import { UserStorageService } from '../services/userStorageService';
-import { useXIONAuth } from '../services/useXIONAuth';
-import { useModal } from '@burnt-labs/abstraxion';
+import { Lock, ArrowLeft, Mail, Eye, EyeOff, LogIn, Wallet, ExternalLink, AlertTriangle, Smartphone } from 'lucide-react';
+import { WalletService, isMobile, isIOS } from '@/services/walletService';
+import { UserStorageService } from '@/services/userStorageService';
+import { useXIONAuth } from '@/services/useXIONAuth';
 
 interface UserLoginProps {
   onBack: () => void;
-  onLogin: (userData: any) => void;
+  onLogin: (userData: User) => void;
+}
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
 }
 
 export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
-  const { account, isConnected, login: xionLogin, logout: xionLogout } = useXIONAuth();
-  const [, setShowModal] = useModal();
+  const { account, isConnected, login: xionLogin } = useXIONAuth();
   
   const [loginMethod, setLoginMethod] = useState<'traditional' | 'xion' | 'metamask'>('traditional');
   const [formData, setFormData] = useState({
@@ -119,15 +124,19 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
         throw new Error('XION wallet connection was not completed. Please try again.');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('XION login error:', error);
       
-      if (error?.message?.includes('no está registrada')) {
-        setError(error.message);
-      } else if (error?.message?.includes('not completed')) {
-        setError('Connection cancelled or failed. Please try again.');
+      if (error instanceof Error) {
+        if (error.message.includes('no está registrada')) {
+          setError(error.message);
+        } else if (error.message.includes('not completed')) {
+          setError('Connection cancelled or failed. Please try again.');
+        } else {
+          setError(error.message);
+        }
       } else {
-        setError('Error connecting to XION wallet. Please try again.');
+        setError('Error desconocido en login con XION');
       }
     } finally {
       setIsLoading(false);
@@ -150,14 +159,18 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
 
       console.log('MetaMask wallet login successful:', userData);
       onLogin(userData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('MetaMask login error:', error);
-      if (error?.message?.includes('not installed')) {
-        setError('MetaMask no está instalada. Por favor instala MetaMask o crea una cuenta.');
-      } else if (error?.message?.includes('no está registrada')) {
-        setError(error.message);
+      if (error instanceof Error) {
+        if (error.message.includes('not installed')) {
+          setError('MetaMask not installed. Please install MetaMask extension.');
+        } else if (error.message.includes('no está registrada')) {
+          setError(error.message);
+        } else {
+          setError(error.message);
+        }
       } else {
-        setError('MetaMask wallet no conectada o no registrada. Por favor crea una cuenta primero.');
+        setError('Error desconocido con MetaMask');
       }
     } finally {
       setIsLoading(false);
@@ -319,7 +332,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                   <div>
                     <h3 className="text-purple-300 font-medium mb-1">XION Wallet Login</h3>
                     <p className="text-purple-200 text-sm">
-                      Connect with your registered XION wallet. Make sure it's the same wallet you used during registration.
+                      Connect with your registered XION wallet. Make sure it&apos;s the same wallet you used during registration.
                     </p>
                   </div>
                 </div>
@@ -359,7 +372,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                   <div>
                     <h3 className="text-orange-300 font-medium mb-1">MetaMask Login</h3>
                     <p className="text-orange-200 text-sm">
-                      Connect with your registered MetaMask wallet. Make sure it's the same wallet you linked during registration.
+                      Connect with your registered MetaMask wallet. Make sure it&apos;s the same wallet you linked during registration.
                     </p>
                   </div>
                 </div>
@@ -412,7 +425,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
           {/* Footer */}
           <div className="text-center">
             <p className="text-gray-400 text-sm mb-4">
-              Don't have an account yet?
+              Don&apos;t have an account yet?
             </p>
             <button
               onClick={onBack}

@@ -5,17 +5,17 @@
 
 'use client';
 
-import { AuthFlow } from '@/components/AuthFlow';
-import { SafeXIONProvider } from '@/components/SafeXIONProvider';
+import { AuthFlow } from '@/components/auth/AuthFlow';
+import SimpleXIONProvider from '@/components/wallet/SimpleXIONProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 // Root component with conditional providers
 export default function AppPage() {
   return (
-    <SafeXIONProvider>
+    <SimpleXIONProvider>
       <AuthProvider>
         <AuthFlow />
       </AuthProvider>
-    </SafeXIONProvider>
+    </SimpleXIONProvider>
   );
 }

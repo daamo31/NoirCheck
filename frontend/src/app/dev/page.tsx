@@ -6,7 +6,7 @@
 'use client';
 
 import { MockAuthProvider, useMockAuth } from '@/contexts/MockAuthContext';
-import { DevUserDashboard } from '@/components/DevUserDashboard';
+import { DevUserDashboard } from '@/components/test/DevUserDashboard';
 
 // Main App Component with Mock Authentication
 function DevMainApp() {

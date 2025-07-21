@@ -5,16 +5,16 @@
 
 'use client';
 
-import { AuthFlow } from '@/components/AuthFlow';
-import { SafeXIONProvider } from '@/components/SafeXIONProvider';
+import { AuthFlow } from '@/components/auth/AuthFlow';
+import SimpleXIONProvider from '@/components/wallet/SimpleXIONProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 export default function HomePage() {
   return (
-    <SafeXIONProvider>
+    <SimpleXIONProvider>
       <AuthProvider>
         <AuthFlow />
       </AuthProvider>
-    </SafeXIONProvider>
+    </SimpleXIONProvider>
   );
 }

@@ -8,10 +8,10 @@
 import { useState, useEffect } from 'react';
 import { useMockAuth } from '@/contexts/MockAuthContext';
 import { User, BarChart3, History, Settings, Upload, CheckCircle, FileText, AlertCircle } from 'lucide-react';
-import { FileUpload } from '@/components/FileUpload';
-import { VerificationResult } from '@/components/VerificationResult';
+import { FileUpload } from '@/components/ui/FileUpload';
+import { VerificationResult } from '@/components/dashboard/VerificationResult';
 import { mockApiService } from '@/services/mockApi';
-import { XIONWalletDisplay } from './XIONWalletDisplay';
+// import { XIONWalletDisplay } from './XIONWalletDisplay'; // Comentado - componente no existe
 
 export function DevUserDashboard() {
   const { user, logout, refreshUser } = useMockAuth();
@@ -179,12 +179,18 @@ function OverviewTab({ userStats, loading }: { userStats: any; loading: boolean 
       
       {/* XION Wallet Information */}
       <div className="mb-6">
-        <XIONWalletDisplay 
+        {/* <XIONWalletDisplay 
           showFullAddress={true}
           showBalance={true}
           showZkTLS={true}
           compact={false}
-        />
+        /> */}
+        
+        {/* Contenido temporal mientras se restaura XIONWalletDisplay */}
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-2">XION Wallet Info</h3>
+          <div className="text-gray-300">Wallet display component temporalmente deshabilitado</div>
+        </div>
       </div>
       
       {/* Stats Cards */}

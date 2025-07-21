@@ -20,7 +20,6 @@ import {
   Search, 
   History, 
   User, 
-  Settings, 
   LogOut, 
   Shield,
   TrendingUp,
@@ -30,11 +29,11 @@ import {
   Wallet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileUpload } from './FileUpload';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { UserProfile } from './UserProfile';
 import { UserHistory } from './UserHistory';
 import { UserStats } from './UserStats';
-import { WalletInfo } from './WalletInfo';
+// import { WalletInfo } from './WalletInfo'; // Comentado - componente no existe
 import { apiService, UserStats as UserStatsData } from '@/services/api';
 
 // Available dashboard tabs
@@ -384,7 +383,13 @@ export function UserDashboard() {
                     View your wallet details, XION connection status, and account management
                   </p>
                 </div>
-                <WalletInfo />
+                {/* <WalletInfo /> */}
+                
+                {/* Contenido temporal mientras se restaura WalletInfo */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Wallet Information</h3>
+                  <div className="text-gray-600 dark:text-gray-400">Wallet info component temporalmente deshabilitado</div>
+                </div>
               </div>
             )}
 

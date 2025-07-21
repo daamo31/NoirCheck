@@ -14,9 +14,9 @@
 
 import { useState } from 'react';
 import { UserPlus, ArrowLeft, Mail, Lock, User, Eye, EyeOff, CheckCircle, AlertCircle, Wallet, ExternalLink, Plus, Link as LinkIcon, AlertTriangle, Smartphone } from 'lucide-react';
-import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletService';
-import { UserStorageService } from '../services/userStorageService';
-import { useXIONAuth } from '../services/useXIONAuth';
+import { WalletService, isMobile, isIOS, isAndroid } from '@/services/walletService';
+import { UserStorageService } from '@/services/userStorageService';
+import { useXIONAuth } from '@/services/useXIONAuth';
 
 interface UserRegistrationProps {
   onBack: () => void;

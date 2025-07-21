@@ -15,10 +15,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LandingPage } from './LandingPage';
+import { LandingPage } from '@/components/layout/LandingPage';
 import { UserRegistrationNew } from './UserRegistrationNew';
 import { UserLoginNew } from './UserLoginNew';
-import { UserDashboard } from './UserDashboard';
+import { UserDashboard } from '@/components/dashboard/UserDashboard';
 
 type AuthFlow = 'landing' | 'register' | 'login' | 'dashboard';
 

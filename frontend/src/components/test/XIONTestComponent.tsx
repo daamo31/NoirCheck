@@ -6,7 +6,7 @@
 "use client";
 
 import React from 'react';
-import { useXIONAuth } from '../services/useXIONAuth';
+import { useXIONAuth } from '@/services/useXIONAuth';
 import { Wallet, LogIn, LogOut, User, AlertCircle } from 'lucide-react';
 
 export default function XIONTestComponent() {

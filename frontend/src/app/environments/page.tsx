@@ -6,7 +6,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Blocks, Code, Zap, Wallet, ArrowLeft } from 'lucide-react';
+import { Shield, Blocks, Zap, Wallet, ArrowLeft } from 'lucide-react';
 
 export default function EnvironmentPage() {
   return (
