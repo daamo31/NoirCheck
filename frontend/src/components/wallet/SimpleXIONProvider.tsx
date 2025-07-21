@@ -21,24 +21,53 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
     const originalWarn = console.warn;
     const originalError = console.error;
 
+    // Clear any existing XION state on provider mount
+    const clearXIONState = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          // Clear all XION related storage
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION') || key.includes('wallet')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION') || key.includes('wallet')) {
+              localStorage.removeItem(key);
+            }
+          });
+          console.log('🧹 Cleared XION state on provider mount');
+        }
+      } catch (error) {
+        console.warn('Error clearing XION state:', error);
+      }
+    };
+
+    clearXIONState();
+
     // Throttle console overrides to prevent timing issues
     const timeoutId = setTimeout(() => {
       console.warn = (...args) => {
-        const message = args[0];
+        const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
         if (
-          typeof message === 'string' &&
-          (message.includes('DialogContent') ||
-           message.includes('DialogTitle') ||
-           message.includes('Missing Description') ||
-           message.includes('aria-describedby') ||
-           message.includes('VisuallyHidden') ||
-           message.includes('screen reader users') ||
-           message.includes('Missing keypair or granter') ||
-           message.includes('cannot authenticate') ||
-           message.includes('Error querying params') ||
-           message.includes('decoding bech32 failed') ||
-           message.includes('invalid checksum') ||
-           message.includes('Login is already in progress'))
+          message.includes('DialogContent') ||
+          message.includes('DialogTitle') ||
+          message.includes('Missing Description') ||
+          message.includes('aria-describedby') ||
+          message.includes('VisuallyHidden') ||
+          message.includes('screen reader users') ||
+          message.includes('Missing keypair or granter') ||
+          message.includes('cannot authenticate') ||
+          message.includes('Error querying params') ||
+          message.includes('decoding bech32 failed') ||
+          message.includes('invalid checksum') ||
+          message.includes('Login is already in progress') ||
+          message.includes('Missing `Description`') ||
+          message.includes('For more information, see https://radix-ui.com') ||
+          message.includes('If you want to hide the `DialogTitle`') ||
+          message.includes('keypair') ||
+          message.includes('granter') ||
+          message.includes('authenticate')
         ) {
           return;
         }
@@ -46,25 +75,50 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
       };
 
       console.error = (...args) => {
-        const message = args[0];
+        const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
         if (
-          typeof message === 'string' &&
-          (message.includes('DialogContent') ||
-           message.includes('DialogTitle') ||
-           message.includes('Missing Description') ||
-           message.includes('aria-describedby') ||
-           message.includes('VisuallyHidden') ||
-           message.includes('screen reader users') ||
-           message.includes('Missing keypair or granter') ||
-           message.includes('cannot authenticate') ||
-           message.includes('Error querying params') ||
-           message.includes('decoding bech32 failed') ||
-           message.includes('invalid checksum') ||
-           message.includes('Login is already in progress'))
+          message.includes('DialogContent') ||
+          message.includes('DialogTitle') ||
+          message.includes('Missing Description') ||
+          message.includes('aria-describedby') ||
+          message.includes('VisuallyHidden') ||
+          message.includes('screen reader users') ||
+          message.includes('Missing keypair or granter') ||
+          message.includes('cannot authenticate') ||
+          message.includes('Error querying params') ||
+          message.includes('decoding bech32 failed') ||
+          message.includes('invalid checksum') ||
+          message.includes('Login is already in progress') ||
+          message.includes('Query failed with') ||
+          message.includes('treasury::state::Params') ||
+          message.includes('not found: query wasm contract failed') ||
+          message.includes('unknown request') ||
+          message.includes('queryAbci') ||
+          message.includes('queryContractSmart') ||
+          message.includes('AAClient') ||
+          message.includes('queryTreasuryContract') ||
+          message.includes('keypair') ||
+          message.includes('granter') ||
+          message.includes('authenticate')
         ) {
           return;
         }
         originalError.apply(console, args);
+      };
+
+      // También interceptar console.log para XION
+      const originalLog = console.log;
+      console.log = (...args) => {
+        const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
+        if (
+          message.includes('Login is already in progress') ||
+          message.includes('Missing keypair or granter') ||
+          message.includes('cannot authenticate') ||
+          message.includes('Error querying params')
+        ) {
+          return;
+        }
+        originalLog.apply(console, args);
       };
     }, 100);
 
@@ -72,6 +126,7 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
       clearTimeout(timeoutId);
       console.warn = originalWarn;
       console.error = originalError;
+      // console.log se restaurará automáticamente al recargar
     };
   }, []);
 

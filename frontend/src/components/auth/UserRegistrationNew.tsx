@@ -47,7 +47,7 @@ interface UserRegistrationProps {
   onComplete: (userData: User) => void;
 }
 
-type RegistrationStep = 'form' | 'wallet' | 'creating' | 'success';
+type RegistrationStep = 'form' | 'wallet' | 'connected' | 'creating' | 'success';
 type WalletOption = 'create' | 'xion' | 'metamask';
 
 export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProps) {
@@ -72,14 +72,137 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   const clickDebounceMs = 1000; // 1 segundo de debounce (reducido)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const componentMounted = useRef<boolean>(false);
+
+  // XION authentication hook
+  const { account: xionAccount, login: xionLogin } = useXIONAuth();
   
   // Mark component as mounted
   useEffect(() => {
     componentMounted.current = true;
+    
+    // Try to restore form data from localStorage
+    try {
+      const savedFormData = localStorage.getItem('noircheck_registration_form');
+      if (savedFormData) {
+        const parsedFormData = JSON.parse(savedFormData);
+        setFormData(parsedFormData);
+        console.log('📋 Form data restored from localStorage');
+        // If we have saved form data, go directly to wallet selection
+        setStep('wallet');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not restore form data from localStorage:', error);
+    }
+    
+    // Clear any existing XION/wallet state on component mount
+    const clearExistingState = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          // Clear XION related storage
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION')) {
+              sessionStorage.removeItem(key);
+              console.log('Cleared sessionStorage key:', key);
+            }
+          });
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION')) {
+              localStorage.removeItem(key);
+              console.log('Cleared localStorage key:', key);
+            }
+          });
+        }
+      } catch (error) {
+        console.warn('Error clearing storage on mount:', error);
+      }
+    };
+    
+    clearExistingState();
+    
     return () => {
       componentMounted.current = false;
     };
   }, []);
+  
+  // Handle XION redirect return
+  useEffect(() => {
+    const handleXIONReturn = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const granted = urlParams.get('granted');
+      const granter = urlParams.get('granter');
+      
+      if (granted === 'true' && granter) {
+        console.log('🎉 XION wallet creation returned successfully!');
+        console.log('👤 Granter address:', granter);
+        
+        // Clean URL parameters
+        const url = new URL(window.location.href);
+        url.searchParams.delete('granted');
+        url.searchParams.delete('granter');
+        window.history.replaceState({}, '', url.toString());
+        
+        // Set loading state
+        setIsLoading(true);
+        setWalletOption('create');
+        setStep('wallet');
+        
+        // Wait a moment for XION state to be available
+        setTimeout(async () => {
+          if (xionAccount && xionAccount.bech32Address) {
+            console.log('✅ XION account available after return:', xionAccount.bech32Address);
+            
+            const xionWallet = {
+              type: 'xion',
+              address: xionAccount.bech32Address,
+              publicKey: '',
+              isExisting: false,
+              isNewlyCreated: true
+            };
+            
+            setConnectedWallet(xionWallet);
+            setStep('connected');
+            setIsLoading(false);
+            
+            // If we have form data in localStorage, retrieve it and proceed
+            const savedFormData = localStorage.getItem('noircheck_registration_form');
+            if (savedFormData) {
+              try {
+                const parsedFormData = JSON.parse(savedFormData);
+                setFormData(parsedFormData);
+                console.log('📝 Form data retrieved from localStorage, proceeding to create account...');
+                await handleCreateAccount(xionWallet);
+              } catch (error) {
+                console.error('Error parsing saved form data:', error);
+              }
+            }
+          } else {
+            console.log('⏳ XION account not yet available, waiting...');
+            // Retry after another delay
+            setTimeout(() => {
+              if (xionAccount && xionAccount.bech32Address) {
+                const xionWallet = {
+                  type: 'xion',
+                  address: xionAccount.bech32Address,
+                  publicKey: '',
+                  isExisting: false,
+                  isNewlyCreated: true
+                };
+                
+                setConnectedWallet(xionWallet);
+                setStep('connected');
+                setIsLoading(false);
+              } else {
+                setIsLoading(false);
+                setError('XION wallet was created but connection failed. Please try connecting again.');
+              }
+            }, 2000);
+          }
+        }, 1000);
+      }
+    };
+
+    handleXIONReturn();
+  }, [xionAccount]);
   
   // Auto-reset debounce if loading state gets stuck
   useEffect(() => {
@@ -112,21 +235,95 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     };
   }, [isLoading]);
   
-  // XION authentication hook
-  const { account: xionAccount, login: xionLogin } = useXIONAuth();
+  // Function to clear all XION state
+  const clearXIONState = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        // Clear all XION related storage más agresivamente
+        const keysToRemove: string[] = [];
+        
+        // Check sessionStorage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.toLowerCase().includes('xion') || 
+              key.toLowerCase().includes('abstraxion') || 
+              key.toLowerCase().includes('wallet') ||
+              key.toLowerCase().includes('auth') ||
+              key.toLowerCase().includes('account')) {
+            keysToRemove.push(`session:${key}`);
+            sessionStorage.removeItem(key);
+          }
+        });
+        
+        // Check localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.toLowerCase().includes('xion') || 
+              key.toLowerCase().includes('abstraxion') || 
+              key.toLowerCase().includes('wallet') ||
+              key.toLowerCase().includes('auth') ||
+              key.toLowerCase().includes('account')) {
+            keysToRemove.push(`local:${key}`);
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Force clear some known XION storage keys
+        const knownXionKeys = [
+          'xion-account',
+          'abstraxion-account', 
+          'abstraxion-signer',
+          'wallet-connect',
+          'wc@2:client:0.3//session',
+          'wc@2:core:0.3//keychain'
+        ];
+        
+        knownXionKeys.forEach(key => {
+          try {
+            sessionStorage.removeItem(key);
+            localStorage.removeItem(key);
+          } catch (e) {
+            // Ignore errors
+          }
+        });
+        
+        if (keysToRemove.length > 0) {
+          console.log('🧹 Cleared XION storage keys:', keysToRemove);
+        }
+        
+        // Reset component state
+        setConnectedWallet(null);
+        setIsLoading(false);
+        setIsManualXIONProcess(false);
+        lastClickTime.current = 0;
+        
+        // Force page reload if we're really stuck
+        if (keysToRemove.length > 5) {
+          console.log('🔄 Many keys found, considering page reload...');
+        }
+      }
+    } catch (error) {
+      console.warn('Error clearing XION state:', error);
+    }
+  };
 
   // Auto-process XION registration when account becomes available (for auto-detection, not manual process)
   useEffect(() => {
+    // TEMPORALMENTE DESHABILITADO para evitar conflictos
+    // Solo permitir flujo manual por ahora
+    return;
+    
     const handleXIONConnection = async () => {
       // Only proceed if:
       // 1. We have a XION account
       // 2. We don't already have a connected wallet (to avoid double processing)
       // 3. We're not in a manual XION process (to avoid conflicts)
       // 4. We have the required form data
+      // 5. We're on the wallet selection step (not form step)
       if (
         xionAccount?.bech32Address && 
         !connectedWallet && 
         !isManualXIONProcess &&
+        !isLoading &&
+        step === 'wallet' &&
         formData.email && 
         formData.firstName && 
         formData.password
@@ -206,7 +403,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     };
 
     handleXIONConnection();
-  }, [xionAccount, connectedWallet, isManualXIONProcess, formData, onComplete]);
+  }, [xionAccount, connectedWallet, isManualXIONProcess, formData, onComplete, step, isLoading]);
 
   // Helper function to generate valid XION addresses for development
   const generateValidXionAddress = (): string => {
@@ -278,6 +475,14 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     setWalletOption(option);
     setError('');
 
+    // Save form data to localStorage before creating wallet (in case of redirect)
+    try {
+      localStorage.setItem('noircheck_registration_form', JSON.stringify(formData));
+      console.log('💾 Form data saved to localStorage');
+    } catch (error) {
+      console.warn('⚠️ Could not save form data to localStorage:', error);
+    }
+
     if (option === 'create') {
       // Create new XION wallet through XION service
       await createXIONWallet();
@@ -297,50 +502,81 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       return;
     }
 
+    console.log('🚀 Starting XION wallet creation process...');
     setIsLoading(true);
-    setIsManualXIONProcess(true); // Marcar que estamos en proceso manual
+    setIsManualXIONProcess(true);
+    setError(''); // Clear any previous errors
+    
     try {
-      console.log('Attempting to create XION wallet...');
+      // Clear any existing XION state to prevent conflicts
+      console.log('🧹 Clearing existing XION state...');
+      clearXIONState();
+      
+      // Wait a moment for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('📞 Calling XION login...');
       
       // Create new XION wallet using XION Abstraxion
       await xionLogin();
       
+      // Wait a moment for the account to be available
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('✅ XION login completed, checking account...', xionAccount);
+      
       if (xionAccount && xionAccount.bech32Address) {
-        console.log('XION account created successfully:', xionAccount.bech32Address);
+        console.log('🎉 XION account created successfully:', xionAccount.bech32Address);
         
         const xionWallet = {
           type: 'xion',
           address: xionAccount.bech32Address,
-          publicKey: '', // PublicKey no está disponible en el tipo AbstraxionAccount
+          publicKey: '',
           isExisting: false,
           isNewlyCreated: true
         };
         
         setConnectedWallet(xionWallet);
+        console.log('✅ Wallet state updated, proceeding to account creation...');
+        
+        // Small delay to let state update
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Proceed to create account with the new wallet
         await handleCreateAccount(xionWallet);
       } else {
-        throw new Error('XION account creation failed - no valid address returned');
+        console.warn('⚠️ XION account creation completed but no valid address returned');
+        setError('XION wallet creation completed but no address was generated. Please try again.');
       }
     } catch (error: unknown) {
-      console.error('XION wallet creation error:', error);
+      console.error('❌ XION wallet creation error:', error);
       if (error instanceof Error) {
         if (error.message.includes('User denied') || error.message.includes('cancelled')) {
           setError('User cancelled wallet creation. Please try again.');
         } else if (error.message.includes('not installed') || error.message.includes('not found')) {
-          setError('XION wallet not available. This is a development version - wallet creation is simulated.');
+          setError('XION wallet not available. Please ensure you have a compatible browser and try again.');
         } else if (error.message.includes('Login is already in progress')) {
           setError('XION connection is in progress. Please wait a moment and try again.');
+          // Auto-retry after a delay
+          setTimeout(() => {
+            console.log('🔄 Auto-retrying XION wallet creation...');
+            setIsLoading(false);
+            setIsManualXIONProcess(false);
+            setError('');
+          }, 3000);
+          return;
         } else {
           setError(`Error creating XION wallet: ${error.message}`);
         }
       } else {
-        setError('Error creating XION wallet. Please try again.');
+        setError('Unexpected error creating XION wallet. Please try again.');
       }
     } finally {
-      setIsLoading(false);
-      setIsManualXIONProcess(false); // Reset manual process flag
+      // Only reset state if we're not auto-retrying
+      if (!error || !error.toString().includes('Login is already in progress')) {
+        setIsLoading(false);
+        setIsManualXIONProcess(false);
+      }
     }
   };
 
@@ -507,6 +743,14 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
 
       console.log('User account created successfully:', userData.email);
       setStep('success');
+      
+      // Clean up form data from localStorage
+      try {
+        localStorage.removeItem('noircheck_registration_form');
+        console.log('🧹 Form data cleaned from localStorage');
+      } catch (error) {
+        console.warn('⚠️ Could not clean form data from localStorage:', error);
+      }
       
       // Complete registration immediately after showing success briefly
       setTimeout(() => {
@@ -731,10 +975,12 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                     console.log('❌ Blocked by isLoading');
                   }
                 }}
-                className={`bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 transition-all ${
-                  isLoading 
-                    ? 'opacity-50 cursor-not-allowed' 
-                    : 'cursor-pointer hover:bg-blue-500/30'
+                className={`border rounded-lg p-4 transition-all ${
+                  isLoading && walletOption === 'create'
+                    ? 'bg-blue-500/30 border-blue-400 opacity-90 cursor-wait' 
+                    : isLoading 
+                      ? 'opacity-50 cursor-not-allowed bg-gray-500/20 border-gray-500/50' 
+                      : 'bg-blue-500/20 border-blue-500/50 cursor-pointer hover:bg-blue-500/30'
                 }`}
               >
                 <div className="flex items-start space-x-3">
@@ -744,16 +990,38 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                     <Plus className="w-6 h-6 text-blue-400 mt-1" />
                   )}
                   <div className="flex-1">
-                    <h3 className="text-blue-300 font-medium mb-1">
+                    <h3 className="text-blue-300 font-medium mb-1 flex items-center">
                       Create New XION Wallet (Recommended)
                       {isLoading && walletOption === 'create' && (
-                        <span className="ml-2 text-xs text-blue-400">Creating...</span>
+                        <span className="ml-2 text-xs text-blue-400 flex items-center">
+                          <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin mr-1"></div>
+                          {isManualXIONProcess ? 'Creating wallet...' : 'Processing...'}
+                        </span>
                       )}
                     </h3>
                     <p className="text-blue-200 text-sm">
                       Create a new XION wallet using official Abstraxion service. 
                       Real blockchain integration with Meta Account authentication.
                       {isMobile() && ' Optimized for mobile experience.'}
+                      {isLoading && walletOption === 'create' && (
+                        <>
+                          <br />
+                          <span className="text-blue-300 text-xs mt-1 block">
+                            🔄 {isManualXIONProcess ? 'Creating your secure XION wallet...' : 'Processing...'}
+                          </span>
+                          <span className="text-blue-400 text-xs mt-1 block">
+                            This may take a few moments. Please don't close this page.
+                          </span>
+                        </>
+                      )}
+                      {!isLoading && (
+                        <>
+                          <br />
+                          <span className="text-green-300 text-xs mt-1 block">
+                            ✓ Click to create your new XION wallet securely
+                          </span>
+                        </>
+                      )}
                     </p>
                     <div className="mt-2">
                       <span className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded">
@@ -868,44 +1136,88 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
               </div>
             </div>
 
-            {/* Connected Wallet Display */}
-            {connectedWallet && (
-              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <div>
-                    <h3 className="text-green-300 font-medium">Wallet Connected</h3>
-                    <p className="text-green-200 text-sm">
-                      {connectedWallet.type === 'xion' ? 'XION' : 'MetaMask'}: {
-                        connectedWallet.type === 'xion' && xionAccount?.bech32Address
-                          ? xionAccount.bech32Address.substring(0, 10)
-                          : connectedWallet.address.substring(0, 10)
-                      }...
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleCreateAccount()}
-                  disabled={isLoading}
-                  className="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Connecting...
-                    </>
-                  ) : (
-                    'Complete Registration'
-                  )}
-                </button>
-              </div>
-            )}
-
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
-                <div className="flex items-center text-red-200 text-sm">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  {error}
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-red-200 text-sm mb-2">
+                      {error}
+                    </div>
+                    
+                    {/* Troubleshooting suggestions */}
+                    {error.includes('Login is already in progress') && (
+                      <div className="mb-3 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded">
+                        <div className="text-yellow-200 text-xs">
+                          <strong>💡 Troubleshooting:</strong><br />
+                          • Another XION process is running<br />
+                          • Try waiting 30 seconds and retry<br />
+                          • If issue persists, reload the page
+                        </div>
+                      </div>
+                    )}
+                    
+                    {error.includes('not available') && (
+                      <div className="mb-3 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded">
+                        <div className="text-yellow-200 text-xs">
+                          <strong>💡 Troubleshooting:</strong><br />
+                          • Check your internet connection<br />
+                          • Try refreshing the page<br />
+                          • Ensure browser allows popups
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-x-2">
+                      {error.includes('Login is already in progress') && (
+                        <>
+                          <button
+                            onClick={() => {
+                              clearXIONState();
+                              setError('');
+                            }}
+                            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                          >
+                            Clear XION State & Retry
+                          </button>
+                          <button
+                            onClick={() => {
+                              clearXIONState();
+                              window.location.reload();
+                            }}
+                            className="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
+                          >
+                            Reload Page
+                          </button>
+                        </>
+                      )}
+                      {!error.includes('Login is already in progress') && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setError('');
+                            }}
+                            className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            onClick={() => {
+                              clearXIONState();
+                              setError('');
+                              // Retry wallet creation
+                              if (walletOption === 'create') {
+                                setTimeout(() => handleWalletSelection('create'), 500);
+                              }
+                            }}
+                            className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors"
+                          >
+                            Try Again
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -915,6 +1227,91 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
               className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
             >
               Back to Form
+            </button>
+          </div>
+        )}
+
+        {/* Connected Step */}
+        {step === 'connected' && connectedWallet && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-6 h-6 text-green-400" />
+                <div>
+                  <h3 className="text-green-300 font-medium">Wallet Connected</h3>
+                  <p className="text-green-200 text-sm">
+                    {connectedWallet.type === 'xion' ? 'XION' : 'MetaMask'}: {
+                      connectedWallet.type === 'xion' && xionAccount?.bech32Address
+                        ? xionAccount.bech32Address.substring(0, 10)
+                        : connectedWallet.address.substring(0, 10)
+                    }...
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleCreateAccount()}
+                disabled={isLoading}
+                className="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Connecting...
+                  </>
+                ) : (
+                  'Complete Registration'
+                )}
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-4">
+                <div className="flex items-center text-red-200 text-sm">
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  {error}
+                </div>
+                <div className="mt-2 space-x-2">
+                  {error.includes('Login is already in progress') && (
+                    <>
+                      <button
+                        onClick={() => {
+                          clearXIONState();
+                          setError('');
+                        }}
+                        className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                      >
+                        Clear XION State & Retry
+                      </button>
+                      <button
+                        onClick={() => {
+                          clearXIONState();
+                          window.location.reload();
+                        }}
+                        className="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
+                      >
+                        Reload Page
+                      </button>
+                    </>
+                  )}
+                  {!error.includes('Login is already in progress') && (
+                    <button
+                      onClick={() => {
+                        setError('');
+                      }}
+                      className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
+                    >
+                      Dismiss
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep('wallet')}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+            >
+              Back to Wallet Selection
             </button>
           </div>
         )}
