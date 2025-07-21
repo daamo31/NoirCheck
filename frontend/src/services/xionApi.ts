@@ -321,7 +321,7 @@ class XIONApiService {
       const data = await response.json();
       
       return {
-        address: data.account.address,
+        address: data.account.bech32Address || data.account.address,
         sequence: data.account.sequence,
         accountNumber: data.account.account_number,
         balance: []

@@ -16,7 +16,6 @@ import { WalletService, isMobile, isIOS, isAndroid } from '../services/walletSer
 import { UserStorageService } from '../services/userStorageService';
 import { useXIONAuth } from '../services/useXIONAuth';
 import { useModal } from '@burnt-labs/abstraxion';
-import FullyCustomXIONModal from './FullyCustomXIONModal';
 
 interface UserLoginProps {
   onBack: () => void;
@@ -26,7 +25,6 @@ interface UserLoginProps {
 export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
   const { account, isConnected, login: xionLogin, logout: xionLogout } = useXIONAuth();
   const [, setShowModal] = useModal();
-  const [showModal, setShowModalState] = useState(false);
   
   const [loginMethod, setLoginMethod] = useState<'traditional' | 'xion' | 'metamask'>('traditional');
   const [formData, setFormData] = useState({
@@ -85,7 +83,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
         console.log('XION wallet already connected:', account);
         
         // Find registered user with this wallet address
-        const userData = UserStorageService.findUserByWalletAddress(account.address);
+        const userData = UserStorageService.findUserByWalletAddress(account.bech32Address);
         
         if (!userData) {
           throw new Error('Esta wallet XION no está registrada. Por favor crea una cuenta primero.');
@@ -93,48 +91,46 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
 
         console.log('XION wallet login successful:', userData);
         onLogin(userData);
+        setIsLoading(false);
         return;
       }
       
-      // If not connected, show the modal and attempt to connect
+      // If not connected, attempt to connect
       console.log('Opening XION connection modal...');
-      setShowModalState(true);
       
       // Use the xionLogin function from our hook
       await xionLogin();
       
-      // The connection will be handled by the useEffect in the hook
-      // We'll check for successful connection in a timeout
-      const checkConnection = () => {
-        if (isConnected && account) {
-          // Find registered user with this wallet address
-          const userData = UserStorageService.findUserByWalletAddress(account.address);
-          
-          if (!userData) {
-            throw new Error('Esta wallet XION no está registrada. Por favor crea una cuenta primero.');
-          }
-
-          console.log('XION wallet login successful:', userData);
-          onLogin(userData);
-          setIsLoading(false);
-        } else {
-          // Check again in a moment
-          setTimeout(checkConnection, 1000);
-        }
-      };
+      // Wait a bit for connection to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Start checking for connection
-      setTimeout(checkConnection, 1000);
+      // Check connection again after login attempt
+      if (isConnected && account) {
+        // Find registered user with this wallet address
+        const userData = UserStorageService.findUserByWalletAddress(account.bech32Address);
+        
+        if (!userData) {
+          throw new Error('Esta wallet XION no está registrada. Por favor crea una cuenta primero.');
+        }
+
+        console.log('XION wallet login successful:', userData);
+        onLogin(userData);
+      } else {
+        throw new Error('XION wallet connection was not completed. Please try again.');
+      }
       
     } catch (error: any) {
       console.error('XION login error:', error);
-      setIsLoading(false);
       
       if (error?.message?.includes('no está registrada')) {
         setError(error.message);
+      } else if (error?.message?.includes('not completed')) {
+        setError('Connection cancelled or failed. Please try again.');
       } else {
         setError('Error connecting to XION wallet. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -342,7 +338,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                 ) : isConnected && account ? (
                   <>
                     <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                    Connected: {account.address.slice(0, 6)}...{account.address.slice(-4)}
+                    Connected: {account.bech32Address.slice(0, 6)}...{account.bech32Address.slice(-4)}
                   </>
                 ) : (
                   <>
@@ -427,12 +423,6 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
           </div>
         </div>
       </div>
-      
-      {/* Custom XION Modal */}
-      <FullyCustomXIONModal 
-        isOpen={showModal} 
-        onClose={() => setShowModalState(false)} 
-      />
     </div>
   );
 }

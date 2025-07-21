@@ -88,8 +88,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       if (xionAccount) {
         const xionWallet = {
           type: 'xion',
-          address: xionAccount.address,
-          publicKey: xionAccount.publicKey || '',
+          address: xionAccount.bech32Address,
+          publicKey: '', // PublicKey no está disponible en el tipo AbstraxionAccount
           isExisting: false,
           isNewlyCreated: true
         };
@@ -121,8 +121,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       if (xionAccount) {
         const xionWallet = {
           type: 'xion',
-          address: xionAccount.address,
-          publicKey: xionAccount.publicKey || '',
+          address: xionAccount.bech32Address,
+          publicKey: '', // PublicKey no está disponible en el tipo AbstraxionAccount
           isExisting: true
         };
         

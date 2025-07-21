@@ -30,10 +30,7 @@ export default function XIONTest() {
               ✅ Connected to XION
             </h3>
             <p className="text-sm text-green-700 dark:text-green-300">
-              <strong>Address:</strong> {account.address}
-            </p>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              <strong>Type:</strong> {account.type}
+              <strong>Address:</strong> {account.bech32Address}
             </p>
           </div>
           

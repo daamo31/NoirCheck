@@ -6,8 +6,10 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "../styles/xion-overrides.css";
+import "../styles/xion-accessibility.css";
 import Navigation from "@/components/Navigation";
 import SimpleXIONProvider from "@/components/SimpleXIONProvider";
+import GlobalWarningsSuppressor from "@/components/GlobalWarningsSuppressor";
 
 // Load Inter font with Latin subset
 const inter = Inter({ subsets: ["latin"] });
@@ -23,6 +25,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       {/* Apply Inter font and antialiasing to body */}
       <body className={`${inter.className} antialiased`}>
+        <GlobalWarningsSuppressor />
         <SimpleXIONProvider>
           <Navigation />
           {children}

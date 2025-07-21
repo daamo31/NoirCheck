@@ -22,9 +22,12 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
       const message = args[0];
       if (
         typeof message === 'string' &&
-        (message.includes('DialogContent requires a DialogTitle') ||
+        (message.includes('DialogContent') ||
+         message.includes('DialogTitle') ||
          message.includes('Missing Description') ||
-         message.includes('aria-describedby'))
+         message.includes('aria-describedby') ||
+         message.includes('VisuallyHidden') ||
+         message.includes('screen reader users'))
       ) {
         return;
       }
@@ -35,9 +38,12 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
       const message = args[0];
       if (
         typeof message === 'string' &&
-        (message.includes('DialogContent requires a DialogTitle') ||
+        (message.includes('DialogContent') ||
+         message.includes('DialogTitle') ||
          message.includes('Missing Description') ||
-         message.includes('aria-describedby'))
+         message.includes('aria-describedby') ||
+         message.includes('VisuallyHidden') ||
+         message.includes('screen reader users'))
       ) {
         return;
       }

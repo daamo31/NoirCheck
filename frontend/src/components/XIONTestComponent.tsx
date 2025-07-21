@@ -13,26 +13,11 @@ export default function XIONTestComponent() {
   const { 
     account, 
     isConnected, 
-    isLoading, 
-    error, 
+    isConnecting, 
+    connectionError, 
     login, 
-    logout, 
-    isXIONAvailable 
+    logout
   } = useXIONAuth();
-
-  if (!isXIONAvailable()) {
-    return (
-      <div className="p-6 max-w-md mx-auto bg-red-50 border border-red-200 rounded-lg">
-        <div className="flex items-center gap-3 mb-3">
-          <AlertCircle className="w-6 h-6 text-red-500" />
-          <h3 className="text-lg font-semibold text-red-800">XION Not Available</h3>
-        </div>
-        <p className="text-red-700">
-          XION Abstraxion is not properly configured. Please check your setup.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 max-w-md mx-auto bg-white border border-gray-200 rounded-lg shadow-lg">
@@ -41,11 +26,11 @@ export default function XIONTestComponent() {
         <h2 className="text-xl font-bold text-gray-800">XION Wallet Test</h2>
       </div>
 
-      {error && (
+      {connectionError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-500" />
-            <span className="text-red-700 text-sm">{error}</span>
+            <span className="text-red-700 text-sm">{connectionError}</span>
           </div>
         </div>
       )}
@@ -58,26 +43,21 @@ export default function XIONTestComponent() {
               <span className="font-medium text-green-800">Connected</span>
             </div>
             <p className="text-sm text-green-700">
-              <strong>Address:</strong> {account.address}
+              <strong>Address:</strong> {account.bech32Address}
             </p>
-            {account.publicKey && (
-              <p className="text-sm text-green-700 mt-1">
-                <strong>Public Key:</strong> {account.publicKey.slice(0, 20)}...
-              </p>
-            )}
           </div>
           
           <button
             onClick={logout}
-            disabled={isLoading}
+            disabled={isConnecting}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? (
+            {isConnecting ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <LogOut className="w-5 h-5" />
             )}
-            {isLoading ? 'Disconnecting...' : 'Disconnect'}
+            {isConnecting ? 'Disconnecting...' : 'Disconnect'}
           </button>
         </div>
       ) : (
@@ -88,15 +68,15 @@ export default function XIONTestComponent() {
           
           <button
             onClick={login}
-            disabled={isLoading}
+            disabled={isConnecting}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? (
+            {isConnecting ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
               <LogIn className="w-5 h-5" />
             )}
-            {isLoading ? 'Connecting...' : 'Connect XION Wallet'}
+            {isConnecting ? 'Connecting...' : 'Connect XION Wallet'}
           </button>
         </div>
       )}
