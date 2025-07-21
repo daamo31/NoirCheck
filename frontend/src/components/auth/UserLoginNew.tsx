@@ -66,8 +66,15 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
 
       console.log('Login successful for:', userData.email);
       
-      // El userData ya viene con toda la información necesaria del UserStorageService
-      onLogin(userData);
+      // Transform userData to match User interface
+      const userForAuth: User = {
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      
+      onLogin(userForAuth);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid credentials. Please try again.';
       setError(errorMessage);
@@ -95,7 +102,16 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
         }
 
         console.log('XION wallet login successful:', userData);
-        onLogin(userData);
+        
+        // Transform userData to match User interface
+        const userForAuth: User = {
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        };
+        
+        onLogin(userForAuth);
         setIsLoading(false);
         return;
       }
@@ -119,7 +135,16 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
         }
 
         console.log('XION wallet login successful:', userData);
-        onLogin(userData);
+        
+        // Transform userData to match User interface
+        const userForAuth: User = {
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        };
+        
+        onLogin(userForAuth);
       } else {
         throw new Error('XION wallet connection was not completed. Please try again.');
       }
@@ -158,7 +183,16 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
       }
 
       console.log('MetaMask wallet login successful:', userData);
-      onLogin(userData);
+      
+      // Transform userData to match User interface
+      const userForAuth: User = {
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      
+      onLogin(userForAuth);
     } catch (error: unknown) {
       console.error('MetaMask login error:', error);
       if (error instanceof Error) {
@@ -416,7 +450,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                 <h3 className="text-yellow-300 font-medium text-sm mb-1">Important</h3>
                 <p className="text-yellow-200 text-xs">
                   Wallet login only works with wallets that were registered with your NoirCheck account. 
-                  If you haven't registered yet, please create an account first.
+                  If you haven&apos;t registered yet, please create an account first.
                 </p>
               </div>
             </div>

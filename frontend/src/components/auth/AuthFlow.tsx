@@ -24,15 +24,14 @@ type AuthFlow = 'landing' | 'register' | 'login' | 'dashboard';
 
 interface User {
   id: string;
-  address: string;
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  registeredAt: string;
-  totalRegistrations: number;
-  totalVerifications: number;
-  lastActivity: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  address?: string;
+  registeredAt?: string;
+  totalRegistrations?: number;
+  totalVerifications?: number;
+  lastActivity?: string;
 }
 
 export function AuthFlow() {
@@ -96,14 +95,6 @@ export function AuthFlow() {
     // Enable XION for future use
     localStorage.setItem('noircheck_enable_xion', 'true');
     setCurrentFlow('dashboard');
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('noircheck_user');
-    localStorage.removeItem('noircheck_enable_xion');
-    setCurrentFlow('landing');
   };
 
   // Loading screen
