@@ -212,4 +212,91 @@ export class UserStorageService {
   static clearCurrentUser(): void {
     localStorage.removeItem(CURRENT_USER_KEY);
   }
+
+  // Statistics management methods
+  static incrementUserRegistrations(userEmail: string): User | null {
+    try {
+      const users = this.getAllUsers();
+      const userIndex = users.findIndex(u => u.email === userEmail);
+      
+      if (userIndex !== -1) {
+        users[userIndex].totalRegistrations += 1;
+        users[userIndex].lastActivity = new Date().toISOString();
+        this.saveAllUsers(users);
+        
+        // Update current user if it's the same user
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.email === userEmail) {
+          this.setCurrentUser(userEmail);
+        }
+        
+        return users[userIndex];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error incrementing user registrations:', error);
+      return null;
+    }
+  }
+
+  static incrementUserVerifications(userEmail: string): User | null {
+    try {
+      const users = this.getAllUsers();
+      const userIndex = users.findIndex(u => u.email === userEmail);
+      
+      if (userIndex !== -1) {
+        users[userIndex].totalVerifications += 1;
+        users[userIndex].lastActivity = new Date().toISOString();
+        this.saveAllUsers(users);
+        
+        // Update current user if it's the same user
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.email === userEmail) {
+          this.setCurrentUser(userEmail);
+        }
+        
+        return users[userIndex];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error incrementing user verifications:', error);
+      return null;
+    }
+  }
+
+  static updateUserActivity(userEmail: string): User | null {
+    try {
+      const users = this.getAllUsers();
+      const userIndex = users.findIndex(u => u.email === userEmail);
+      
+      if (userIndex !== -1) {
+        users[userIndex].lastActivity = new Date().toISOString();
+        this.saveAllUsers(users);
+        
+        // Update current user if it's the same user
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.email === userEmail) {
+          this.setCurrentUser(userEmail);
+        }
+        
+        return users[userIndex];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating user activity:', error);
+      return null;
+    }
+  }
+
+  static getUserActivityStats(userEmail: string): { totalRegistrations: number; totalVerifications: number; lastActivity: string } | null {
+    const user = this.findUserByEmail(userEmail);
+    if (user) {
+      return {
+        totalRegistrations: user.totalRegistrations,
+        totalVerifications: user.totalVerifications,
+        lastActivity: user.lastActivity
+      };
+    }
+    return null;
+  }
 }

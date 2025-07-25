@@ -118,10 +118,29 @@ export function UserDashboard() {
     
     setIsLoadingStats(true);
     try {
-      const stats = await apiService.getUserStats(user.id);
-      setUserStats(stats);
+      // TODO: Re-enable when backend is running
+      // const stats = await apiService.getUserStats(user.id);
+      // setUserStats(stats);
+      
+      // For now, use local user data from UserStorageService
+      console.log('📊 Refreshing local user stats instead of backend');
+      const localStats = {
+        totalRegistrations: user.totalRegistrations || 0,
+        totalVerifications: user.totalVerifications || 0,
+        recentActivity: [], // Empty for now
+        joinDate: user.registeredAt
+      };
+      setUserStats(localStats);
     } catch (error) {
-      console.error('Error loading user stats:', error);
+      console.error('Error refreshing user stats:', error);
+      // Fallback to local data
+      const localStats = {
+        totalRegistrations: user.totalRegistrations || 0,
+        totalVerifications: user.totalVerifications || 0,
+        recentActivity: [],
+        joinDate: user.registeredAt
+      };
+      setUserStats(localStats);
     } finally {
       setIsLoadingStats(false);
     }

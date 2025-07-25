@@ -16,7 +16,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Mail, Wallet, Save, X } from 'lucide-react';
+import { User, Mail, Wallet, Save, X, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import type { User as UserType } from '@/services/api';
 
@@ -30,6 +30,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || ''
@@ -44,6 +45,7 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
 
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       await updateProfile({
@@ -52,6 +54,13 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
       });
       
       setIsEditing(false);
+      setSuccessMessage('Profile updated successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      
       onUpdateSuccess();
     } catch (error) {
       console.error('Profile update error:', error);
@@ -105,6 +114,16 @@ export function UserProfile({ user, onUpdateSuccess }: UserProfileProps) {
         {error && (
           <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
             <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <p className="text-green-600 dark:text-green-400 text-sm">{successMessage}</p>
+            </div>
           </div>
         )}
 

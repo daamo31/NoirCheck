@@ -418,7 +418,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Update user profile
-   * Updates user information in the backend and refreshes local state
+   * Updates user information in UserStorageService and refreshes local state
    */
   const updateProfile = async (data: Partial<User>) => {
     if (!state.user) return;
@@ -426,29 +426,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const updatedUser = await apiService.updateUser(state.user.id, data);
-      dispatch({ type: 'SET_USER', payload: updatedUser });
+      console.log('🔄 Updating user profile locally with UserStorageService...');
+      
+      // Convert AuthContext User data to UserStorageService format
+      const updateData: any = {};
+      if (data.username) updateData.username = data.username;
+      if (data.email) updateData.email = data.email;
+      if (data.firstName) updateData.firstName = data.firstName;
+      if (data.lastName) updateData.lastName = data.lastName;
+      
+      // Update in UserStorageService
+      const success = UserStorageService.updateUser(state.user.id, updateData);
+      
+      if (success) {
+        // Get updated user from storage
+        const updatedStorageUser = UserStorageService.findUserByEmail(state.user.email!);
+        if (updatedStorageUser) {
+          const updatedUser = adaptUserFromStorage(updatedStorageUser);
+          dispatch({ type: 'SET_USER', payload: updatedUser });
+          console.log('✅ Profile updated successfully:', updatedUser);
+        }
+      } else {
+        throw new Error('Failed to update user in storage');
+      }
     } catch (error) {
       console.error('Profile update error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Profile update failed' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   /**
    * Refresh user data
-   * Fetches latest user information from the backend
+   * Fetches latest user information from UserStorageService
    */
   const refreshUser = async () => {
     if (!state.user) return;
     
     try {
-      // Try to get updated data from backend
-      const userData = await apiService.getUser(state.user.address);
-      if (userData) {
-        dispatch({ type: 'SET_USER', payload: userData });
+      console.log('🔄 Refreshing user data from UserStorageService...');
+      
+      // Get current user from UserStorageService
+      const currentStorageUser = UserStorageService.getCurrentUser();
+      if (currentStorageUser) {
+        const refreshedUser = adaptUserFromStorage(currentStorageUser);
+        dispatch({ type: 'SET_USER', payload: refreshedUser });
+        console.log('✅ User data refreshed:', refreshedUser);
+      } else {
+        console.warn('No current user found in UserStorageService');
       }
     } catch (error) {
-      console.warn('Backend not available for user refresh, keeping current user data:', error);
+      console.warn('Error refreshing user data from storage:', error);
     }
   };
 
