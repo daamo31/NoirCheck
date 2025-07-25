@@ -16,6 +16,39 @@ export function useXIONAuth() {
   const isConnected = Boolean(abstraxionAccount?.isConnected);
   const account = abstraxionAccount?.data; // Use 'data' instead of 'account'
 
+  // Suppress specific XION authentication errors
+  useEffect(() => {
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
+    console.error = (...args) => {
+      const message = typeof args[0] === 'string' ? args[0] : String(args[0]);
+      if (message.includes('Missing keypair or granter') || 
+          message.includes('cannot authenticate') ||
+          message.includes('overrideMethod') ||
+          message.includes('AbstraxionContextProvider')) {
+        return; // Suppress these specific errors
+      }
+      originalConsoleError.apply(console, args);
+    };
+    
+    console.warn = (...args) => {
+      const message = typeof args[0] === 'string' ? args[0] : String(args[0]);
+      if (message.includes('Missing keypair or granter') || 
+          message.includes('cannot authenticate') ||
+          message.includes('overrideMethod') ||
+          message.includes('AbstraxionContextProvider')) {
+        return; // Suppress these specific warnings
+      }
+      originalConsoleWarn.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalConsoleError;
+      console.warn = originalConsoleWarn;
+    };
+  }, []);
+
   // Handle connection state changes
   useEffect(() => {
     // Only log if this is a new connection, not an auto-restored session

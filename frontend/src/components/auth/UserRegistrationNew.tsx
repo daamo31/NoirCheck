@@ -29,6 +29,7 @@ import { UserPlus, ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle, ExternalLink
 import { WalletService, isMobile, isIOS, isAndroid } from '@/services/walletService';
 import { UserStorageService } from '@/services/userStorageService';
 import { useXIONAuth } from '@/services/useXIONAuth';
+import { forceCleanXIONState, forceXIONLogout } from '@/utils/xionCleanup';
 
 interface User {
   id: string;
@@ -80,18 +81,36 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
   useEffect(() => {
     componentMounted.current = true;
     
-    // Try to restore form data from localStorage
+    // Try to restore form data from localStorage ONLY if it's complete
     try {
       const savedFormData = localStorage.getItem('noircheck_registration_form');
       if (savedFormData) {
         const parsedFormData = JSON.parse(savedFormData);
-        setFormData(parsedFormData);
-        console.log('📋 Form data restored from localStorage');
-        // If we have saved form data, go directly to wallet selection
-        setStep('wallet');
+        
+        // Only restore if we have complete form data AND we're returning from XION redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        const isReturningFromXION = urlParams.get('granted') === 'true';
+        
+        // Check if form data is complete
+        const isFormDataComplete = parsedFormData.firstName && 
+                                 parsedFormData.lastName && 
+                                 parsedFormData.email && 
+                                 parsedFormData.password;
+        
+        if (isReturningFromXION && isFormDataComplete) {
+          setFormData(parsedFormData);
+          console.log('📋 Form data restored from localStorage (returning from XION)');
+          // Don't automatically go to wallet selection, let the XION redirect handler manage this
+        } else {
+          // Clean up incomplete or stale form data
+          localStorage.removeItem('noircheck_registration_form');
+          console.log('🧹 Cleaned up incomplete/stale form data from localStorage');
+        }
       }
     } catch (error) {
       console.warn('⚠️ Could not restore form data from localStorage:', error);
+      // Clean up corrupted data
+      localStorage.removeItem('noircheck_registration_form');
     }
     
     // Clear any existing XION/wallet state on component mount
@@ -134,6 +153,7 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
       if (granted === 'true' && granter) {
         console.log('🎉 XION wallet creation returned successfully!');
         console.log('👤 Granter address:', granter);
+        console.log('🔍 Current xionAccount state:', xionAccount);
         
         // Clean URL parameters
         const url = new URL(window.location.href);
@@ -146,58 +166,53 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
         setWalletOption('create');
         setStep('wallet');
         
-        // Wait a moment for XION state to be available
-        setTimeout(async () => {
-          if (xionAccount && xionAccount.bech32Address) {
-            console.log('✅ XION account available after return:', xionAccount.bech32Address);
+        // Function to check for XION account with retries
+        const checkForXIONAccount = async (maxRetries = 10, delay = 1000) => {
+          for (let i = 0; i < maxRetries; i++) {
+            console.log(`🔍 Checking for XION account (attempt ${i + 1}/${maxRetries})...`);
             
-            const xionWallet = {
-              type: 'xion',
-              address: xionAccount.bech32Address,
-              publicKey: '',
-              isExisting: false,
-              isNewlyCreated: true
-            };
-            
-            setConnectedWallet(xionWallet);
-            setStep('connected');
-            setIsLoading(false);
-            
-            // If we have form data in localStorage, retrieve it and proceed
-            const savedFormData = localStorage.getItem('noircheck_registration_form');
-            if (savedFormData) {
-              try {
-                const parsedFormData = JSON.parse(savedFormData);
-                setFormData(parsedFormData);
-                console.log('📝 Form data retrieved from localStorage, proceeding to create account...');
-                await handleCreateAccount(xionWallet);
-              } catch (error) {
-                console.error('Error parsing saved form data:', error);
+            if (xionAccount && xionAccount.bech32Address) {
+              console.log('✅ XION account found:', xionAccount.bech32Address);
+              
+              const xionWallet = {
+                type: 'xion',
+                address: xionAccount.bech32Address,
+                publicKey: '',
+                isExisting: false,
+                isNewlyCreated: true
+              };
+              
+              setConnectedWallet(xionWallet);
+              setStep('connected');
+              setIsLoading(false);
+              
+              // If we have form data in localStorage, retrieve it and proceed
+              const savedFormData = localStorage.getItem('noircheck_registration_form');
+              if (savedFormData) {
+                try {
+                  const parsedFormData = JSON.parse(savedFormData);
+                  setFormData(parsedFormData);
+                  console.log('📝 Form data retrieved from localStorage, proceeding to create account...');
+                  await handleCreateAccount(xionWallet);
+                } catch (error) {
+                  console.error('Error parsing saved form data:', error);
+                }
               }
+              return;
             }
-          } else {
-            console.log('⏳ XION account not yet available, waiting...');
-            // Retry after another delay
-            setTimeout(() => {
-              if (xionAccount && xionAccount.bech32Address) {
-                const xionWallet = {
-                  type: 'xion',
-                  address: xionAccount.bech32Address,
-                  publicKey: '',
-                  isExisting: false,
-                  isNewlyCreated: true
-                };
-                
-                setConnectedWallet(xionWallet);
-                setStep('connected');
-                setIsLoading(false);
-              } else {
-                setIsLoading(false);
-                setError('XION wallet was created but connection failed. Please try connecting again.');
-              }
-            }, 2000);
+            
+            console.log(`⏳ XION account not yet available, waiting ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
-        }, 1000);
+          
+          // If we get here, account wasn't found after all retries
+          console.error('❌ XION account not found after maximum retries');
+          setIsLoading(false);
+          setError(`XION wallet was created (address: ${granter}) but connection failed. Please try connecting manually or refresh the page.`);
+        };
+        
+        // Start checking for account
+        await checkForXIONAccount();
       }
     };
 
@@ -273,7 +288,8 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
           'abstraxion-signer',
           'wallet-connect',
           'wc@2:client:0.3//session',
-          'wc@2:core:0.3//keychain'
+          'wc@2:core:0.3//keychain',
+          'xion-authz-granter-account' // This specific problematic key
         ];
         
         knownXionKeys.forEach(key => {
@@ -303,6 +319,46 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     } catch (error) {
       console.warn('Error clearing XION state:', error);
     }
+  };
+
+  // Function to clear only problematic XION keys (conservative approach)
+  const clearProblematicXIONKeys = () => {
+    try {
+      // Only remove the specific problematic key that causes authentication errors
+      const problematicKey = 'xion-authz-granter-account';
+      
+      if (localStorage.getItem(problematicKey)) {
+        localStorage.removeItem(problematicKey);
+        console.log('🧹 Removed problematic key:', problematicKey);
+      }
+      
+      if (sessionStorage.getItem(problematicKey)) {
+        sessionStorage.removeItem(problematicKey);
+        console.log('🧹 Removed problematic key from session:', problematicKey);
+      }
+      
+      setError(''); // Clear any errors
+      console.log('✅ Cleared only problematic XION keys, preserved valid session data');
+    } catch (error) {
+      console.warn('Error clearing problematic XION keys:', error);
+    }
+  };
+
+  // Function to completely reset everything (aggressive cleanup)
+  const clearAllState = () => {
+    forceCleanXIONState(); // Full cleanup
+    localStorage.removeItem('noircheck_registration_form');
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    });
+    setStep('form');
+    setError('');
+    setConnectedWallet(null);
+    console.log('🧹 Performed complete state reset');
   };
 
   // Auto-process XION registration when account becomes available (for auto-detection, not manual process)
@@ -508,9 +564,9 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
     setError(''); // Clear any previous errors
     
     try {
-      // Clear any existing XION state to prevent conflicts
-      console.log('🧹 Clearing existing XION state...');
-      clearXIONState();
+      // Clear any problematic XION keys to prevent conflicts (conservative approach)
+      console.log('🧹 Clearing problematic XION keys...');
+      clearProblematicXIONKeys();
       
       // Wait a moment for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -827,6 +883,55 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
         {/* Form Step */}
         {step === 'form' && (
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+            {/* Check if there's saved form data */}
+            {(() => {
+              try {
+                const savedFormData = localStorage.getItem('noircheck_registration_form');
+                if (savedFormData) {
+                  return (
+                    <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-3 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-blue-200 text-sm">
+                          <AlertTriangle className="w-4 h-4 mr-2" />
+                          <span>Datos del formulario guardados encontrados</span>
+                        </div>
+                        <div className="space-x-2">
+                          <button
+                            onClick={() => {
+                              localStorage.removeItem('noircheck_registration_form');
+                              setFormData({
+                                firstName: '',
+                                lastName: '',
+                                email: '',
+                                password: '',
+                                confirmPassword: ''
+                              });
+                              console.log('🧹 Cleared saved form data');
+                            }}
+                            className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded transition-colors"
+                          >
+                            Limpiar Formulario
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log('🚀 Forcing complete XION logout and reload...');
+                              forceXIONLogout();
+                            }}
+                            className="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition-colors"
+                          >
+                            Logout Completo
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              } catch (error) {
+                return null;
+              }
+            })()}
+            
             <form onSubmit={handleFormSubmit} className="space-y-4">
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
@@ -932,12 +1037,25 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-              >
-                Continue to Wallet Setup
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                >
+                  Continue to Wallet Setup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('🚀 Forcing complete XION logout to clear any persistent sessions...');
+                    forceXIONLogout();
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all"
+                  title="Limpiar sesiones XION persistentes"
+                >
+                  🔄
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -1173,16 +1291,16 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                         <>
                           <button
                             onClick={() => {
-                              clearXIONState();
+                              clearProblematicXIONKeys();
                               setError('');
                             }}
                             className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
                           >
-                            Clear XION State & Retry
+                            Fix XION Session & Retry
                           </button>
                           <button
                             onClick={() => {
-                              clearXIONState();
+                              clearProblematicXIONKeys();
                               window.location.reload();
                             }}
                             className="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
@@ -1201,9 +1319,44 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                           >
                             Dismiss
                           </button>
+                          {error.includes('connection failed') && (
+                            <button
+                              onClick={async () => {
+                                console.log('🔄 Manual XION connection attempt...');
+                                setError('');
+                                setIsLoading(true);
+                                try {
+                                  await xionLogin();
+                                  // Wait a bit for account to be available
+                                  setTimeout(() => {
+                                    if (xionAccount && xionAccount.bech32Address) {
+                                      const xionWallet = {
+                                        type: 'xion',
+                                        address: xionAccount.bech32Address,
+                                        publicKey: '',
+                                        isExisting: false,
+                                        isNewlyCreated: true
+                                      };
+                                      setConnectedWallet(xionWallet);
+                                      setStep('connected');
+                                    } else {
+                                      setError('Manual connection attempt failed - account not found.');
+                                    }
+                                    setIsLoading(false);
+                                  }, 2000);
+                                } catch (err: any) {
+                                  setError(`Manual connection failed: ${err.message}`);
+                                  setIsLoading(false);
+                                }
+                              }}
+                              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors"
+                            >
+                              Connect Manually
+                            </button>
+                          )}
                           <button
                             onClick={() => {
-                              clearXIONState();
+                              clearProblematicXIONKeys();
                               setError('');
                               // Retry wallet creation
                               if (walletOption === 'create') {
@@ -1222,12 +1375,28 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
               </div>
             )}
 
-            <button
-              onClick={() => setStep('form')}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-            >
-              Back to Form
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setStep('form')}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+              >
+                Back to Form
+              </button>
+              <button
+                onClick={clearProblematicXIONKeys}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                title="Remove only problematic XION keys that cause errors"
+              >
+                Fix XION Session
+              </button>
+              <button
+                onClick={clearAllState}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                title="Completely reset all data and start over"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
         )}
 
@@ -1275,16 +1444,16 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
                     <>
                       <button
                         onClick={() => {
-                          clearXIONState();
+                          clearProblematicXIONKeys();
                           setError('');
                         }}
                         className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition-colors"
                       >
-                        Clear XION State & Retry
+                        Fix XION Session & Retry
                       </button>
                       <button
                         onClick={() => {
-                          clearXIONState();
+                          clearProblematicXIONKeys();
                           window.location.reload();
                         }}
                         className="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded transition-colors"
@@ -1307,12 +1476,28 @@ export function UserRegistrationNew({ onBack, onComplete }: UserRegistrationProp
               </div>
             )}
 
-            <button
-              onClick={() => setStep('wallet')}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-            >
-              Back to Wallet Selection
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setStep('wallet')}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+              >
+                Back to Wallet Selection
+              </button>
+              <button
+                onClick={clearProblematicXIONKeys}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                title="Remove only problematic XION keys that cause errors"
+              >
+                Fix XION Session
+              </button>
+              <button
+                onClick={clearAllState}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
+                title="Completely reset all data and start over"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
         )}
 

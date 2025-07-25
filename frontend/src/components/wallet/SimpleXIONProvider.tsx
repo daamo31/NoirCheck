@@ -7,12 +7,81 @@
 
 import React, { useEffect } from 'react';
 import { AbstraxionProvider } from '@burnt-labs/abstraxion';
+import { forceCleanXIONState, startPeriodicCleanup } from '../../utils/xionCleanup';
 
 interface SimpleXIONProviderProps {
   children: React.ReactNode;
 }
 
 export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps) {
+  // Debug account state changes
+  useEffect(() => {
+    const checkAccountState = () => {
+      try {
+        // Check for XION-related data in storage
+        const sessionKeys = Object.keys(sessionStorage).filter(key => 
+          key.toLowerCase().includes('xion') || 
+          key.toLowerCase().includes('abstraxion')
+        );
+        const localKeys = Object.keys(localStorage).filter(key => 
+          key.toLowerCase().includes('xion') || 
+          key.toLowerCase().includes('abstraxion')
+        );
+        
+        // Only report the problematic key, don't auto-remove immediately
+        const problematicKeys = ['xion-authz-granter-account', 'abstraxion-authz-granter-account'];
+        const foundProblematicKeys = [
+          ...sessionKeys.filter(key => problematicKeys.includes(key)),
+          ...localKeys.filter(key => problematicKeys.includes(key))
+        ];
+        
+        if (foundProblematicKeys.length > 0) {
+          console.warn('⚠️ Found problematic XION keys (will be cleaned by periodic task):', foundProblematicKeys);
+        }
+        
+        if (sessionKeys.length > 0 || localKeys.length > 0) {
+          console.log('🔍 XION storage state changed:');
+          console.log('  SessionStorage keys:', sessionKeys);
+          console.log('  LocalStorage keys:', localKeys);
+          
+          // Log the actual values for debugging (exclude problematic keys from detailed logging)
+          const safeSessionKeys = sessionKeys.filter(key => !problematicKeys.includes(key));
+          const safeLocalKeys = localKeys.filter(key => !problematicKeys.includes(key));
+          
+          safeSessionKeys.forEach(key => {
+            try {
+              const value = sessionStorage.getItem(key);
+              if (value && value.includes('bech32')) {
+                console.log(`  📦 ${key}:`, JSON.parse(value));
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          });
+          
+          safeLocalKeys.forEach(key => {
+            try {
+              const value = localStorage.getItem(key);
+              if (value && value.includes('bech32')) {
+                console.log(`  📦 ${key}:`, JSON.parse(value));
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          });
+        }
+      } catch (error) {
+        console.warn('Error checking account state:', error);
+      }
+    };
+
+    // Check immediately and set up interval
+    checkAccountState();
+    const interval = setInterval(checkAccountState, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Suppress console warnings for development
   useEffect(() => {
     // Only suppress warnings in development and if not already suppressed
@@ -21,29 +90,51 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
     const originalWarn = console.warn;
     const originalError = console.error;
 
-    // Clear any existing XION state on provider mount
-    const clearXIONState = () => {
+    // Clear XION state ONLY if there are problematic keys that cause errors
+    const clearProblematicXIONState = () => {
       try {
-        if (typeof window !== 'undefined') {
-          // Clear all XION related storage
-          Object.keys(sessionStorage).forEach(key => {
-            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION') || key.includes('wallet')) {
-              sessionStorage.removeItem(key);
-            }
-          });
-          Object.keys(localStorage).forEach(key => {
-            if (key.includes('xion') || key.includes('abstraxion') || key.includes('XION') || key.includes('wallet')) {
-              localStorage.removeItem(key);
-            }
-          });
-          console.log('🧹 Cleared XION state on provider mount');
+        // Only clear the specific problematic key that causes authentication errors
+        const problematicKey = 'xion-authz-granter-account';
+        
+        if (localStorage.getItem(problematicKey)) {
+          localStorage.removeItem(problematicKey);
+          console.log('🧹 Removed problematic key:', problematicKey);
+        }
+        
+        if (sessionStorage.getItem(problematicKey)) {
+          sessionStorage.removeItem(problematicKey);
+          console.log('🧹 Removed problematic key from session:', problematicKey);
         }
       } catch (error) {
-        console.warn('Error clearing XION state:', error);
+        console.warn('Error clearing problematic XION keys:', error);
       }
     };
 
-    clearXIONState();
+    // Only clear problematic state, not all XION state
+    clearProblematicXIONState();
+    
+    // Start a more conservative periodic cleanup that only targets problematic keys
+    const conservativeCleanup = () => {
+      const problematicKey = 'xion-authz-granter-account';
+      let removedAny = false;
+      
+      if (localStorage.getItem(problematicKey)) {
+        localStorage.removeItem(problematicKey);
+        console.log('🧹 Conservative cleanup removed:', problematicKey);
+        removedAny = true;
+      }
+      
+      if (sessionStorage.getItem(problematicKey)) {
+        sessionStorage.removeItem(problematicKey);
+        console.log('🧹 Conservative cleanup removed from session:', problematicKey);
+        removedAny = true;
+      }
+      
+      return removedAny;
+    };
+
+    // Run conservative cleanup every 10 seconds (less aggressive)
+    const cleanupInterval = setInterval(conservativeCleanup, 10000);
 
     // Throttle console overrides to prevent timing issues
     const timeoutId = setTimeout(() => {
@@ -67,7 +158,9 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
           message.includes('If you want to hide the `DialogTitle`') ||
           message.includes('keypair') ||
           message.includes('granter') ||
-          message.includes('authenticate')
+          message.includes('authenticate') ||
+          message.includes('overrideMethod') ||
+          message.includes('AbstraxionContextProvider')
         ) {
           return;
         }
@@ -99,7 +192,11 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
           message.includes('queryTreasuryContract') ||
           message.includes('keypair') ||
           message.includes('granter') ||
-          message.includes('authenticate')
+          message.includes('authenticate') ||
+          message.includes('overrideMethod') ||
+          message.includes('AbstraxionContextProvider') ||
+          message.includes('hook.js') ||
+          message.includes('index.mjs')
         ) {
           return;
         }
@@ -114,7 +211,12 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
           message.includes('Login is already in progress') ||
           message.includes('Missing keypair or granter') ||
           message.includes('cannot authenticate') ||
-          message.includes('Error querying params')
+          message.includes('Error querying params') ||
+          message.includes('overrideMethod') ||
+          message.includes('AbstraxionContextProvider') ||
+          message.includes('authenticate @') ||
+          message.includes('hook.js') ||
+          message.includes('index.mjs')
         ) {
           return;
         }
@@ -126,6 +228,8 @@ export default function SimpleXIONProvider({ children }: SimpleXIONProviderProps
       clearTimeout(timeoutId);
       console.warn = originalWarn;
       console.error = originalError;
+      // Stop conservative cleanup
+      clearInterval(cleanupInterval);
       // console.log se restaurará automáticamente al recargar
     };
   }, []);
