@@ -2,7 +2,51 @@
  * Authentication Context
  * 
  * Provides global authentication state management using XION's Meta Account
- * technology. Handles user registration, login, logout, and session persistence.
+ * technology. Handles user r        // Only check for UserStorageService users, with legacy migration support
+        console.log('🔍 Initializing auth with UserStorageService...');
+        
+        // Check for current session in UserStorageService
+        const currentStorageUser = UserStorageService.getCurrentUser();
+        if (currentStorageUser) {
+          console.log('📱 Found current user session:', currentStorageUser.email);
+          const currentUser = adaptUserFromStorage(currentStorageUser);
+          dispatch({ type: 'SET_USER', payload: currentUser });
+        } else {
+          // Check for legacy mock user and migrate to UserStorageService
+          const savedMockUser = localStorage.getItem('noircheck_mock_user');
+          if (savedMockUser) {
+            try {
+              const mockUser = JSON.parse(savedMockUser);
+              console.log('🔄 Migrating legacy mock user to UserStorageService:', mockUser.email);
+              
+              // Register in UserStorageService if not already there
+              const existingUser = UserStorageService.findUserByEmail(mockUser.email);
+              if (!existingUser) {
+                UserStorageService.registerUser({
+                  email: mockUser.email,
+                  username: mockUser.username || 'Usuario Demo',
+                  walletAddress: mockUser.address,
+                  registrationMethod: 'legacy_migration',
+                  walletType: 'mock'
+                });
+              }
+              
+              // Set as current user and cleanup legacy storage
+              UserStorageService.setCurrentUser(mockUser.email);
+              localStorage.removeItem('noircheck_mock_user');
+              
+              dispatch({ type: 'SET_USER', payload: mockUser });
+            } catch (parseError) {
+              console.error('Error migrating legacy user:', parseError);
+              localStorage.removeItem('noircheck_mock_user');
+              dispatch({ type: 'SET_USER', payload: null });
+            }
+          } else {
+            // No saved user - start in anonymous mode
+            console.log('👤 No saved user found - starting in anonymous mode');
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+        }logout, and session persistence.
  * 
  * Features:
  * - XION blockchain integration for secure authentication
@@ -17,6 +61,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAbstraxionAccount, useModal } from '@burnt-labs/abstraxion';
 import { apiService } from '@/services/api';
+import { UserStorageService } from '@/services/userStorageService';
 
 /**
  * User interface representing authenticated user data
@@ -33,6 +78,22 @@ interface User {
 }
 
 /**
+ * Convert UserStorageService User to AuthContext User
+ */
+function adaptUserFromStorage(storageUser: import('@/services/userStorageService').User): User {
+  return {
+    id: storageUser.id,
+    address: storageUser.address || storageUser.xionWallet?.address || storageUser.metaMaskWallet?.address || '',
+    username: storageUser.username,
+    email: storageUser.email,
+    registeredAt: storageUser.registeredAt,
+    totalRegistrations: storageUser.totalRegistrations,
+    totalVerifications: storageUser.totalVerifications,
+    lastActivity: storageUser.lastActivity
+  };
+}
+
+/**
  * Authentication state interface
  */
 interface AuthState {
@@ -46,7 +107,8 @@ interface AuthState {
  * Authentication context type with methods
  */
 interface AuthContextType extends AuthState {
-  login: () => Promise<void>;                    // Initiate login process
+  login: () => Promise<void>;                    // Initiate XION wallet login process
+  loginWithEmail: (email: string, password?: string) => Promise<boolean>; // Login with email/password
   logout: () => Promise<void>;                   // Logout and clear session
   updateProfile: (data: Partial<User>) => Promise<void>; // Update user profile
   refreshUser: () => Promise<void>;              // Refresh user data
@@ -183,17 +245,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // The actual login is handled by Abstraxion modal
         // User data will be updated through the account effect above
       } else {
-        // XION not available - create mock user for development
-        console.log('XION not available, creating mock user for development');
+        // XION not available - create mock user for development using UserStorageService
+        console.log('XION not available, creating mock user via UserStorageService');
         
-        // Check if we have a saved user, otherwise create one
-        let savedUser = localStorage.getItem('noircheck_mock_user');
-        let mockUser: User;
+        // Check if we already have a demo user in UserStorageService
+        let mockUser = UserStorageService.findUserByEmail('demo@noircheck.com');
         
-        if (savedUser) {
-          mockUser = JSON.parse(savedUser);
-        } else {
-          // Create new mock user
+        if (!mockUser) {
+          // Create new mock user via UserStorageService
           const randomBytes = new Uint8Array(20);
           crypto.getRandomValues(randomBytes);
           const addressSuffix = Array.from(randomBytes)
@@ -201,43 +260,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .join('')
             .substring(0, 39);
           
-          mockUser = {
-            id: `mock-user-${Date.now()}`,
-            address: `xion1${addressSuffix}`,
-            username: 'Usuario Demo',
+          UserStorageService.registerUser({
             email: 'demo@noircheck.com',
-            registeredAt: new Date().toISOString(),
+            username: 'Usuario Demo',
+            address: `xion1${addressSuffix}`,
+            registrationMethod: 'xion',
+            password: 'demo123', // For demo user
+            firstName: 'Usuario',
+            lastName: 'Demo',
             totalRegistrations: 0,
-            totalVerifications: 0,
-            lastActivity: new Date().toISOString()
-          };
-          
-          // Save to localStorage
-          localStorage.setItem('noircheck_mock_user', JSON.stringify(mockUser));
-        }
-        
-        // Try to register/update user in backend
-        try {
-          const response = await apiService.registerUser({
-            address: mockUser.address,
-            username: mockUser.username,
-            email: mockUser.email
+            totalVerifications: 0
           });
           
-          // Update with backend data if successful
-          if (response) {
-            mockUser = { ...mockUser, ...response };
-            localStorage.setItem('noircheck_mock_user', JSON.stringify(mockUser));
-          }
-        } catch (backendError) {
-          console.warn('Backend not available, using local mock user:', backendError);
+          mockUser = UserStorageService.findUserByEmail('demo@noircheck.com');
         }
         
-        dispatch({ type: 'SET_USER', payload: mockUser });
+        if (mockUser) {
+          // Set as current user
+          UserStorageService.setCurrentUser('demo@noircheck.com');
+          
+          const adaptedUser = adaptUserFromStorage(mockUser);
+          
+          // Try to register/update user in backend
+          try {
+            const response = await apiService.registerUser({
+              address: adaptedUser.address,
+              username: adaptedUser.username,
+              email: adaptedUser.email
+            });
+            
+            // Update with backend data if successful
+            if (response) {
+              // Update the user in UserStorageService with backend data
+              const updatedUser = { ...adaptedUser, ...response };
+              dispatch({ type: 'SET_USER', payload: updatedUser });
+            } else {
+              dispatch({ type: 'SET_USER', payload: adaptedUser });
+            }
+          } catch (backendError) {
+            console.warn('Backend not available, using local mock user:', backendError);
+            dispatch({ type: 'SET_USER', payload: adaptedUser });
+          }
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Login failed' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  /**
+   * Login with email and optional password
+   * Uses UserStorageService to authenticate users
+   */
+  const loginWithEmail = async (email: string, password?: string): Promise<boolean> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    
+    try {
+      console.log('🔍 Attempting login with email:', email);
+      
+      // Find user in UserStorageService
+      const user = UserStorageService.findUserByEmail(email);
+      if (!user) {
+        console.log('❌ User not found:', email);
+        dispatch({ type: 'SET_ERROR', payload: 'Usuario no encontrado' });
+        return false;
+      }
+      
+      // For now, we don't have password authentication - just email verification
+      // In a real app, you would verify the password here
+      console.log('✅ User found, logging in:', user.email);
+      
+      // Set as current user
+      UserStorageService.setCurrentUser(email);
+      
+      // Convert to AuthContext User format
+      const adaptedUser = adaptUserFromStorage(user);
+      
+      // Update auth state
+      dispatch({ type: 'SET_USER', payload: adaptedUser });
+      
+      return true;
+    } catch (error) {
+      console.error('Login with email error:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Error de inicio de sesión' });
+      return false;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -251,7 +361,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      // Clear any local storage data
+      // Clear UserStorageService session
+      UserStorageService.clearCurrentUser();
+      
+      // Clear any legacy local storage data
       localStorage.removeItem('noircheck_user');
       localStorage.removeItem('noircheck_mock_user');
       localStorage.removeItem('noircheck_enable_xion');
@@ -421,6 +534,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     ...state,
     login,
+    loginWithEmail,
     logout,
     updateProfile,
     refreshUser,

@@ -1,20 +1,49 @@
 /**
  * Custom XION Authentication Hook
- * Provides a cleaner interface for XION wallet authentication
+ * Provides a cleaner interface for XION wallet authentication with keypair management
  */
 
 import { useAbstraxionAccount, useModal } from '@burnt-labs/abstraxion';
 import { useEffect, useState } from 'react';
+import { xionKeypairService, XIONWalletState } from './xionKeypairService';
 
 export function useXIONAuth() {
   const abstraxionAccount = useAbstraxionAccount();
   const [isShowingModal, setIsShowingModal] = useModal();
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [walletState, setWalletState] = useState<XIONWalletState>({
+    isConnected: false,
+    address: null,
+    keypair: null,
+    granter: null
+  });
 
   // Enhanced connection state
-  const isConnected = Boolean(abstraxionAccount?.isConnected);
-  const account = abstraxionAccount?.data; // Use 'data' instead of 'account'
+  const isConnected = Boolean(abstraxionAccount?.isConnected) || walletState.isConnected;
+  const account = abstraxionAccount?.data || walletState.address; // Use 'data' instead of 'account'
+
+  // Initialize keypair service on mount
+  useEffect(() => {
+    const initializeKeypairService = async () => {
+      try {
+        await xionKeypairService.initialize();
+        const currentState = xionKeypairService.getWalletState();
+        setWalletState(currentState);
+        
+        if (currentState.isConnected) {
+          console.log('🔑 XION keypair service initialized with existing wallet');
+        } else {
+          console.log('🔍 XION keypair service initialized, no existing wallet found');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize XION keypair service:', error);
+        setConnectionError('Failed to initialize wallet service');
+      }
+    };
+
+    initializeKeypairService();
+  }, []);
 
   // Suppress specific XION authentication errors
   useEffect(() => {
@@ -126,6 +155,15 @@ export function useXIONAuth() {
         await abstraxionAccount.logout();
       }
       
+      // Clear keypair service state
+      await xionKeypairService.clearWalletState();
+      setWalletState({
+        isConnected: false,
+        address: null,
+        keypair: null,
+        granter: null
+      });
+      
       setIsConnecting(false);
       setConnectionError(null);
       setIsShowingModal(false);
@@ -137,17 +175,86 @@ export function useXIONAuth() {
     }
   };
 
+  // Create new XION wallet
+  const createWallet = async (): Promise<void> => {
+    try {
+      setIsConnecting(true);
+      setConnectionError(null);
+      
+      console.log('🔑 Creating new XION wallet...');
+      
+      // Create new keypair through service
+      const newKeypair = await xionKeypairService.createNewKeypair();
+      
+      // Update local state
+      const newState = xionKeypairService.getWalletState();
+      setWalletState(newState);
+      
+      setIsConnecting(false);
+      console.log('✅ New XION wallet created:', newKeypair.address);
+    } catch (error) {
+      console.error('❌ Failed to create XION wallet:', error);
+      setConnectionError('Failed to create new wallet');
+      setIsConnecting(false);
+      throw error;
+    }
+  };
+
+  // Connect to existing XION wallet
+  const connectWallet = async (mnemonic: string): Promise<void> => {
+    try {
+      setIsConnecting(true);
+      setConnectionError(null);
+      
+      console.log('🔗 Connecting to existing XION wallet...');
+      
+      // Connect through service
+      const existingKeypair = await xionKeypairService.connectExistingKeypair(mnemonic);
+      
+      // Update local state
+      const newState = xionKeypairService.getWalletState();
+      setWalletState(newState);
+      
+      setIsConnecting(false);
+      console.log('✅ Connected to existing XION wallet:', existingKeypair.address);
+    } catch (error) {
+      console.error('❌ Failed to connect to existing XION wallet:', error);
+      setConnectionError('Failed to connect to existing wallet');
+      setIsConnecting(false);
+      throw error;
+    }
+  };
+
+  // Check if wallet is ready for operations
+  const isWalletReady = (): boolean => {
+    return xionKeypairService.isReadyForOperations();
+  };
+
+  // Get current wallet address
+  const getCurrentAddress = (): string | null => {
+    const state = xionKeypairService.getWalletState();
+    return state.address || (account ? account.bech32Address : null);
+  };
+
   return {
     // Connection state
-    isConnected,
+    isConnected: isConnected || walletState.isConnected,
     account: account ? {
       ...account,
       // Ensure address is available with fallback
-      address: account.bech32Address || '',
-      bech32Address: account.bech32Address || ''
-    } : null,
+      address: account.bech32Address || walletState.address || '',
+      bech32Address: account.bech32Address || walletState.address || ''
+    } : (walletState.address ? {
+      address: walletState.address,
+      bech32Address: walletState.address
+    } : null),
     isConnecting,
     connectionError,
+    
+    // Wallet state from keypair service
+    walletState,
+    isWalletReady: isWalletReady(),
+    currentAddress: getCurrentAddress(),
     
     // Aliases for backward compatibility
     isLoading: isConnecting,
@@ -160,6 +267,8 @@ export function useXIONAuth() {
     // Actions
     login,
     logout,
+    createWallet,
+    connectWallet,
     
     // Raw account data for advanced usage
     rawAccount: abstraxionAccount,

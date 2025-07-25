@@ -31,6 +31,7 @@ export interface User {
 }
 
 const USERS_STORAGE_KEY = 'noircheck_users';
+const CURRENT_USER_KEY = 'noircheck_current_user';
 
 export class UserStorageService {
   // Get all users
@@ -176,5 +177,39 @@ export class UserStorageService {
       console.error('Error importing users:', error);
       return false;
     }
+  }
+
+  // Session management methods
+  static setCurrentUser(email: string): boolean {
+    try {
+      const user = this.findUserByEmail(email);
+      if (user) {
+        localStorage.setItem(CURRENT_USER_KEY, email);
+        // Update last activity
+        this.updateUser(user.id, { lastActivity: new Date().toISOString() });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error setting current user:', error);
+      return false;
+    }
+  }
+
+  static getCurrentUser(): User | null {
+    try {
+      const currentUserEmail = localStorage.getItem(CURRENT_USER_KEY);
+      if (currentUserEmail) {
+        return this.findUserByEmail(currentUserEmail);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  }
+
+  static clearCurrentUser(): void {
+    localStorage.removeItem(CURRENT_USER_KEY);
   }
 }
