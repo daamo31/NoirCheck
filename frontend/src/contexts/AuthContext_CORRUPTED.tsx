@@ -6,9 +6,142 @@
  * integrated UserStorageService support.
  */
 
+'use cl        console.log('🔍 Initializing auth with UserStorageService...');
+        
+        // Debug: Check localStorage contents
+        const allUsers = UserStorageService.getAllUsers();
+        console.log('👥 All users in storage:', allUsers);
+        
+        // Detailed debug for each user
+        allUsers.forEach((user, index) => {
+          console.log(`👤 User ${index + 1}:`, {
+            email: user.email,
+            username: user.username,
+            address: user.address,
+            registrationMethod: user.registrationMethod,
+            xionWallet: user.xionWallet,
+            metaMaskWallet: user.metaMaskWallet
+          });
+        });
+        
+        const currentUserEmail = localStorage.getItem('noircheck_current_user');
+        console.log('📧 Current user email:', currentUserEmail);
+        
+        // Check for current session in UserStorageService
+        const currentStorageUser = UserStorageService.getCurrentUser();
+        if (currentStorageUser) {
+          console.log('📱 Found current user session:', currentStorageUser.email);
+          const currentUser = adaptUserFromStorage(currentStorageUser);
+          dispatch({ type: 'SET_USER', payload: currentUser });
+        } else {
+          // If no current session but users exist, auto-login the last registered user
+          if (allUsers.length > 0) {
+            const lastUser = allUsers[allUsers.length - 1]; // Get the most recent user
+            console.log('🔄 No active session found, auto-logging in most recent user:', lastUser.email);
+            const success = UserStorageService.setCurrentUser(lastUser.email);
+            if (success) {
+              const adaptedUser = adaptUserFromStorage(lastUser);
+              dispatch({ type: 'SET_USER', payload: adaptedUser });
+              console.log('✅ Auto-login successful for:', lastUser.email);
+            } else {
+              console.error('❌ Failed to set current user:', lastUser.email);
+            }
+          } else {
+            // No users exist - start in anonymous mode
+            console.log('👤 No users found - starting in anonymous mode');
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+        }eateContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { useAbstraxionAccount, useModal } from '@burnt-labs/abstraxion';
+import { apiService } from '@/services/api';
+import { UserStorageService } from '@/services/userStorageService';
+          crypto.getRandomValues(randomBytes);
+          const addressSuffix = Array.from(randomBytes)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('')
+            .substring(0, 39);
+          
+          UserStorageService.registerUser({
+            email: 'demo@noircheck.com',
+            username: 'Usuario Demo',
+            firstName: 'Usuario',
+            lastName: 'Demo',
+            password: 'demo123',
+            address: `xion1${addressSuffix}`,
+            registrationMethod: 'create',
+            totalRegistrations: 5,
+            totalVerifications: 12
+          });
+          console.log('✅ Demo user created');
+        }
+        
+        // Check for current session in UserStorageService
+        const currentStorageUser = UserStorageService.getCurrentUser();
+        if (currentStorageUser) {
+          console.log('📱 Found current user session:', currentStorageUser.email);
+          const currentUser = adaptUserFromStorage(currentStorageUser);
+          dispatch({ type: 'SET_USER', payload: currentUser });
+        } else {
+          // If no current session but users exist, auto-login the last registered user
+          if (allUsers.length > 0) {
+            const lastUser = allUsers[allUsers.length - 1]; // Get the most recent user
+            console.log('🔄 No active session found, auto-logging in most recent user:', lastUser.email);
+            const success = UserStorageService.setCurrentUser(lastUser.email);
+            if (success) {
+              const adaptedUser = adaptUserFromStorage(lastUser);
+              dispatch({ type: 'SET_USER', payload: adaptedUser });
+              console.log('✅ Auto-login successful for:', lastUser.email);
+            } else {
+              console.error('❌ Failed to set current user:', lastUser.email);
+            }
+          } else {
+          // Check for legacy mock user and migrate to UserStorageService
+          const savedMockUser = localStorage.getItem('noircheck_mock_user');
+          if (savedMockUser) {
+            try {
+              const mockUser = JSON.parse(savedMockUser);
+              console.log('🔄 Migrating legacy mock user to UserStorageService:', mockUser.email);
+              
+              // Register in UserStorageService if not already there
+              const existingUser = UserStorageService.findUserByEmail(mockUser.email);
+              if (!existingUser) {
+                UserStorageService.registerUser({
+                  email: mockUser.email,
+                  username: mockUser.username || 'Usuario Demo',
+                  walletAddress: mockUser.address,
+                  registrationMethod: 'legacy_migration',
+                  walletType: 'mock'
+                });
+              }
+              
+              // Set as current user and cleanup legacy storage
+              UserStorageService.setCurrentUser(mockUser.email);
+              localStorage.removeItem('noircheck_mock_user');
+              
+              dispatch({ type: 'SET_USER', payload: mockUser });
+            } catch (parseError) {
+              console.error('Error migrating legacy user:', parseError);
+              localStorage.removeItem('noircheck_mock_user');
+              dispatch({ type: 'SET_USER', payload: null });
+            }
+          } else {
+            // No saved user - start in anonymous mode
+            console.log('👤 No saved user found - starting in anonymous mode');
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+        }logout, and session persistence.
+ * 
+ * Features:
+ * - XION blockchain integration for secure authentication
+ * - Automatic user registration for new addresses
+ * - Session persistence across browser refreshes
+ * - Profile management and updates
+ * - Real-time authentication state management
+ */
+
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAbstraxionAccount, useModal } from '@burnt-labs/abstraxion';
 import { apiService } from '@/services/api';
 import { UserStorageService } from '@/services/userStorageService';
@@ -21,8 +154,6 @@ interface User {
   address: string;           // XION blockchain address
   username?: string;         // Optional display name
   email?: string;           // Optional email address
-  firstName?: string;       // First name from registration
-  lastName?: string;        // Last name from registration
   registeredAt: string;     // Registration timestamp
   totalRegistrations: number; // Total content registrations
   totalVerifications: number; // Total verifications performed
@@ -38,8 +169,6 @@ function adaptUserFromStorage(storageUser: import('@/services/userStorageService
     address: storageUser.address || storageUser.xionWallet?.address || storageUser.metaMaskWallet?.address || '',
     username: storageUser.username,
     email: storageUser.email,
-    firstName: storageUser.firstName,
-    lastName: storageUser.lastName,
     registeredAt: storageUser.registeredAt,
     totalRegistrations: storageUser.totalRegistrations,
     totalVerifications: storageUser.totalVerifications,
@@ -111,40 +240,35 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-/**
- * AuthProvider component props
- */
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// Initial authentication state
+const initialState: AuthState = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  error: null
+};
 
 /**
  * Authentication Provider Component
  * 
- * Wraps the application to provide authentication context to all components.
- * Integrates with XION and UserStorageService for comprehensive user management.
+ * Wraps the application with authentication context and manages XION
+ * integration for user authentication and registration.
  */
-export function AuthProvider({ children }: AuthProviderProps) {
-  // Initialize authentication state
-  const [state, dispatch] = useReducer(authReducer, {
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null
-  });
-
-  // XION integration
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  
+  // Safely access XION hooks only when available
   let account = null;
   let setShowModal = null;
   let xionAvailable = false;
-
+  
   try {
-    const xionHooks = useAbstraxionAccount();
-    const modalHooks = useModal();
-    account = xionHooks.data;
-    setShowModal = modalHooks[1]; // useModal returns [boolean, Dispatch<SetStateAction<boolean>>]
+    // Only try to use XION hooks if AbstraxionProvider is in context
+    const xionAccount = useAbstraxionAccount();
+    const xionModal = useModal();
+    account = xionAccount?.data;
+    setShowModal = xionModal?.[1];
     xionAvailable = true;
-    console.log('XION hooks available, account:', account?.bech32Address);
   } catch (error) {
     // XION not available - this is expected when AbstraxionProvider is not loaded
     console.info('XION hooks not available, running without XION functionality');
@@ -152,57 +276,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   // Initialize authentication state when component mounts
-  // Integrates with UserStorageService for unified user management
+  // NOTE: Removed automatic XION user loading to prevent auto-login
   useEffect(() => {
     const initializeAuth = async () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       
       try {
-        console.log('🔍 Initializing auth with UserStorageService...');
+        // Only check for saved mock user, don't auto-load XION users
+        console.log('� Initializing auth (no auto-login)...');
         
-        // Debug: Check localStorage contents
-        const allUsers = UserStorageService.getAllUsers();
-        console.log('👥 All users in storage:', allUsers);
-        
-        // Detailed debug for each user
-        allUsers.forEach((user, index) => {
-          console.log(`👤 User ${index + 1}:`, {
-            email: user.email,
-            username: user.username,
-            address: user.address,
-            registrationMethod: user.registrationMethod,
-            xionWallet: user.xionWallet,
-            metaMaskWallet: user.metaMaskWallet
-          });
-        });
-        
-        const currentUserEmail = localStorage.getItem('noircheck_current_user');
-        console.log('📧 Current user email:', currentUserEmail);
-        
-        // Check for current session in UserStorageService
-        const currentStorageUser = UserStorageService.getCurrentUser();
-        if (currentStorageUser) {
-          console.log('📱 Found current user session:', currentStorageUser.email);
-          const currentUser = adaptUserFromStorage(currentStorageUser);
-          dispatch({ type: 'SET_USER', payload: currentUser });
-        } else {
-          // If no current session but users exist, auto-login the last registered user
-          if (allUsers.length > 0) {
-            const lastUser = allUsers[allUsers.length - 1]; // Get the most recent user
-            console.log('🔄 No active session found, auto-logging in most recent user:', lastUser.email);
-            const success = UserStorageService.setCurrentUser(lastUser.email);
-            if (success) {
-              const adaptedUser = adaptUserFromStorage(lastUser);
-              dispatch({ type: 'SET_USER', payload: adaptedUser });
-              console.log('✅ Auto-login successful for:', lastUser.email);
-            } else {
-              console.error('❌ Failed to set current user:', lastUser.email);
-            }
-          } else {
-            // No users exist - start in anonymous mode
-            console.log('👤 No users found - starting in anonymous mode');
+        // Check for saved mock user in localStorage
+        const savedMockUser = localStorage.getItem('noircheck_mock_user');
+        if (savedMockUser) {
+          try {
+            const mockUser = JSON.parse(savedMockUser);
+            console.log('📱 Found saved mock user:', mockUser.email);
+            dispatch({ type: 'SET_USER', payload: mockUser });
+          } catch (parseError) {
+            console.error('Error parsing saved mock user:', parseError);
+            localStorage.removeItem('noircheck_mock_user');
             dispatch({ type: 'SET_USER', payload: null });
           }
+        } else {
+          // No saved user - start in anonymous mode
+          console.log('👤 No saved user found - starting in anonymous mode');
+          dispatch({ type: 'SET_USER', payload: null });
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -248,11 +346,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           UserStorageService.registerUser({
             email: 'demo@noircheck.com',
             username: 'Usuario Demo',
-            firstName: 'Usuario',
-            lastName: 'Demo',
-            password: 'demo123',
             address: `xion1${addressSuffix}`,
             registrationMethod: 'xion',
+            password: 'demo123', // For demo user
+            firstName: 'Usuario',
+            lastName: 'Demo',
             totalRegistrations: 0,
             totalVerifications: 0
           });
@@ -389,10 +487,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const clearUserData = async () => {
     console.log('🧹 Starting complete cleanup...');
     
-    // Clear UserStorageService data
-    UserStorageService.clearAllUsers();
-    UserStorageService.clearCurrentUser();
-    
     // Clear all localStorage keys
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -405,8 +499,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
     
+    // Clear all sessionStorage keys  
+    const sessionKeysToRemove = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      sessionKeysToRemove.push(sessionStorage.key(i));
+    }
+    sessionKeysToRemove.forEach(key => {
+      if (key) {
+        console.log('🗑️ Removing sessionStorage key:', key);
+        sessionStorage.removeItem(key);
+      }
+    });
+    
     // Clear user state
     dispatch({ type: 'SET_USER', payload: null });
+    
+    // Clear XION specific data if available
+    try {
+      // Try to clear XION session data
+      if (typeof window !== 'undefined') {
+        // Clear all XION related keys specifically
+        const xionKeys = [
+          'abstraxion_session',
+          'abstraxion_account', 
+          'abstraxion_wallet',
+          'abstraxion-account',
+          'abstraxion-client',
+          'abstraxion-signer',
+          'xion_session',
+          'xion_account',
+          'xion_wallet',
+          'cosmos_kit_wallet',
+          'keplr_autoconnect',
+        ];
+        
+        xionKeys.forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+        
+        // Clear IndexedDB related to XION (if accessible)
+        if ('indexedDB' in window) {
+          try {
+            console.log('🗑️ Clearing IndexedDB databases...');
+            indexedDB.deleteDatabase('abstraxion');
+            indexedDB.deleteDatabase('xion');
+            indexedDB.deleteDatabase('cosmos-kit');
+          } catch (idbError) {
+            console.warn('Could not clear IndexedDB:', idbError);
+          }
+        }
+      }
+    } catch (xionError) {
+      console.warn('Error clearing XION data:', xionError);
+    }
     
     console.log('🗑️ Complete cleanup finished - RELOAD REQUIRED');
     
@@ -446,9 +592,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = await apiService.getUser(state.user.address);
       if (userData) {
         dispatch({ type: 'SET_USER', payload: userData });
+        
+        // If this is a mock user, also update localStorage
+        if (state.user.id.startsWith('mock-user-')) {
+          localStorage.setItem('noircheck_mock_user', JSON.stringify(userData));
+        }
       }
     } catch (error) {
       console.warn('Backend not available for user refresh, keeping current user data:', error);
+      
+      // If backend is not available but we have a mock user, update the activity timestamp
+      if (state.user.id.startsWith('mock-user-')) {
+        const updatedUser = {
+          ...state.user,
+          lastActivity: new Date().toISOString()
+        };
+        dispatch({ type: 'SET_USER', payload: updatedUser });
+        localStorage.setItem('noircheck_mock_user', JSON.stringify(updatedUser));
+      }
     }
   };
 

@@ -33,7 +33,8 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { UserProfile } from './UserProfile';
 import { UserHistory } from './UserHistory';
 import { UserStats } from './UserStats';
-// import { WalletInfo } from './WalletInfo'; // Comentado - componente no existe
+import { WalletInfo } from './WalletInfo';
+import { UserStorageService } from '@/services/userStorageService';
 import { apiService, UserStats as UserStatsData } from '@/services/api';
 
 // Available dashboard tabs
@@ -48,6 +49,24 @@ export function UserDashboard() {
   const [userStats, setUserStats] = useState<UserStatsData | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 UserDashboard - User state:', user);
+    console.log('🔍 UserDashboard - User address:', user?.address);
+    console.log('🔍 UserDashboard - User username:', user?.username);
+    console.log('🔍 UserDashboard - User email:', user?.email);
+    
+    // Debug localStorage contents
+    try {
+      const allUsers = UserStorageService.getAllUsers();
+      console.log('👥 All users in UserStorageService:', allUsers);
+      const currentUserEmail = localStorage.getItem('noircheck_current_user');
+      console.log('📧 Current user email in localStorage:', currentUserEmail);
+    } catch (error) {
+      console.error('Error accessing UserStorageService:', error);
+    }
+  }, [user]);
+
   // Load user statistics on component mount and user change
   useEffect(() => {
     const loadUserStats = async () => {
@@ -56,11 +75,29 @@ export function UserDashboard() {
       // Set loading state while fetching stats
       setIsLoadingStats(true);
       try {
-        // Fetch user statistics from API
-        const stats = await apiService.getUserStats(user.id);
-        setUserStats(stats);
+        // TODO: Re-enable when backend is running
+        // const stats = await apiService.getUserStats(user.id);
+        // setUserStats(stats);
+        
+        // For now, use local user data from UserStorageService
+        console.log('📊 Using local user stats instead of backend');
+        const localStats = {
+          totalRegistrations: user.totalRegistrations || 0,
+          totalVerifications: user.totalVerifications || 0,
+          recentActivity: [], // Empty for now
+          joinDate: user.registeredAt
+        };
+        setUserStats(localStats);
       } catch (error) {
         console.error('Error loading user stats:', error);
+        // Fallback to local data
+        const localStats = {
+          totalRegistrations: user.totalRegistrations || 0,
+          totalVerifications: user.totalVerifications || 0,
+          recentActivity: [],
+          joinDate: user.registeredAt
+        };
+        setUserStats(localStats);
       } finally {
         setIsLoadingStats(false);
       }
@@ -200,10 +237,13 @@ export function UserDashboard() {
               {/* User Info Display */}
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user?.username || (user?.address ? `User ${user.address.slice(-8)}` : 'Cargando usuario...')}
+                  {user?.firstName && user?.lastName 
+                    ? `${user.firstName} ${user.lastName}` 
+                    : user?.username || (user?.address ? `User ${user.address.slice(-8)}` : 'Cargando usuario...')
+                  }
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {user?.address ? `${user.address.slice(0, 8)}...${user.address.slice(-8)}` : 'Conectando...'}
+                  {user?.email || (user?.address ? `${user.address.slice(0, 8)}...${user.address.slice(-8)}` : 'Conectando...')}
                 </p>
               </div>
               
@@ -383,13 +423,7 @@ export function UserDashboard() {
                     View your wallet details, XION connection status, and account management
                   </p>
                 </div>
-                {/* <WalletInfo /> */}
-                
-                {/* Contenido temporal mientras se restaura WalletInfo */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Wallet Information</h3>
-                  <div className="text-gray-600 dark:text-gray-400">Wallet info component temporalmente deshabilitado</div>
-                </div>
+                <WalletInfo />
               </div>
             )}
 

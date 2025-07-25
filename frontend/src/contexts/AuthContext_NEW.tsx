@@ -21,8 +21,6 @@ interface User {
   address: string;           // XION blockchain address
   username?: string;         // Optional display name
   email?: string;           // Optional email address
-  firstName?: string;       // First name from registration
-  lastName?: string;        // Last name from registration
   registeredAt: string;     // Registration timestamp
   totalRegistrations: number; // Total content registrations
   totalVerifications: number; // Total verifications performed
@@ -38,8 +36,6 @@ function adaptUserFromStorage(storageUser: import('@/services/userStorageService
     address: storageUser.address || storageUser.xionWallet?.address || storageUser.metaMaskWallet?.address || '',
     username: storageUser.username,
     email: storageUser.email,
-    firstName: storageUser.firstName,
-    lastName: storageUser.lastName,
     registeredAt: storageUser.registeredAt,
     totalRegistrations: storageUser.totalRegistrations,
     totalVerifications: storageUser.totalVerifications,
@@ -142,7 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const xionHooks = useAbstraxionAccount();
     const modalHooks = useModal();
     account = xionHooks.data;
-    setShowModal = modalHooks[1]; // useModal returns [boolean, Dispatch<SetStateAction<boolean>>]
+    setShowModal = modalHooks.setShowModal;
     xionAvailable = true;
     console.log('XION hooks available, account:', account?.bech32Address);
   } catch (error) {
