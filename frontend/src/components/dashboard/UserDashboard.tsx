@@ -75,27 +75,37 @@ export function UserDashboard() {
       // Set loading state while fetching stats
       setIsLoadingStats(true);
       try {
-        // TODO: Re-enable when backend is running
-        // const stats = await apiService.getUserStats(user.id);
-        // setUserStats(stats);
+        // Get real-time stats from UserStorageService
+        console.log('📊 Loading user stats from UserStorageService');
+        const currentUser = UserStorageService.getCurrentUser();
+        const recentActivity = currentUser?.recentActivity || [];
         
-        // For now, use local user data from UserStorageService
-        console.log('📊 Using local user stats instead of backend');
-        const localStats = {
-          totalRegistrations: user.totalRegistrations || 0,
-          totalVerifications: user.totalVerifications || 0,
-          recentActivity: [], // Empty for now
-          joinDate: user.registeredAt
+        // Convert ActivityEntry to UserActivity format
+        const convertedActivity = recentActivity.slice(0, 10).map(activity => ({
+          id: activity.id,
+          type: (activity.type === 'registration' ? 'registration' : 'verification') as 'registration' | 'verification',
+          filename: activity.details?.filename || 'Unknown file',
+          timestamp: activity.timestamp,
+          status: 'completed' as const,
+          hash: activity.details?.hash
+        }));
+        
+        const localStats: UserStatsData = {
+          totalRegistrations: currentUser?.totalRegistrations || 0,
+          totalVerifications: currentUser?.totalVerifications || 0,
+          recentActivity: convertedActivity,
+          joinDate: currentUser?.registeredAt || user.registeredAt || new Date().toISOString()
         };
         setUserStats(localStats);
+        console.log('📊 Stats loaded:', localStats);
       } catch (error) {
         console.error('Error loading user stats:', error);
-        // Fallback to local data
-        const localStats = {
+        // Fallback to user data
+        const localStats: UserStatsData = {
           totalRegistrations: user.totalRegistrations || 0,
           totalVerifications: user.totalVerifications || 0,
           recentActivity: [],
-          joinDate: user.registeredAt
+          joinDate: user.registeredAt || new Date().toISOString()
         };
         setUserStats(localStats);
       } finally {
@@ -107,7 +117,14 @@ export function UserDashboard() {
     if (user) {
       loadUserStats();
     }
-  }, [user?.id]);
+  }, [user?.id, user?.totalRegistrations, user?.totalVerifications]);
+
+  // Update user activity when tab changes
+  useEffect(() => {
+    if (user && user.email) {
+      handleUserActivity();
+    }
+  }, [activeTab]);
 
   /**
    * Refresh user statistics manually
@@ -118,32 +135,83 @@ export function UserDashboard() {
     
     setIsLoadingStats(true);
     try {
-      // TODO: Re-enable when backend is running
-      // const stats = await apiService.getUserStats(user.id);
-      // setUserStats(stats);
+      // Get latest stats from UserStorageService
+      console.log('📊 Refreshing user stats from UserStorageService');
+      const currentUser = UserStorageService.getCurrentUser();
+      const recentActivity = currentUser?.recentActivity || [];
       
-      // For now, use local user data from UserStorageService
-      console.log('📊 Refreshing local user stats instead of backend');
-      const localStats = {
-        totalRegistrations: user.totalRegistrations || 0,
-        totalVerifications: user.totalVerifications || 0,
-        recentActivity: [], // Empty for now
-        joinDate: user.registeredAt
+      // Convert ActivityEntry to UserActivity format
+      const convertedActivity = recentActivity.slice(0, 10).map(activity => ({
+        id: activity.id,
+        type: (activity.type === 'registration' ? 'registration' : 'verification') as 'registration' | 'verification',
+        filename: activity.details?.filename || 'Unknown file',
+        timestamp: activity.timestamp,
+        status: 'completed' as const,
+        hash: activity.details?.hash
+      }));
+      
+      const localStats: UserStatsData = {
+        totalRegistrations: currentUser?.totalRegistrations || 0,
+        totalVerifications: currentUser?.totalVerifications || 0,
+        recentActivity: convertedActivity,
+        joinDate: currentUser?.registeredAt || user.registeredAt || new Date().toISOString()
       };
       setUserStats(localStats);
+      console.log('📊 Stats refreshed:', localStats);
+      
+      // Also refresh the user context to keep everything in sync
+      await refreshUser();
     } catch (error) {
       console.error('Error refreshing user stats:', error);
-      // Fallback to local data
-      const localStats = {
+      // Fallback to user data
+      const localStats: UserStatsData = {
         totalRegistrations: user.totalRegistrations || 0,
         totalVerifications: user.totalVerifications || 0,
         recentActivity: [],
-        joinDate: user.registeredAt
+        joinDate: user.registeredAt || new Date().toISOString()
       };
       setUserStats(localStats);
     } finally {
       setIsLoadingStats(false);
     }
+  };
+
+  /**
+   * Handle content registration - increment registration count
+   */
+  const handleContentRegistered = async () => {
+    if (!user || !user.email) return;
+    
+    console.log('📝 Content registered, updating stats...');
+    // Update stats in UserStorageService
+    UserStorageService.incrementUserRegistrations(user.email);
+    
+    // Refresh stats in real-time
+    await refreshUserStats();
+  };
+
+  /**
+   * Handle content verification - increment verification count
+   */
+  const handleContentVerified = async () => {
+    if (!user || !user.email) return;
+    
+    console.log('🔍 Content verified, updating stats...');
+    // Update stats in UserStorageService
+    UserStorageService.incrementUserVerifications(user.email);
+    
+    // Refresh stats in real-time
+    await refreshUserStats();
+  };
+
+  /**
+   * Handle any user activity - update last activity timestamp
+   */
+  const handleUserActivity = async () => {
+    if (!user || !user.email) return;
+    
+    // Update activity timestamp in UserStorageService
+    UserStorageService.updateUserActivity(user.email);
   };
 
   /**
@@ -378,7 +446,7 @@ export function UserDashboard() {
                     Register your original content on blockchain to protect your intellectual property
                   </p>
                 </div>
-                <FileUpload mode="register" onOperationComplete={refreshUserStats} />
+                <FileUpload mode="register" onOperationComplete={handleContentRegistered} />
               </div>
             )}
 
@@ -393,7 +461,7 @@ export function UserDashboard() {
                     Verify if content is original or has been modified
                   </p>
                 </div>
-                <FileUpload mode="verify" onOperationComplete={refreshUserStats} />
+                <FileUpload mode="verify" onOperationComplete={handleContentVerified} />
               </div>
             )}
 
@@ -423,6 +491,7 @@ export function UserDashboard() {
                     Analyze your activity and contribution to the platform
                   </p>
                 </div>
+                
                 <UserStats 
                   userStats={userStats} 
                   isLoading={isLoadingStats}

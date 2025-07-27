@@ -17,8 +17,17 @@ NoirCheck is an innovative digital content authenticity verification platform th
 - **TypeScript** for enhanced code robustness
 - **Turbopack** for ultra-fast builds
 
-### 🔗 Enhanced Wallet Integration
-- **Multi-wallet support**: XION, MetaMask, and WalletConnect v2
+### � Real-Time Statistics System
+- **Live activity tracking** with localStorage persistence
+- **Dynamic counters** for registrations and verifications
+- **User activity history** with detailed timestamps
+- **Automatic stats updates** when users perform actions
+- **Local data management** independent of backend API
+
+### �🔗 Enhanced Wallet Integration
+- **Multi-wallet support**: XION, MetaMask, and manual address connection
+- **Manual wallet connection** - paste any XION address to connect
+- **Automatic user creation** for new wallet addresses
 - **Mobile-first approach** with deep linking for iOS/Android
 - **Real-time wallet detection** and status indicators
 - **Universal compatibility** - works on desktop and mobile browsers
@@ -41,10 +50,13 @@ NoirCheck is an innovative digital content authenticity verification platform th
 
 ### For Creators
 - **Original Content Registration**: Upload and authenticate your original content on blockchain
-- **Multi-wallet Support**: Connect with XION, MetaMask, or 100+ wallets via WalletConnect
+- **Multi-wallet Support**: Connect with XION, MetaMask, or manually with wallet address
+- **Manual Address Connection**: Paste any XION wallet address to connect instantly
 - **Identity Verification**: Integration with XION zkTLS for secure verification
 - **Authenticity Seal**: Generate unique QR codes and cryptographic seals
 - **Proof of Authorship**: Create immutable records of your creative work
+- **Real-time Statistics**: Track your registrations and verifications in real-time
+- **Activity History**: Detailed log of all your platform interactions
 
 ### For Consumers
 - **Instant Verification**: Verify any digital content in seconds
@@ -52,6 +64,14 @@ NoirCheck is an innovative digital content authenticity verification platform th
 - **Modification Detection**: Identify if content has been altered
 - **Source Analysis**: Evaluate the reliability of the origin website
 - **Verification History**: Keep a record of all your verifications
+- **Live Stats Tracking**: See your verification activity update in real-time
+
+### For Developers & Users
+- **Local Data Persistence**: All user data stored locally using localStorage
+- **No Backend Dependency**: Frontend works independently for better reliability
+- **Real-time Updates**: Statistics and activity update instantly
+- **Developer-Friendly**: Easy to extend and customize
+- **Privacy-First**: No personal data sent to external servers
 
 ### For Mobile Users
 - **Native App Experience**: Deep linking to XION and MetaMask mobile apps
@@ -71,8 +91,11 @@ NoirCheck is an innovative digital content authenticity verification platform th
 
 ### Frontend (Next.js + React)
 - **Modern web application** with TypeScript
-- **Multi-wallet integration**: XION, MetaMask, WalletConnect v2
+- **Multi-wallet integration**: XION, MetaMask, and manual address connection
+- **Real-time statistics system** with localStorage persistence
+- **User activity tracking** with detailed history
 - **Mobile-responsive design** with Tailwind CSS
+- **Local data management** independent of backend
 - **Real-time status indicators** for all services
 - **Progressive Web App** capabilities for mobile installation
 - **SQLite database** with SQLAlchemy ORM
@@ -186,10 +209,22 @@ curl http://localhost:3000
 
 ### 🎨 User Interface
 - **Elegant dark theme** and modern design
+- **Real-time statistics** displayed throughout the dashboard
 - **Consistent Lucide React icons**
 - **Smooth animations** and visual feedback
 - **Responsive design** for all devices
 - **Loading states** for asynchronous operations
+- **Multi-tab dashboard** with Statistics, History, Profile, and Wallet sections
+- **Activity feed** showing recent user actions
+- **Quick stats** cards showing total registrations and verifications
+
+### 🔑 Authentication UI
+- **Multi-method login**: Email, XION, MetaMask, and Manual Address
+- **Clean registration flow** with step-by-step validation
+- **Wallet connection status** with real-time indicators
+- **Manual address input** with XION format validation
+- **Auto-detection** of connected wallets
+- **Responsive grid layout** for authentication options
 
 ## 🔒 Security and Privacy
 
@@ -325,16 +360,80 @@ npm run lint
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **Health Check**: http://localhost:8000/health
+
+## 👥 User Management & Statistics System
+
+### 🗄️ Local Data Storage
+NoirCheck uses a sophisticated localStorage-based system for user management that works independently of the backend:
+
+- **UserStorageService**: Manages all user data locally
+- **Real-time statistics**: Track registrations and verifications instantly
+- **Activity history**: Detailed log of user actions with timestamps
+- **Data persistence**: All data survives browser refreshes and sessions
+- **No backend dependency**: Fully functional offline experience
+
+### 📊 Statistics Features
+- **Live counters**: Registration and verification numbers update in real-time
+- **Activity tracking**: Every action creates a detailed activity entry
+- **User dashboard**: Complete overview of user stats and recent activity
+- **History management**: View detailed history of all actions
+- **Data migration**: Automatic migration of existing users to new data structure
+
+### 🔐 Authentication Methods
+1. **Email/Password**: Traditional registration with form validation
+2. **XION Wallet**: Connect using XION's abstraxion modal
+3. **MetaMask**: Connect with MetaMask browser extension
+4. **Manual Address**: Paste any XION wallet address to connect instantly
+
+### 💾 Data Structure
+```javascript
+// User data stored in localStorage
+{
+  id: "user_12345_abc",
+  email: "user@example.com",
+  firstName: "John",
+  lastName: "Doe",
+  totalRegistrations: 5,
+  totalVerifications: 12,
+  lastActivity: "2025-07-27T10:30:00Z",
+  recentActivity: [
+    {
+      id: "activity_12345_xyz",
+      type: "registration",
+      description: "Content registered: image.jpg",
+      timestamp: "2025-07-27T10:25:00Z",
+      details: { filename: "image.jpg", hash: "sha256..." }
+    }
+  ],
+  xionWallet: {
+    address: "xion1abc123...",
+    createdAt: "2025-07-27T09:00:00Z"
+  }
+}
+```
 - **Mobile Status**: http://localhost:8000/mobile/status
 - **API Docs**: http://localhost:8000/docs (FastAPI auto-docs)
 
 ## 🌐 Available Endpoints and Pages
 
 ### Frontend Pages
-- **`/`** - Main application dashboard with registration and verification
+- **`/`** - Main application dashboard with registration, verification, and user management
+- **`/dashboard`** - User dashboard with real-time statistics and activity history
+- **`/auth`** - Authentication flow with multiple login methods
 - **`/mobile`** - Mobile-specific information and app store links
 - **`/wallet-diagnostic`** - Comprehensive wallet troubleshooting tools
-- **`/xion-callback`** - Callback endpoint for XION deep linking
+
+### User Dashboard Features
+- **Statistics Tab**: Real-time counters and activity overview
+- **History Tab**: Detailed log of all user actions with timestamps
+- **Profile Tab**: User profile management and settings
+- **Wallet Tab**: Connected wallet information and XION details
+
+### Authentication Methods
+- **Email/Password**: Traditional registration and login
+- **XION Abstraxion**: Connect via XION modal with automatic user creation
+- **MetaMask**: Browser extension integration
+- **Manual Address**: Paste XION wallet address for instant connection
 
 ### Backend API Endpoints
 - **`GET /`** - API health check and status
@@ -382,9 +481,43 @@ npm run lint
 - **Ready for migration** to real SDK when available
 - **Consistent mock responses** for testing
 
-## 🚧 Roadmap and Future Improvements
+## � Best Practices & Architecture Decisions
+
+### 🏗️ Frontend Architecture
+- **Local-first approach**: All user data stored in localStorage for better privacy
+- **Real-time updates**: Statistics and activity update instantly without API calls
+- **Modular components**: Reusable React components with TypeScript
+- **State management**: Context API for global authentication state
+- **Error handling**: Comprehensive error boundaries and user feedback
+
+### 📊 Data Management Strategy
+- **UserStorageService**: Centralized service for all user data operations
+- **Activity tracking**: Every user action creates a detailed activity entry
+- **Data migration**: Automatic migration of existing users to new schema
+- **Persistence**: Survives browser refreshes and maintains user sessions
+- **Privacy-first**: No personal data sent to external servers
+
+### 🔐 Security Implementation
+- **Local authentication**: User credentials managed locally
+- **Address validation**: XION wallet address format validation
+- **Safe defaults**: Secure configurations for all services
+- **Data encryption**: Sensitive data properly encrypted
+- **Input sanitization**: All user inputs validated and sanitized
+
+### 🎨 User Experience Design
+- **Progressive enhancement**: Works without JavaScript (basic functionality)
+- **Responsive design**: Optimized for all device sizes
+- **Dark theme**: Modern UI with consistent design system
+- **Loading states**: Clear feedback for all asynchronous operations
+- **Error recovery**: Graceful handling of network and user errors
+
+## �🚧 Roadmap and Future Improvements
 
 ### 🎯 Upcoming Features
+- [x] **Real-time statistics system** with localStorage persistence ✅
+- [x] **Manual wallet connection** with XION address input ✅
+- [x] **Activity history tracking** with detailed timestamps ✅
+- [x] **User dashboard** with comprehensive statistics ✅
 - [ ] **Real XION integration** when dependency conflicts are resolved
 - [ ] **Deepfake analysis** with specialized AI models
 - [ ] **Batch verification** for multiple simultaneous files
@@ -393,6 +526,9 @@ npm run lint
 - [ ] **Distributed database** for greater scalability
 
 ### 🔧 Planned Technical Improvements
+- [x] **Local-first data management** with UserStorageService ✅
+- [x] **Multi-authentication methods** (Email, XION, MetaMask, Manual) ✅
+- [x] **Real-time UI updates** without backend dependency ✅
 - [ ] **Complete test suite** with pytest and Jest
 - [ ] **CI/CD pipeline** with GitHub Actions
 - [ ] **Containerization** with Docker and Docker Compose

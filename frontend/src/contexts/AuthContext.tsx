@@ -21,8 +21,8 @@ interface User {
   address: string;           // XION blockchain address
   username?: string;         // Optional display name
   email?: string;           // Optional email address
-  firstName?: string;       // First name from registration
-  lastName?: string;        // Last name from registration
+  firstName?: string;       // User's first name
+  lastName?: string;        // User's last name
   registeredAt: string;     // Registration timestamp
   totalRegistrations: number; // Total content registrations
   totalVerifications: number; // Total verifications performed
@@ -63,6 +63,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: () => Promise<void>;                    // Initiate XION wallet login process
   loginWithEmail: (email: string, password?: string) => Promise<boolean>; // Login with email/password
+  loginWithWalletAddress: (address: string) => Promise<boolean>; // Connect manually with wallet address
   logout: () => Promise<void>;                   // Logout and clear session
   updateProfile: (data: Partial<User>) => Promise<void>; // Update user profile
   refreshUser: () => Promise<void>;              // Refresh user data
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const xionHooks = useAbstraxionAccount();
     const modalHooks = useModal();
     account = xionHooks.data;
-    setShowModal = modalHooks[1]; // useModal returns [boolean, Dispatch<SetStateAction<boolean>>]
+    setShowModal = modalHooks[1]; // setShowModal is the second element of the array
     xionAvailable = true;
     console.log('XION hooks available, account:', account?.bech32Address);
   } catch (error) {
@@ -339,6 +340,73 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   /**
+   * Login with wallet address
+   * Allows manual connection by providing wallet address
+   */
+  const loginWithWalletAddress = async (address: string): Promise<boolean> => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    
+    try {
+      // Validate wallet address format (basic XION format check)
+      if (!address || !address.startsWith('xion1') || address.length < 40) {
+        throw new Error('Invalid wallet address format. Must be a valid XION address starting with "xion1"');
+      }
+      
+      // Check if user already exists with this wallet address
+      let existingUser = UserStorageService.findUserByWalletAddress(address);
+      
+      if (!existingUser) {
+        // Create new user with this wallet address
+        const timestamp = new Date().toISOString();
+        const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        
+        const newUserData = {
+          email: `${address.slice(-8)}@wallet.connect`,
+          username: `Wallet User ${address.slice(-8)}`,
+          firstName: 'Wallet',
+          lastName: `User ${address.slice(-8)}`,
+          password: 'wallet_connect', // Placeholder for wallet connections
+          address: address,
+          registrationMethod: 'xion' as const,
+          totalRegistrations: 0,
+          totalVerifications: 0,
+          xionWallet: {
+            address: address,
+            publicKey: '', // Unknown for manual connections
+            createdAt: timestamp,
+            isAutoCreated: false,
+            isNewlyCreated: true
+          }
+        };
+        
+        existingUser = UserStorageService.registerUser(newUserData);
+        console.log('🆕 Created new user for wallet address:', address);
+      } else {
+        // Update last activity for existing user
+        UserStorageService.updateUserActivity(existingUser.email);
+        console.log('👋 Existing user found for wallet address:', address);
+      }
+      
+      // Set as current user
+      UserStorageService.setCurrentUser(existingUser.email);
+      
+      // Adapt to AuthContext User format
+      const adaptedUser = adaptUserFromStorage(existingUser);
+      dispatch({ type: 'SET_USER', payload: adaptedUser });
+      
+      console.log('✅ Successfully connected with wallet address:', address);
+      return true;
+    } catch (error) {
+      console.error('Login with wallet address error:', error);
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Error connecting wallet' });
+      return false;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  /**
    * Logout function
    * Clears authentication state and disconnects from XION
    */
@@ -418,7 +486,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Update user profile
-   * Updates user information in UserStorageService and refreshes local state
+   * Updates user information in the backend and refreshes local state
    */
   const updateProfile = async (data: Partial<User>) => {
     if (!state.user) return;
@@ -426,34 +494,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      console.log('🔄 Updating user profile locally with UserStorageService...');
-      
-      // Convert AuthContext User data to UserStorageService format
-      const updateData: any = {};
-      if (data.username) updateData.username = data.username;
-      if (data.email) updateData.email = data.email;
-      if (data.firstName) updateData.firstName = data.firstName;
-      if (data.lastName) updateData.lastName = data.lastName;
-      
-      // Update in UserStorageService
-      const success = UserStorageService.updateUser(state.user.id, updateData);
-      
-      if (success) {
-        // Get updated user from storage
-        const updatedStorageUser = UserStorageService.findUserByEmail(state.user.email!);
-        if (updatedStorageUser) {
-          const updatedUser = adaptUserFromStorage(updatedStorageUser);
-          dispatch({ type: 'SET_USER', payload: updatedUser });
-          console.log('✅ Profile updated successfully:', updatedUser);
-        }
-      } else {
-        throw new Error('Failed to update user in storage');
-      }
+      const updatedUser = await apiService.updateUser(state.user.id, data);
+      dispatch({ type: 'SET_USER', payload: updatedUser });
     } catch (error) {
       console.error('Profile update error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Profile update failed' });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
@@ -462,22 +507,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Fetches latest user information from UserStorageService
    */
   const refreshUser = async () => {
-    if (!state.user) return;
+    if (!state.user?.email) return;
     
     try {
-      console.log('🔄 Refreshing user data from UserStorageService...');
-      
-      // Get current user from UserStorageService
-      const currentStorageUser = UserStorageService.getCurrentUser();
-      if (currentStorageUser) {
-        const refreshedUser = adaptUserFromStorage(currentStorageUser);
-        dispatch({ type: 'SET_USER', payload: refreshedUser });
-        console.log('✅ User data refreshed:', refreshedUser);
-      } else {
-        console.warn('No current user found in UserStorageService');
+      // Get updated data from UserStorageService
+      const currentUser = UserStorageService.getCurrentUser();
+      if (currentUser) {
+        const updatedUser = adaptUserFromStorage(currentUser);
+        dispatch({ type: 'SET_USER', payload: updatedUser });
+        console.log('📊 User data refreshed from UserStorageService:', updatedUser);
       }
     } catch (error) {
-      console.warn('Error refreshing user data from storage:', error);
+      console.error('Error refreshing user data:', error);
     }
   };
 
@@ -486,6 +527,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ...state,
     login,
     loginWithEmail,
+    loginWithWalletAddress,
     logout,
     updateProfile,
     refreshUser,

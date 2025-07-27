@@ -28,6 +28,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { apiService, UserActivity } from '@/services/api';
+import { UserStorageService } from '@/services/userStorageService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserHistoryProps {
   userId: string;
@@ -36,6 +38,7 @@ interface UserHistoryProps {
 type ActivityFilter = 'all' | 'registration' | 'verification';
 
 export function UserHistory({ userId }: UserHistoryProps) {
+  const { user } = useAuth();
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<UserActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,27 +46,42 @@ export function UserHistory({ userId }: UserHistoryProps) {
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Load user activities from API
+  // Load user activities from UserStorageService
   useEffect(() => {
     const loadActivity = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const activityData = await apiService.getUserActivity(userId, 50);
-        setActivities(activityData);
+        // Get current user from UserStorageService
+        const currentUser = UserStorageService.getCurrentUser();
+        if (currentUser?.recentActivity) {
+          // Convert ActivityEntry to UserActivity format
+          const convertedActivities: UserActivity[] = currentUser.recentActivity.map(activity => ({
+            id: activity.id,
+            type: (activity.type === 'registration' ? 'registration' : 'verification') as 'registration' | 'verification',
+            filename: activity.details?.filename || activity.description,
+            timestamp: activity.timestamp,
+            status: 'completed',
+            hash: activity.details?.hash
+          }));
+          setActivities(convertedActivities);
+        } else {
+          setActivities([]);
+        }
       } catch (error) {
         console.error('Error loading user activity:', error);
         setError('Error loading activity history');
+        setActivities([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (userId) {
+    if (user?.email) {
       loadActivity();
     }
-  }, [userId]);
+  }, [user?.email]);
 
   // Filter activities based on type and search term
   useEffect(() => {
@@ -97,11 +115,26 @@ export function UserHistory({ userId }: UserHistoryProps) {
     setError(null);
 
     try {
-      const activityData = await apiService.getUserActivity(userId, 50);
-      setActivities(activityData);
+      // Get current user from UserStorageService
+      const currentUser = UserStorageService.getCurrentUser();
+      if (currentUser?.recentActivity) {
+        // Convert ActivityEntry to UserActivity format
+        const convertedActivities: UserActivity[] = currentUser.recentActivity.map(activity => ({
+          id: activity.id,
+          type: (activity.type === 'registration' ? 'registration' : 'verification') as 'registration' | 'verification',
+          filename: activity.details?.filename || activity.description,
+          timestamp: activity.timestamp,
+          status: 'completed',
+          hash: activity.details?.hash
+        }));
+        setActivities(convertedActivities);
+      } else {
+        setActivities([]);
+      }
     } catch (error) {
       console.error('Error loading user activity:', error);
       setError('Error loading activity history');
+      setActivities([]);
     } finally {
       setIsLoading(false);
     }

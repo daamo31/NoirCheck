@@ -11,10 +11,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Lock, ArrowLeft, Mail, Eye, EyeOff, LogIn, Wallet, ExternalLink, AlertTriangle, Smartphone } from 'lucide-react';
+import { Lock, ArrowLeft, Mail, Eye, EyeOff, LogIn, Wallet, ExternalLink, AlertTriangle, Smartphone, Copy } from 'lucide-react';
 import { WalletService, isMobile, isIOS } from '@/services/walletService';
 import { UserStorageService } from '@/services/userStorageService';
 import { useXIONAuth } from '@/services/useXIONAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserLoginProps {
   onBack: () => void;
@@ -30,12 +31,14 @@ interface User {
 
 export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
   const { account, isConnected, login: xionLogin } = useXIONAuth();
+  const { loginWithWalletAddress } = useAuth();
   
-  const [loginMethod, setLoginMethod] = useState<'traditional' | 'xion' | 'metamask'>('traditional');
+  const [loginMethod, setLoginMethod] = useState<'traditional' | 'xion' | 'metamask' | 'manual'>('traditional');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [walletAddress, setWalletAddress] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -211,6 +214,36 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
     }
   };
 
+  const handleManualWalletLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Basic validation
+      if (!walletAddress.trim()) {
+        throw new Error('Please enter a wallet address');
+      }
+
+      // Use the AuthContext loginWithWalletAddress function
+      const success = await loginWithWalletAddress(walletAddress.trim());
+      
+      if (success) {
+        // Success will be handled by AuthContext
+        console.log('✅ Manual wallet connection successful');
+      }
+    } catch (error) {
+      console.error('Manual wallet login error:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Error connecting with wallet address');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // ELIMINADO: Ya no necesitamos login demo, ahora usamos usuarios reales
 
   return (
@@ -239,7 +272,7 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
         {/* Login Methods */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 space-y-4">
           {/* Method Selection */}
-          <div className="grid grid-cols-3 gap-2 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
             <button
               onClick={() => setLoginMethod('traditional')}
               className={`p-3 rounded-lg transition-all ${
@@ -272,6 +305,17 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
             >
               <ExternalLink className="w-5 h-5 mx-auto mb-1" />
               <span className="text-xs">MetaMask</span>
+            </button>
+            <button
+              onClick={() => setLoginMethod('manual')}
+              className={`p-3 rounded-lg transition-all ${
+                loginMethod === 'manual' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              <Copy className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-xs">Manual</span>
             </button>
           </div>
 
@@ -429,6 +473,61 @@ export function UserLoginNew({ onBack, onLogin }: UserLoginProps) {
                   </>
                 )}
               </button>
+            </div>
+          )}
+
+          {/* Manual Wallet Address Login */}
+          {loginMethod === 'manual' && (
+            <div className="space-y-4">
+              <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 mb-4">
+                <div className="flex items-start space-x-3">
+                  <Copy className="w-5 h-5 text-blue-400 mt-0.5" />
+                  <div>
+                    <h3 className="text-blue-300 font-medium text-sm mb-1">Conexión Manual</h3>
+                    <p className="text-blue-200 text-xs">
+                      Introduce tu dirección de wallet XION para conectar manualmente. 
+                      Se creará una cuenta automáticamente si no existe.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleManualWalletLogin} className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-medium mb-2">
+                    Dirección de Wallet XION
+                  </label>
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="xion1..."
+                    className="w-full bg-white/10 border border-gray-600 rounded-lg py-3 px-4 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                    required
+                  />
+                  <p className="text-gray-400 text-xs mt-1">
+                    La dirección debe comenzar con "xion1" y tener al menos 40 caracteres
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5 mr-2" />
+                      Conectar Wallet
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           )}
 

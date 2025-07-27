@@ -4,6 +4,14 @@
  * In production, this would be replaced with API calls to backend
  */
 
+export interface ActivityEntry {
+  id: string;
+  type: 'registration' | 'verification' | 'login' | 'profile_update';
+  description: string;
+  timestamp: string;
+  details?: any;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -15,6 +23,7 @@ export interface User {
   totalRegistrations: number;
   totalVerifications: number;
   lastActivity: string;
+  recentActivity: ActivityEntry[]; // Recent activity history
   address?: string;
   registrationMethod?: 'create' | 'xion' | 'metamask';
   xionWallet?: {
@@ -38,7 +47,22 @@ export class UserStorageService {
   static getAllUsers(): User[] {
     try {
       const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
-      return usersJson ? JSON.parse(usersJson) : [];
+      const users = usersJson ? JSON.parse(usersJson) : [];
+      
+      // Migrate users that don't have recentActivity
+      const migratedUsers = users.map((user: any) => {
+        if (!user.recentActivity) {
+          user.recentActivity = [];
+        }
+        return user;
+      });
+      
+      // Save migrated users if needed
+      if (migratedUsers.some((user: any, index: number) => !users[index].recentActivity)) {
+        this.saveAllUsers(migratedUsers);
+      }
+      
+      return migratedUsers;
     } catch (error) {
       console.error('Error reading users from localStorage:', error);
       return [];
@@ -55,7 +79,7 @@ export class UserStorageService {
   }
 
   // Registrar nuevo usuario
-  static registerUser(userData: Omit<User, 'id' | 'registeredAt' | 'lastActivity'>): User {
+  static registerUser(userData: Omit<User, 'id' | 'registeredAt' | 'lastActivity' | 'recentActivity'>): User {
     const users = this.getAllUsers();
     
     // Verificar si el email ya existe
@@ -67,7 +91,13 @@ export class UserStorageService {
       ...userData,
       id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       registeredAt: new Date().toISOString(),
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      recentActivity: [{
+        id: `activity_${Date.now()}`,
+        type: 'login',
+        description: 'Account created',
+        timestamp: new Date().toISOString()
+      }]
     };
 
     users.push(newUser);
@@ -80,18 +110,22 @@ export class UserStorageService {
   // Autenticar usuario
   static authenticateUser(email: string, password: string): User | null {
     const users = this.getAllUsers();
-    const user = users.find(u => u.email === email && u.password === password);
+    const userIndex = users.findIndex(u => u.email === email && u.password === password);
     
-    if (user) {
+    if (userIndex !== -1) {
       // Actualizar última actividad
-      user.lastActivity = new Date().toISOString();
+      users[userIndex].lastActivity = new Date().toISOString();
+      
+      // Agregar entrada de actividad de login
+      this.addActivityEntry(users[userIndex], 'login', 'Logged in');
+      
       this.saveAllUsers(users);
-      console.log('User authenticated successfully:', { email: user.email, id: user.id });
+      console.log('User authenticated successfully:', { email: users[userIndex].email, id: users[userIndex].id });
+      return users[userIndex];
     } else {
       console.log('Authentication failed for email:', email);
+      return null;
     }
-    
-    return user || null;
   }
 
   // Buscar usuario por email
@@ -214,7 +248,7 @@ export class UserStorageService {
   }
 
   // Statistics management methods
-  static incrementUserRegistrations(userEmail: string): User | null {
+  static incrementUserRegistrations(userEmail: string, filename?: string, hash?: string): User | null {
     try {
       const users = this.getAllUsers();
       const userIndex = users.findIndex(u => u.email === userEmail);
@@ -222,6 +256,15 @@ export class UserStorageService {
       if (userIndex !== -1) {
         users[userIndex].totalRegistrations += 1;
         users[userIndex].lastActivity = new Date().toISOString();
+        
+        // Add activity entry with details
+        this.addActivityEntry(
+          users[userIndex], 
+          'registration', 
+          `Content registered: ${filename || 'Unknown file'}`,
+          { filename, hash, registrationNumber: users[userIndex].totalRegistrations }
+        );
+        
         this.saveAllUsers(users);
         
         // Update current user if it's the same user
@@ -239,7 +282,7 @@ export class UserStorageService {
     }
   }
 
-  static incrementUserVerifications(userEmail: string): User | null {
+  static incrementUserVerifications(userEmail: string, filename?: string, result?: string): User | null {
     try {
       const users = this.getAllUsers();
       const userIndex = users.findIndex(u => u.email === userEmail);
@@ -247,6 +290,15 @@ export class UserStorageService {
       if (userIndex !== -1) {
         users[userIndex].totalVerifications += 1;
         users[userIndex].lastActivity = new Date().toISOString();
+        
+        // Add activity entry with details
+        this.addActivityEntry(
+          users[userIndex], 
+          'verification', 
+          `Content verified: ${filename || 'Unknown file'}`,
+          { filename, result, verificationNumber: users[userIndex].totalVerifications }
+        );
+        
         this.saveAllUsers(users);
         
         // Update current user if it's the same user
@@ -298,5 +350,30 @@ export class UserStorageService {
       };
     }
     return null;
+  }
+
+  // Activity management methods
+  static addActivityEntry(user: User, type: ActivityEntry['type'], description: string, details?: any): void {
+    if (!user.recentActivity) {
+      user.recentActivity = [];
+    }
+
+    const newActivity: ActivityEntry = {
+      id: `activity_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      type,
+      description,
+      timestamp: new Date().toISOString(),
+      details
+    };
+
+    user.recentActivity.unshift(newActivity);
+
+    // Keep only the last 50 activities
+    user.recentActivity = user.recentActivity.slice(0, 50);
+  }
+
+  static getUserRecentActivity(userEmail: string): ActivityEntry[] {
+    const user = this.findUserByEmail(userEmail);
+    return user?.recentActivity || [];
   }
 }
