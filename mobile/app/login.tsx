@@ -23,7 +23,7 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, register, loginWithWallet } = useAuth();
+  const { login, loginWithEmail, register } = useAuth();
   const router = useRouter();
 
   const handleEmailLogin = async () => {
@@ -34,15 +34,10 @@ const LoginScreen = () => {
 
     try {
       setLoading(true);
-      const success = await login(email, password);
-      
-      if (success) {
-        router.replace('/(tabs)');
-      } else {
-        Alert.alert('Error', 'Invalid credentials');
-      }
+      await loginWithEmail(email, password);
+      router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during login');
+      Alert.alert('Error', 'Invalid credentials or login failed');
     } finally {
       setLoading(false);
     }
@@ -56,17 +51,22 @@ const LoginScreen = () => {
 
     try {
       setLoading(true);
-      const success = await register({ email, username });
+      console.log('📝 Starting user registration...');
       
-      if (success) {
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)') }
-        ]);
-      } else {
-        Alert.alert('Error', 'Failed to create account');
-      }
+      await register({
+        email,
+        password,
+        username,
+        firstName: username.split(' ')[0] || username,
+        lastName: username.split(' ')[1] || ''
+      });
+      
+      Alert.alert('Success', 'Account created successfully! A XION wallet has been created for you.', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)') }
+      ]);
     } catch (error) {
-      Alert.alert('Error', 'An error occurred during registration');
+      console.error('Registration error:', error);
+      Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -75,15 +75,10 @@ const LoginScreen = () => {
   const handleWalletLogin = async () => {
     try {
       setLoading(true);
-      const success = await loginWithWallet();
-      
-      if (success) {
-        router.replace('/(tabs)');
-      } else {
-        Alert.alert('Error', 'Failed to connect XION wallet');
-      }
+      await login();
+      router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while connecting wallet');
+      Alert.alert('Error', 'Failed to connect XION wallet');
     } finally {
       setLoading(false);
     }
