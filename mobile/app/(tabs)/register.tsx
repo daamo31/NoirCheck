@@ -146,7 +146,7 @@ const RegisterScreen = () => {
       const wallet = await xionService.connectWallet();
       if (wallet && user) {
         updateUser({ 
-          wallet, 
+          xionWallet: wallet, 
           address: wallet.address,
           lastActivity: new Date().toISOString()
         });

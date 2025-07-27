@@ -425,15 +425,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
         firstName: updates.firstName,
         lastName: updates.lastName,
         totalRegistrations: updates.totalRegistrations,
-        totalVerifications: updates.totalVerifications
+        totalVerifications: updates.totalVerifications,
+        address: updates.address
       });
       
       if (updatedStorageUser) {
+        // If updating xionWallet, connect it to user
+        if (updates.xionWallet) {
+          await UserStorageService.connectXionWallet(state.user.id, {
+            address: updates.xionWallet.address,
+            publicKey: updates.xionWallet.publicKey,
+            isAutoCreated: false,
+            isNewlyCreated: false
+          });
+          // Get updated user with wallet
+          const userWithWallet = await UserStorageService.findUserById(state.user.id);
+          if (userWithWallet) {
+            await UserStorageService.setCurrentUser(userWithWallet);
+            const updatedUser = adaptUserFromStorage(userWithWallet);
+            dispatch({ type: 'SET_USER', payload: updatedUser });
+            console.log('✅ User data and wallet updated');
+            return;
+          }
+        }
+        
         await UserStorageService.setCurrentUser(updatedStorageUser);
         const updatedUser = adaptUserFromStorage(updatedStorageUser);
         
-        // Preserve XION wallet if it exists
-        if (state.user.xionWallet) {
+        // Preserve XION wallet if it exists and wasn't being updated
+        if (state.user.xionWallet && !updates.xionWallet) {
           updatedUser.xionWallet = state.user.xionWallet;
         }
         

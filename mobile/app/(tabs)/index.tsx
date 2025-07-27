@@ -9,8 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useAuth } from '../../src/contexts/AuthContext';
+import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+  
   const [userStats, setUserStats] = useState({
     totalRegistrations: 0,
     totalVerifications: 0,
@@ -18,15 +23,35 @@ export default function DashboardScreen() {
     joinDate: new Date().toISOString(),
   });
 
-  const [user] = useState({
-    username: 'Demo User',
-    email: 'demo@noircheck.com',
-    address: 'xion1abc...def123',
-    totalRegistrations: 3,
-    totalVerifications: 7,
-    registeredAt: new Date().toISOString(),
-    lastActivity: new Date().toISOString(),
-  });
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated]);
+
+  // Update stats when user changes
+  useEffect(() => {
+    if (user) {
+      setUserStats({
+        totalRegistrations: user.totalRegistrations || 0,
+        totalVerifications: user.totalVerifications || 0,
+        recentActivity: [], // We can populate this from user activity later
+        joinDate: user.registeredAt,
+      });
+    }
+  }, [user]);
+
+  // Show loading or redirect if no user
+  if (!user || !isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyActivity}>
+          <Text style={styles.emptyActivityText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   
 
@@ -67,9 +92,14 @@ export default function DashboardScreen() {
       '¿Estás seguro que quieres cerrar sesión?',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar Sesión', style: 'destructive', onPress: () => {
-          // Aquí iría la lógica de logout
-          Alert.alert('Info', 'Sesión cerrada');
+        { text: 'Cerrar Sesión', style: 'destructive', onPress: async () => {
+          try {
+            await logout();
+            router.replace('/login');
+          } catch (error) {
+            console.error('Logout error:', error);
+            Alert.alert('Error', 'Error al cerrar sesión');
+          }
         }},
       ]
     );
@@ -104,8 +134,17 @@ export default function DashboardScreen() {
               <Text style={styles.avatarText}>👤</Text>
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user.username}</Text>
-              <Text style={styles.userAddress}>{user.address}</Text>
+              <Text style={styles.userName}>
+                {user.username || 
+                 `${user.firstName || ''} ${user.lastName || ''}`.trim() || 
+                 user.email?.split('@')[0] || 
+                 'User'}
+              </Text>
+              <Text style={styles.userAddress}>
+                {user.address ? 
+                  `${user.address.slice(0, 10)}...${user.address.slice(-6)}` : 
+                  'No wallet connected'}
+              </Text>
               <Text style={styles.userJoinDate}>
                 Registrado: {new Date(user.registeredAt).toLocaleDateString()}
               </Text>
