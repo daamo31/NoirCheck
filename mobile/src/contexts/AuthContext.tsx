@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { xionService, XIONWallet } from '../services/XionService';
 
 interface User {
   id: string;
@@ -10,6 +11,7 @@ interface User {
   totalVerifications: number;
   registeredAt: string;
   lastActivity: string;
+  wallet?: XIONWallet;
 }
 
 interface AuthContextType {
@@ -17,10 +19,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  loginWithWallet: (address: string) => Promise<boolean>;
+  loginWithWallet: () => Promise<boolean>;
   register: (userData: Partial<User>) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
+  connectXionWallet: () => Promise<boolean>;
+  disconnectXionWallet: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,20 +38,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay una sesión guardada al iniciar
-    checkStoredAuth();
+    initializeAuth();
   }, []);
 
-  const checkStoredAuth = async () => {
+  const initializeAuth = async () => {
     try {
+      // Initialize XION service
+      await xionService.initialize();
+      
+      // Check for stored user session
       const storedUser = await AsyncStorage.getItem('user');
       const storedToken = await AsyncStorage.getItem('authToken');
       
       if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        
+        // Check if user has a connected XION wallet
+        const wallet = xionService.getWallet();
+        if (wallet) {
+          userData.wallet = wallet;
+          userData.address = wallet.address;
+        }
+        
+        setUser(userData);
+        console.log('✅ User session restored');
       }
     } catch (error) {
-      console.error('Error checking stored auth:', error);
+      console.error('❌ Error initializing auth:', error);
     } finally {
       setIsLoading(false);
     }
@@ -57,62 +74,67 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       
-      // Simulación de autenticación (reemplazar con API real)
+      // In a real app, this would authenticate with your backend
       if (email && password) {
-        const mockUser: User = {
+        const newUser: User = {
           id: '1',
           username: email.split('@')[0],
           email,
-          address: 'xion1abc...def123',
-          totalRegistrations: 3,
-          totalVerifications: 7,
+          totalRegistrations: 0,
+          totalVerifications: 0,
           registeredAt: new Date().toISOString(),
           lastActivity: new Date().toISOString(),
         };
 
-        // Guardar en storage
-        await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-        await AsyncStorage.setItem('authToken', 'mock-token-123');
+        // Save user session
+        await AsyncStorage.setItem('user', JSON.stringify(newUser));
+        await AsyncStorage.setItem('authToken', 'user-token-123');
         
-        setUser(mockUser);
+        setUser(newUser);
+        console.log('✅ User logged in:', email);
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('❌ Error during login:', error);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loginWithWallet = async (address: string): Promise<boolean> => {
+  const loginWithWallet = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
       
-      if (address) {
-        const mockUser: User = {
-          id: '1',
-          username: `User_${address.slice(-6)}`,
+      // Connect XION wallet
+      const wallet = await xionService.connectWallet();
+      
+      if (wallet) {
+        const newUser: User = {
+          id: wallet.address,
+          username: `User_${wallet.address.slice(-6)}`,
           email: '',
-          address,
-          totalRegistrations: 2,
-          totalVerifications: 5,
+          address: wallet.address,
+          wallet: wallet,
+          totalRegistrations: 0,
+          totalVerifications: 0,
           registeredAt: new Date().toISOString(),
           lastActivity: new Date().toISOString(),
         };
 
-        await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+        await AsyncStorage.setItem('user', JSON.stringify(newUser));
         await AsyncStorage.setItem('authToken', 'wallet-token-123');
         
-        setUser(mockUser);
+        setUser(newUser);
+        console.log('✅ User logged in with wallet:', wallet.address);
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('Error during wallet login:', error);
+      console.error('❌ Error during wallet login:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -128,7 +150,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: Date.now().toString(),
           username: userData.username,
           email: userData.email,
-          address: userData.address || `xion1${Math.random().toString(36).substr(2, 9)}`,
           totalRegistrations: 0,
           totalVerifications: 0,
           registeredAt: new Date().toISOString(),
@@ -139,12 +160,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await AsyncStorage.setItem('authToken', 'new-user-token-123');
         
         setUser(newUser);
+        console.log('✅ User registered:', userData.email);
         return true;
       }
       
       return false;
     } catch (error) {
-      console.error('Error during registration:', error);
+      console.error('❌ Error during registration:', error);
       return false;
     } finally {
       setIsLoading(false);
@@ -155,9 +177,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AsyncStorage.removeItem('user');
       await AsyncStorage.removeItem('authToken');
+      await xionService.disconnectWallet();
       setUser(null);
+      console.log('✅ User logged out');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('❌ Error during logout:', error);
     }
   };
 
@@ -166,6 +190,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
       AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
+  const connectXionWallet = async (): Promise<boolean> => {
+    try {
+      const wallet = await xionService.connectWallet();
+      
+      if (wallet && user) {
+        const updatedUser = { 
+          ...user, 
+          wallet, 
+          address: wallet.address,
+          lastActivity: new Date().toISOString()
+        };
+        
+        setUser(updatedUser);
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('✅ XION wallet connected:', wallet.address);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ Error connecting XION wallet:', error);
+      return false;
+    }
+  };
+
+  const disconnectXionWallet = async (): Promise<void> => {
+    try {
+      await xionService.disconnectWallet();
+      
+      if (user) {
+        const updatedUser = { 
+          ...user, 
+          wallet: undefined, 
+          address: undefined,
+          lastActivity: new Date().toISOString()
+        };
+        
+        setUser(updatedUser);
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('✅ XION wallet disconnected');
+      }
+    } catch (error) {
+      console.error('❌ Error disconnecting XION wallet:', error);
     }
   };
 
@@ -178,6 +248,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     logout,
     updateUser,
+    connectXionWallet,
+    disconnectXionWallet,
   };
 
   return (
