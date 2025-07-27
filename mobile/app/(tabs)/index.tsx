@@ -1,75 +1,435 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function DashboardScreen() {
+  const [userStats, setUserStats] = useState({
+    totalRegistrations: 0,
+    totalVerifications: 0,
+    recentActivity: [],
+    joinDate: new Date().toISOString(),
+  });
 
-export default function HomeScreen() {
+  const [user] = useState({
+    username: 'Demo User',
+    email: 'demo@noircheck.com',
+    address: 'xion1abc...def123',
+    totalRegistrations: 3,
+    totalVerifications: 7,
+    registeredAt: new Date().toISOString(),
+    lastActivity: new Date().toISOString(),
+  });
+
+  
+
+  const quickStats = [
+    {
+      label: 'Contenido Registrado',
+      value: userStats.totalRegistrations,
+      icon: '📝',
+      color: '#dbeafe',
+      textColor: '#2563eb',
+    },
+    {
+      label: 'Verificaciones',
+      value: userStats.totalVerifications,
+      icon: '🛡️',
+      color: '#dcfce7',
+      textColor: '#16a34a',
+    },
+    {
+      label: 'Actividad Reciente',
+      value: userStats.recentActivity.length,
+      icon: '📊',
+      color: '#fdf4ff',
+      textColor: '#9333ea',
+    },
+    {
+      label: 'Miembro desde',
+      value: new Date(user.registeredAt).getFullYear(),
+      icon: '📅',
+      color: '#fef3c7',
+      textColor: '#d97706',
+    },
+  ];
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar Sesión', style: 'destructive', onPress: () => {
+          // Aquí iría la lógica de logout
+          Alert.alert('Info', 'Sesión cerrada');
+        }},
+      ]
+    );
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>🛡️</Text>
+          </View>
+          <View>
+            <Text style={styles.appName}>NoirCheck</Text>
+            <Text style={styles.headerSubtitle}>Dashboard</Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Salir</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* User Info Card */}
+        <View style={styles.userCard}>
+          <View style={styles.userInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>👤</Text>
+            </View>
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>{user.username}</Text>
+              <Text style={styles.userAddress}>{user.address}</Text>
+              <Text style={styles.userJoinDate}>
+                Registrado: {new Date(user.registeredAt).toLocaleDateString()}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.userStats}>
+            <View style={styles.statBadge}>
+              <Text style={styles.statLabel}>Registros</Text>
+              <Text style={styles.statValue}>{user.totalRegistrations}</Text>
+            </View>
+            <View style={[styles.statBadge, { marginLeft: 12 }]}>
+              <Text style={styles.statLabel}>Verificaciones</Text>
+              <Text style={styles.statValue}>{user.totalVerifications}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Statistics */}
+        <Text style={styles.sectionTitle}>Estadísticas Rápidas</Text>
+        <View style={styles.statsGrid}>
+          {quickStats.map((stat, index) => (
+            <View key={index} style={[styles.statCard, { backgroundColor: stat.color }]}>
+              <Text style={styles.statIcon}>{stat.icon}</Text>
+              <Text style={styles.statCardLabel}>{stat.label}</Text>
+              <Text style={[styles.statCardValue, { color: stat.textColor }]}>
+                {stat.value}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Actions */}
+        <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Registrar', 'Ir a pantalla de registro')}>
+            <Text style={styles.actionIcon}>📝</Text>
+            <Text style={styles.actionTitle}>Registrar Contenido</Text>
+            <Text style={styles.actionSubtitle}>Protege tu contenido original</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Verificar', 'Ir a pantalla de verificación')}>
+            <Text style={styles.actionIcon}>🔍</Text>
+            <Text style={styles.actionTitle}>Verificar Contenido</Text>
+            <Text style={styles.actionSubtitle}>Comprueba la autenticidad</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recent Activity */}
+        <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+        <View style={styles.activityList}>
+          {userStats.recentActivity.length > 0 ? (
+            userStats.recentActivity.map((activity: any, index) => (
+              <View key={index} style={styles.activityItem}>
+                <Text style={styles.activityIcon}>
+                  {activity.type === 'registration' ? '📝' : '🔍'}
+                </Text>
+                <View style={styles.activityDetails}>
+                  <Text style={styles.activityTitle}>
+                    {activity.type === 'registration' ? 'Contenido registrado' : 'Contenido verificado'}
+                  </Text>
+                  <Text style={styles.activitySubtitle}>{activity.filename}</Text>
+                  <Text style={styles.activityTime}>
+                    {new Date(activity.timestamp).toLocaleString()}
+                  </Text>
+                </View>
+                <View style={styles.activityStatus}>
+                  <Text style={styles.statusText}>✅</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyActivity}>
+              <Text style={styles.emptyActivityText}>No hay actividad reciente</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
+  logo: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#3b82f6',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  logoText: {
+    fontSize: 20,
+    color: 'white',
+  },
+  appName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  logoutButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: '#374151',
+    fontWeight: '500',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  userCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    backgroundColor: '#3b82f6',
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 24,
+    color: 'white',
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  userAddress: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontFamily: 'monospace',
+    marginBottom: 2,
+  },
+  userJoinDate: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  userStats: {
+    flexDirection: 'row',
+  },
+  statBadge: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 24,
+  },
+  statCard: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    marginRight: '2%',
+    marginBottom: 12,
+  },
+  statIcon: {
+    fontSize: 24,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  statCardLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  statCardValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  actionCard: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  actionIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  actionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  activityList: {
+    marginBottom: 24,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activityIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  activityDetails: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  activitySubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  activityTime: {
+    fontSize: 11,
+    color: '#9ca3af',
+  },
+  activityStatus: {
+    marginLeft: 12,
+  },
+  statusText: {
+    fontSize: 16,
+  },
+  emptyActivity: {
+    backgroundColor: 'white',
+    padding: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  emptyActivityText: {
+    color: '#6b7280',
+    fontSize: 14,
   },
 });
