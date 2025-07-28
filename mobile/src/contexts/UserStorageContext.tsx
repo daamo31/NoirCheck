@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FileRegistration {
   id: string;
@@ -63,94 +64,43 @@ export function UserStorageProvider({ children }: UserStorageProviderProps) {
   const [activity, setActivity] = useState<UserActivity[]>([]);
 
   useEffect(() => {
-    // Cargar datos iniciales de ejemplo para demostración
-    loadInitialData();
+    // Load real data from AsyncStorage
+    loadStoredData();
   }, []);
 
-  const loadInitialData = () => {
-    // Datos de ejemplo para la demostración
-    const mockRegistrations: FileRegistration[] = [
-      {
-        id: '1',
-        filename: 'document.pdf',
-        hash: 'abc123...',
-        size: 1024000,
-        mimeType: 'application/pdf',
-        registeredAt: new Date(Date.now() - 86400000).toISOString(), // 1 día atrás
-        blockchainTxId: 'tx_123456',
-        status: 'confirmed',
-      },
-      {
-        id: '2',
-        filename: 'image.jpg',
-        hash: 'def456...',
-        size: 2048000,
-        mimeType: 'image/jpeg',
-        registeredAt: new Date(Date.now() - 172800000).toISOString(), // 2 días atrás
-        blockchainTxId: 'tx_789012',
-        status: 'confirmed',
-      },
-    ];
+  const loadStoredData = async () => {
+    try {
+      // Load real data from AsyncStorage
+      const storedRegistrations = await AsyncStorage.getItem('user_registrations');
+      const storedVerifications = await AsyncStorage.getItem('user_verifications');
+      const storedActivity = await AsyncStorage.getItem('user_activity');
 
-    const mockVerifications: FileVerification[] = [
-      {
-        id: '1',
-        filename: 'test_document.pdf',
-        hash: 'xyz789...',
-        verifiedAt: new Date(Date.now() - 43200000).toISOString(), // 12 horas atrás
-        result: {
-          isOriginal: true,
-          confidence: 95,
-          originalOwner: 'user123',
-          registrationDate: new Date(Date.now() - 259200000).toISOString(),
-        },
-      },
-      {
-        id: '2',
-        filename: 'photo.png',
-        hash: 'uvw456...',
-        verifiedAt: new Date(Date.now() - 21600000).toISOString(), // 6 horas atrás
-        result: {
-          isOriginal: false,
-          confidence: 75,
-          modifications: ['compression', 'metadata_removed'],
-        },
-      },
-    ];
-
-    const mockActivity: UserActivity[] = [
-      {
-        id: '1',
-        type: 'registration',
-        filename: 'document.pdf',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        status: 'completed',
-      },
-      {
-        id: '2',
-        type: 'verification',
-        filename: 'test_document.pdf',
-        timestamp: new Date(Date.now() - 43200000).toISOString(),
-        status: 'completed',
-      },
-      {
-        id: '3',
-        type: 'verification',
-        filename: 'photo.png',
-        timestamp: new Date(Date.now() - 21600000).toISOString(),
-        status: 'completed',
-      },
-    ];
-
-    setRegistrations(mockRegistrations);
-    setVerifications(mockVerifications);
-    setActivity(mockActivity);
+      if (storedRegistrations) {
+        setRegistrations(JSON.parse(storedRegistrations));
+      }
+      if (storedVerifications) {
+        setVerifications(JSON.parse(storedVerifications));
+      }
+      if (storedActivity) {
+        setActivity(JSON.parse(storedActivity));
+      }
+    } catch (error) {
+      console.error('Error loading stored data:', error);
+    }
   };
 
-  const addRegistration = (registration: FileRegistration) => {
-    setRegistrations(prev => [registration, ...prev]);
+  const addRegistration = async (registration: FileRegistration) => {
+    const updatedRegistrations = [registration, ...registrations];
+    setRegistrations(updatedRegistrations);
     
-    // Agregar a la actividad
+    // Save to AsyncStorage
+    try {
+      await AsyncStorage.setItem('user_registrations', JSON.stringify(updatedRegistrations));
+    } catch (error) {
+      console.error('Error saving registration:', error);
+    }
+    
+    // Add to activity
     const activityItem: UserActivity = {
       id: Date.now().toString(),
       type: 'registration',
@@ -158,13 +108,29 @@ export function UserStorageProvider({ children }: UserStorageProviderProps) {
       timestamp: registration.registeredAt,
       status: registration.status === 'confirmed' ? 'completed' : 'pending',
     };
-    setActivity(prev => [activityItem, ...prev]);
+    const updatedActivity = [activityItem, ...activity];
+    setActivity(updatedActivity);
+    
+    // Save activity to AsyncStorage
+    try {
+      await AsyncStorage.setItem('user_activity', JSON.stringify(updatedActivity));
+    } catch (error) {
+      console.error('Error saving activity:', error);
+    }
   };
 
-  const addVerification = (verification: FileVerification) => {
-    setVerifications(prev => [verification, ...prev]);
+  const addVerification = async (verification: FileVerification) => {
+    const updatedVerifications = [verification, ...verifications];
+    setVerifications(updatedVerifications);
     
-    // Agregar a la actividad
+    // Save to AsyncStorage
+    try {
+      await AsyncStorage.setItem('user_verifications', JSON.stringify(updatedVerifications));
+    } catch (error) {
+      console.error('Error saving verification:', error);
+    }
+    
+    // Add to activity
     const activityItem: UserActivity = {
       id: Date.now().toString(),
       type: 'verification',
@@ -173,7 +139,15 @@ export function UserStorageProvider({ children }: UserStorageProviderProps) {
       status: 'completed',
       details: verification.result,
     };
-    setActivity(prev => [activityItem, ...prev]);
+    const updatedActivity = [activityItem, ...activity];
+    setActivity(updatedActivity);
+    
+    // Save activity to AsyncStorage
+    try {
+      await AsyncStorage.setItem('user_activity', JSON.stringify(updatedActivity));
+    } catch (error) {
+      console.error('Error saving activity:', error);
+    }
   };
 
   const addActivity = (activityItem: UserActivity) => {

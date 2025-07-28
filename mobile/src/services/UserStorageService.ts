@@ -1,7 +1,7 @@
 /**
  * Mobile User Storage Service
- * Manages user accounts in AsyncStorage for mobile demo/development
- * Based on the web UserStorageService but adapted for React Native
+ * Manages user accounts in AsyncStorage for mobile application
+ * Real user data management with AsyncStorage persistence
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

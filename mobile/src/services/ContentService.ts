@@ -41,13 +41,17 @@ class ContentService {
    * Calculate SHA-256 hash of file content
    */
   async calculateFileHash(fileUri: string): Promise<string> {
-    // In a real implementation, you would read the file and calculate its hash
-    // For demo purposes, we'll generate a deterministic hash based on the URI
-    const encoder = new TextEncoder();
-    const data = encoder.encode(fileUri + Date.now());
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+      // Read the actual file content and calculate real hash
+      const response = await fetch(fileUri);
+      const arrayBuffer = await response.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+      console.error('Error calculating file hash:', error);
+      throw new Error('Failed to calculate file hash');
+    }
   }
 
   /**

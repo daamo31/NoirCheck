@@ -102,111 +102,56 @@ class XionService {
    */
   async createWallet(request: CreateWalletRequest): Promise<XIONWallet | null> {
     try {
-      console.log('🔐 Creating new XION wallet...');
+      console.log('🔐 Creating new XION wallet with real blockchain integration...');
       
-      // Check if we should use real API or simulation
-      const useRealAPI = !DEVELOPMENT_CONFIG.useMockData && this.baseUrl.includes('xion');
-      
-      if (useRealAPI) {
-        // Try real XION API call
-        const response = await fetch(`${this.baseUrl}/xion/wallet/create`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            key_type: request.keyType || 'secp256k1',
-            username: request.username,
-            entropy: request.entropy,
-            zktls_enabled: request.zkTLS || false,
-            verification_level: 'basic'
-          })
-        });
+      // Always use real XION API
+      const response = await fetch(`${this.baseUrl}/xion/wallet/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          key_type: request.keyType || 'secp256k1',
+          username: request.username,
+          entropy: request.entropy,
+          zktls_enabled: request.zkTLS || false,
+          verification_level: 'basic'
+        })
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          
-          this.wallet = {
-            address: data.address,
-            publicKey: data.public_key,
-            mnemonic: data.mnemonic,
-            keyType: data.key_type,
-            zkTLS: request.zkTLS ? {
-              enabled: data.zktls?.enabled || true,
-              proofGenerated: data.zktls?.proof_generated || false,
-              identityVerified: data.zktls?.identity_verified || false,
-              verificationLevel: data.zktls?.verification_level || 'basic'
-            } : undefined
-          };
-
-          await AsyncStorage.setItem('xion_wallet', JSON.stringify(this.wallet));
-          console.log('✅ Real wallet created:', this.wallet.address);
-          return this.wallet;
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`XION API error: ${response.status} - ${errorText}`);
       }
 
-      // Fallback to realistic simulation
-      console.log('🔧 Using realistic wallet simulation');
-      this.wallet = this.createRealisticWallet(request);
-      await AsyncStorage.setItem('xion_wallet', JSON.stringify(this.wallet));
+      const data = await response.json();
       
+      this.wallet = {
+        address: data.address,
+        publicKey: data.public_key,
+        mnemonic: data.mnemonic,
+        keyType: data.key_type,
+        zkTLS: request.zkTLS ? {
+          enabled: data.zktls?.enabled || true,
+          proofGenerated: data.zktls?.proof_generated || false,
+          identityVerified: data.zktls?.identity_verified || false,
+          verificationLevel: data.zktls?.verification_level || 'basic'
+        } : undefined
+      };
+
+      await AsyncStorage.setItem('xion_wallet', JSON.stringify(this.wallet));
+      console.log('✅ Real XION wallet created:', this.wallet.address);
       return this.wallet;
+      
     } catch (error) {
-      console.error('❌ Error creating wallet:', error);
-      return null;
+      console.error('❌ Error creating real XION wallet:', error);
+      throw new Error(`Failed to create XION wallet: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   /**
-   * Create a realistic wallet simulation
-   */
-  private createRealisticWallet(request: CreateWalletRequest): XIONWallet {
-    // Generate realistic XION address
-    const randomBytes = new Uint8Array(20);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      crypto.getRandomValues(randomBytes);
-    } else {
-      // Fallback for environments without crypto.getRandomValues
-      for (let i = 0; i < randomBytes.length; i++) {
-        randomBytes[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    
-    const addressSuffix = Array.from(randomBytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-      .substring(0, 39);
-    
-    const address = `xion1${addressSuffix}`;
-    
-    // Generate public key
-    const pubKeyBytes = new Uint8Array(33);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      crypto.getRandomValues(pubKeyBytes);
-    } else {
-      for (let i = 0; i < pubKeyBytes.length; i++) {
-        pubKeyBytes[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    pubKeyBytes[0] = 0x02; // Compressed public key prefix
-    
-    const publicKey = Array.from(pubKeyBytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    return {
-      address,
-      publicKey,
-      mnemonic: this.generateMnemonic(),
-      keyType: request.keyType || 'secp256k1',
-      zkTLS: request.zkTLS ? {
-        enabled: true,
-        proofGenerated: true,
-        identityVerified: false,
-        verificationLevel: 'basic'
-      } : undefined
-    };
-  }
+   * Connect to an existing XION wallet
 
   /**
    * Generate BIP39 compatible mnemonic
@@ -285,57 +230,41 @@ class XionService {
         proof: this.generateProof(contentHash, this.wallet.address),
       };
 
-      // Try real blockchain transaction
-      const useRealAPI = !DEVELOPMENT_CONFIG.useMockData && this.baseUrl.includes('xion');
-      
-      if (useRealAPI) {
-        try {
-          const response = await fetch(`${this.baseUrl}/xion/content/register`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              wallet_address: this.wallet.address,
-              content_hash: contentHash,
-              metadata: registration.metadata,
-              proof: registration.proof
-            })
-          });
+      // Execute real blockchain transaction
+      const response = await fetch(`${this.baseUrl}/xion/content/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          wallet_address: this.wallet.address,
+          content_hash: contentHash,
+          metadata: registration.metadata,
+          proof: registration.proof
+        })
+      });
 
-          if (response.ok) {
-            const data = await response.json();
-            const result = {
-              txId: data.tx_hash,
-              hash: contentHash,
-              timestamp: registration.metadata.timestamp,
-              status: 'confirmed'
-            };
-
-            await this.saveRegistrationLocal(registration, result);
-            console.log('✅ Real blockchain registration:', result.txId);
-            return result;
-          }
-        } catch (apiError) {
-          console.warn('⚠️ Real API failed, using simulation:', apiError);
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`XION blockchain registration failed: ${response.status} - ${errorText}`);
       }
 
-      // Simulate blockchain transaction
-      const simulatedResult = {
-        txId: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+      const data = await response.json();
+      const result = {
+        txId: data.tx_hash,
         hash: contentHash,
         timestamp: registration.metadata.timestamp,
         status: 'confirmed'
       };
 
-      await this.saveRegistrationLocal(registration, simulatedResult);
-      console.log('🔧 Simulated registration:', simulatedResult.txId);
+      await this.saveRegistrationLocal(registration, result);
+      console.log('✅ Real blockchain registration successful:', result.txId);
+      return result;
       
-      return simulatedResult;
     } catch (error) {
-      console.error('❌ Error registering content:', error);
-      return null;
+      console.error('❌ Error registering content on blockchain:', error);
+      throw new Error(`Failed to register content: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -344,59 +273,48 @@ class XionService {
    */
   async verifyContent(fileData: ArrayBuffer | string): Promise<VerificationResult | null> {
     try {
-      console.log('🔍 Verifying content authenticity...');
+      console.log('🔍 Verifying content authenticity on blockchain...');
       
       const contentHash = this.calculateHash(fileData);
       
-      // Try real blockchain query
-      const useRealAPI = !DEVELOPMENT_CONFIG.useMockData && this.baseUrl.includes('xion');
+      // Execute real blockchain query
+      const response = await fetch(`${this.baseUrl}/xion/content/verify/${contentHash}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       
-      if (useRealAPI) {
-        try {
-          const response = await fetch(`${this.baseUrl}/xion/content/verify/${contentHash}`);
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Real blockchain verification');
-            
-            return {
-              isOriginal: data.is_original,
-              confidence: data.confidence,
-              originalOwner: data.original_owner,
-              registrationDate: data.registration_date,
-              blockchainProof: data.blockchain_proof,
-              modifications: data.modifications || []
-            };
-          }
-        } catch (apiError) {
-          console.warn('⚠️ Real API failed, using local verification:', apiError);
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Content not found on blockchain
+          console.log('⚠️ Content not found on blockchain');
+          return {
+            isOriginal: false,
+            confidence: 0.0,
+            modifications: ['Content not registered on blockchain'],
+          };
         }
+        
+        const errorText = await response.text();
+        throw new Error(`XION blockchain verification failed: ${response.status} - ${errorText}`);
       }
-
-      // Local verification against stored registrations
-      const registration = await this.findRegistrationByHash(contentHash);
       
-      if (registration) {
-        console.log('✅ Found local registration');
-        return {
-          isOriginal: true,
-          confidence: 0.95,
-          originalOwner: registration.metadata.creator,
-          registrationDate: registration.metadata.timestamp,
-          blockchainProof: registration.proof,
-        };
-      }
-
-      // No registration found
-      console.log('⚠️ No registration found');
+      const data = await response.json();
+      console.log('✅ Real blockchain verification successful');
+      
       return {
-        isOriginal: false,
-        confidence: 0.1,
-        modifications: ['No original registration found'],
+        isOriginal: data.is_original,
+        confidence: data.confidence,
+        originalOwner: data.original_owner,
+        registrationDate: data.registration_date,
+        blockchainProof: data.blockchain_proof,
+        modifications: data.modifications || []
       };
+      
     } catch (error) {
-      console.error('❌ Error verifying content:', error);
-      return null;
+      console.error('❌ Error verifying content on blockchain:', error);
+      throw new Error(`Failed to verify content: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -409,26 +327,25 @@ class XionService {
     networkName: string;
   }> {
     try {
-      const useRealAPI = !DEVELOPMENT_CONFIG.useMockData && this.baseUrl.includes('xion');
+      // Always use real XION blockchain API
+      const response = await fetch(`${this.baseUrl}/blocks/latest`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       
-      if (useRealAPI) {
-        const response = await fetch(`${this.baseUrl}/blocks/latest`);
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            isConnected: true,
-            blockHeight: parseInt(data.block.header.height),
-            networkName: XION_CONFIG.chainName,
-          };
-        }
+      if (!response.ok) {
+        throw new Error(`Network status request failed: ${response.status}`);
       }
-
-      // Fallback simulation
+      
+      const data = await response.json();
       return {
         isConnected: true,
-        blockHeight: Math.floor(Math.random() * 1000000) + 500000,
+        blockHeight: parseInt(data.block.header.height),
         networkName: XION_CONFIG.chainName,
       };
+      
     } catch (error) {
       console.error('❌ Error getting network status:', error);
       return {

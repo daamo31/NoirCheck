@@ -44,9 +44,8 @@ export const XION_CONFIG = {
 };
 
 export const DEVELOPMENT_CONFIG = {
-  // Development/demo mode settings
-  useMockData: process.env.NODE_ENV === 'development',
+  // Production settings - Real blockchain integration only
+  useMockData: false, // Always use real blockchain
   enableLogging: true,
-  simulateNetworkDelay: 1000,
-  mockWalletPrefix: 'xion1mock'
+  simulateNetworkDelay: 0, // No artificial delays
 };
