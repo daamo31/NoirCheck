@@ -27,8 +27,10 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function RegisterScreen() {
+  const { register, isLoading, error } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -36,7 +38,6 @@ export default function RegisterScreen() {
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -60,17 +61,21 @@ export default function RegisterScreen() {
       return;
     }
 
-    setLoading(true);
     try {
-      // Aquí iría la lógica de registro
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      Alert.alert('Éxito', 'Cuenta creada exitosamente', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)') }
-      ]);
+      await register({
+        email,
+        password,
+        username: `${firstName} ${lastName}`,
+        firstName,
+        lastName
+      });
+      
+      // Si llegamos aquí, el registro fue exitoso
+      console.log('✅ Registration successful, navigating to dashboard...');
+      router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'No se pudo crear la cuenta');
-    } finally {
-      setLoading(false);
+      console.error('❌ Registration error:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Registration failed');
     }
   };
 
@@ -161,19 +166,19 @@ export default function RegisterScreen() {
           </View>
 
           <TouchableOpacity 
-            style={[styles.primaryButton, loading && styles.disabledButton]}
+            style={[styles.primaryButton, isLoading && styles.disabledButton]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={isLoading}
           >
             <Text style={styles.primaryButtonText}>
-              {loading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </Text>
           </TouchableOpacity>
 
           {/* Login Link */}
           <View style={styles.loginLink}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/login' as any)}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
               <Text style={styles.loginButtonText}>Sign in</Text>
             </TouchableOpacity>
           </View>

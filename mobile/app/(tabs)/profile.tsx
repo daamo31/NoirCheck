@@ -14,7 +14,18 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 
 const ProfileScreen = () => {
-  const { user, logout, updateUser, connectXionWallet, disconnectXionWallet, addActivity } = useAuth();
+  const { user, logout, updateUser, connectXionWallet, disconnectXionWallet, addActivity, retryPendingWallet } = useAuth();
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const handleRetryWallet = async () => {
+    setPendingLoading(true);
+    const result = await retryPendingWallet();
+    setPendingLoading(false);
+    if (result) {
+      Alert.alert('Success', 'Your XION wallet has been created and connected!');
+    } else {
+      Alert.alert('Network Issue', 'XION network is still unavailable. Please try again later.');
+    }
+  };
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -141,6 +152,25 @@ const ProfileScreen = () => {
         </View>
 
         {/* XION Wallet Section */}
+        {user.isPending && (
+          <View style={{backgroundColor:'#fffbe6',borderRadius:12,padding:16,marginBottom:16,borderWidth:1,borderColor:'#facc15'}}>
+            <Text style={{color:'#b45309',fontWeight:'bold',marginBottom:8}}>
+              XION wallet creation is pending
+            </Text>
+            <Text style={{color:'#b45309',marginBottom:12}}>
+              Your wallet could not be created due to network issues. You can retry now or wait until the network is available.
+            </Text>
+            <TouchableOpacity
+              style={{backgroundColor:'#facc15',padding:12,borderRadius:8,alignItems:'center'}}
+              onPress={handleRetryWallet}
+              disabled={pendingLoading}
+            >
+              <Text style={{color:'#78350f',fontWeight:'bold'}}>
+                {pendingLoading ? 'Retrying...' : 'Retry Wallet Creation'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>XION Wallet</Text>
           

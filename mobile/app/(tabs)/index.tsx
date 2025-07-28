@@ -13,7 +13,7 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, retryPendingWallet } = useAuth();
   const router = useRouter();
   
   const [userStats, setUserStats] = useState({
@@ -26,7 +26,7 @@ export default function DashboardScreen() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace('/login');
+      router.replace('/(auth)/login');
     }
   }, [isAuthenticated]);
 
@@ -52,6 +52,19 @@ export default function DashboardScreen() {
       </SafeAreaView>
     );
   }
+
+  // Wallet pending UI state
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const handleRetryWallet = async () => {
+    setPendingLoading(true);
+    const result = await retryPendingWallet();
+    setPendingLoading(false);
+    if (result) {
+      Alert.alert('Success', 'Your XION wallet has been created and connected!');
+    } else {
+      Alert.alert('Network Issue', 'XION network is still unavailable. Please try again later.');
+    }
+  };
 
   
 
@@ -98,12 +111,12 @@ export default function DashboardScreen() {
               console.log('🚪 Logging out from dashboard...');
               await logout();
               console.log('✅ Logout successful, redirecting...');
-              router.replace('/login');
+              router.replace('/(auth)/login');
             } catch (error) {
               console.error('❌ Logout error:', error);
               Alert.alert('Error', 'Error signing out. Trying again...');
               // Force navigation even if logout fails
-              router.replace('/login');
+              router.replace('/(auth)/login');
             }
           }
         },
@@ -138,6 +151,25 @@ export default function DashboardScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Info Card */}
+        {user.isPending && (
+          <View style={{backgroundColor:'#fffbe6',borderRadius:12,padding:16,marginBottom:16,borderWidth:1,borderColor:'#facc15'}}>
+            <Text style={{color:'#b45309',fontWeight:'bold',marginBottom:8}}>
+              XION wallet creation is pending
+            </Text>
+            <Text style={{color:'#b45309',marginBottom:12}}>
+              Your wallet could not be created due to network issues. You can retry now or wait until the network is available.
+            </Text>
+            <TouchableOpacity
+              style={{backgroundColor:'#facc15',padding:12,borderRadius:8,alignItems:'center'}}
+              onPress={handleRetryWallet}
+              disabled={pendingLoading}
+            >
+              <Text style={{color:'#78350f',fontWeight:'bold'}}>
+                {pendingLoading ? 'Retrying...' : 'Retry Wallet Creation'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.userCard}>
           <View style={styles.userInfo}>
             <View style={styles.avatar}>

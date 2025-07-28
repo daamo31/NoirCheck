@@ -26,34 +26,40 @@ import {
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function LoginScreen() {
+  const { loginWithEmail, login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      Alert.alert('Error', 'Please complete all fields');
       return;
     }
 
-    setLoading(true);
     try {
-      // Aquí iría la lógica de autenticación
-      // Por ahora simulamos un login exitoso
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await loginWithEmail(email, password);
+      
+      // Si llegamos aquí, el login fue exitoso
+      console.log('✅ Login successful, navigating to dashboard...');
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'Credenciales incorrectas');
-    } finally {
-      setLoading(false);
+      console.error('❌ Login error:', error);
+      Alert.alert('Error', 'Incorrect credentials');
     }
   };
 
-  const handleXionLogin = () => {
-    Alert.alert('XION Login', 'Conectando con XION wallet...');
-    // Aquí iría la integración con XION
+  const handleXionLogin = async () => {
+    try {
+      await login(); // Este método ya maneja XION wallet
+      console.log('✅ XION login successful, navigating to dashboard...');
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('❌ XION login error:', error);
+      Alert.alert('Error', 'Failed to connect XION wallet');
+    }
   };
 
   const handleMetaMaskLogin = () => {
@@ -112,12 +118,12 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity 
-            style={[styles.primaryButton, loading && styles.disabledButton]}
+            style={[styles.primaryButton, isLoading && styles.disabledButton]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading}
           >
             <Text style={styles.primaryButtonText}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Text>
           </TouchableOpacity>
 
@@ -146,7 +152,7 @@ export default function LoginScreen() {
           {/* Register Link */}
           <View style={styles.registerLink}>
             <Text style={styles.registerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/register' as any)}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.registerButtonText}>Create account</Text>
             </TouchableOpacity>
           </View>

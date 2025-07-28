@@ -28,6 +28,7 @@ export interface User {
   recentActivity: ActivityEntry[]; // Recent activity history
   address?: string;
   registrationMethod?: 'create' | 'xion' | 'wallet';
+  isPending?: boolean; // True if wallet creation is pending
   xionWallet?: {
     address: string;
     publicKey: string;
@@ -280,6 +281,30 @@ export class UserStorageService {
       totalActivities: user.recentActivity?.length || 0,
       memberSince: user.registeredAt
     };
+  }
+
+  // Update user wallet and remove pending status
+  static async updateUserWallet(userId: string, wallet: any): Promise<User | null> {
+    const updatedUser = await this.updateUser(userId, {
+      xionWallet: {
+        address: wallet.address,
+        publicKey: wallet.publicKey,
+        createdAt: new Date().toISOString(),
+        isAutoCreated: false,
+        isNewlyCreated: true
+      },
+      address: wallet.address,
+      isPending: false // Remove pending status
+    });
+
+    if (updatedUser) {
+      await this.addActivity(userId, {
+        type: 'profile_update',
+        description: 'XION wallet successfully created'
+      });
+    }
+
+    return updatedUser;
   }
 
   // Clear all data (for development/testing)

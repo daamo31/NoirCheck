@@ -25,6 +25,7 @@ interface User {
   totalVerifications: number; // Total verifications performed
   lastActivity: string;     // Last activity timestamp
   xionWallet?: XIONWallet;  // Connected XION wallet
+  isPending?: boolean;      // True if wallet creation is pending
 }
 
 /**
@@ -42,6 +43,7 @@ function adaptUserFromStorage(storageUser: StorageUser): User {
     totalRegistrations: storageUser.totalRegistrations,
     totalVerifications: storageUser.totalVerifications,
     lastActivity: storageUser.lastActivity,
+    isPending: storageUser.isPending || false,
     xionWallet: storageUser.xionWallet ? {
       address: storageUser.xionWallet.address,
       publicKey: storageUser.xionWallet.publicKey,
@@ -72,6 +74,7 @@ interface AuthContextType {
   connectXionWallet: () => Promise<void>;      // Connect XION wallet
   disconnectXionWallet: () => Promise<void>;   // Disconnect XION wallet
   addActivity: (activity: Omit<ActivityEntry, 'id' | 'timestamp'>) => Promise<void>; // Add activity
+  retryPendingWallet: () => Promise<boolean>; // Retry pending wallet creation
 }
 
 /**
@@ -152,22 +155,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Initialize authentication on app start
    */
+  // Method to retry pending wallet creation
+  const retryPendingWallet = async (): Promise<boolean> => {
+    if (!state.user?.id || !state.user?.isPending) {
+      return false;
+    }
+
+    try {
+      console.log('🔄 Retrying wallet creation for user:', state.user.id);
+      dispatch({ type: 'SET_LOADING', payload: true });
+      // Check network connectivity first
+      const networkStatus = await xionService.getNetworkStatus();
+      if (!networkStatus.isConnected) {
+        console.log('🌐 Network still unavailable for wallet creation');
+        return false;
+      }
+      // Try to create the wallet
+      const wallet = await xionService.createWallet({
+        username: state.user.username || `user_${state.user.id}`,
+        keyType: 'secp256k1',
+        zkTLS: true
+      });
+      // Update user in storage to remove pending status
+      const updatedUser = await UserStorageService.updateUserWallet(state.user.id, wallet);
+      // Update context state
+      if (updatedUser) {
+        const user = adaptUserFromStorage(updatedUser);
+        dispatch({ type: 'SET_USER', payload: user });
+      }
+      console.log('✅ Wallet successfully created for pending user');
+      return true;
+    } catch (error) {
+      console.warn('⚠️ Failed to retry wallet creation:', error);
+      return false;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       dispatch({ type: 'SET_LOADING', payload: true });
-      
       try {
         console.log('🚀 Initializing mobile authentication...');
-        
         // Initialize XION service
         await xionService.initialize();
-        
         // Check for existing user session
         const currentUser = await UserStorageService.getCurrentUser();
-        
         if (currentUser) {
           console.log('👤 Found existing user session:', currentUser.email);
-          
           // Check if user has XION wallet in storage
           if (currentUser.xionWallet) {
             // Try to restore XION wallet connection
@@ -182,11 +218,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
               console.warn('⚠️ Could not restore XION wallet:', walletError);
             }
           }
-          
           // Set user as authenticated
           const user = adaptUserFromStorage(currentUser);
           dispatch({ type: 'SET_USER', payload: user });
-          
           // Update last activity
           await UserStorageService.updateLastActivity(currentUser.id);
         } else {
@@ -198,10 +232,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         dispatch({ type: 'SET_ERROR', payload: 'Authentication initialization failed' });
         dispatch({ type: 'SET_USER', payload: null });
       }
-      
-      dispatch({ type: 'SET_LOADING', payload: false });
     };
-
     initializeAuth();
   }, []);
 
@@ -360,7 +391,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const errorMessage = walletError instanceof Error ? walletError.message : String(walletError);
         if (errorMessage.includes('network') || errorMessage.includes('unavailable') || errorMessage.includes('connection')) {
           console.log('🌐 XION network temporarily unavailable - user can connect wallet later');
-          // Show a notification that wallet creation will be available when network is restored
+          
+          // Create a placeholder wallet that will be replaced when network is available
+          await UserStorageService.connectXionWallet(newUser.id, {
+            address: 'pending_xion_connection',
+            publicKey: 'pending',
+            isAutoCreated: true,
+            isNewlyCreated: false
+          });
+          
+          // Mark user as having pending wallet creation
+          await UserStorageService.updateUser(newUser.id, {
+            isPending: true
+          });
+          
+          console.log('📝 Wallet creation marked as pending - will retry when network is available');
         }
         // Continue without wallet - user can connect later
       }
@@ -378,16 +423,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('❌ Registration error:', error);
       
       // Provide user-friendly error messages
-      let errorMessage = 'Registration failed';
-      if (error instanceof Error) {
-        if (error.message.includes('network') || error.message.includes('unavailable')) {
-          errorMessage = 'Registration completed, but XION wallet creation failed due to network issues. You can connect your wallet later in settings.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
+      let errorMessage = 'Registration completed successfully!';
       
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      // If it was just a wallet creation issue, still allow registration to complete
+      if (error instanceof Error && error.message.includes('XION')) {
+        errorMessage = 'Account created! XION wallet will be created automatically when the network is available.';
+        
+        // Still complete the registration flow
+        dispatch({ type: 'SET_ERROR', payload: null });
+        return; // Don't show this as an error
+      } else {
+        // Actual registration error
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = 'Registration failed';
+        }
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      }
     }
   };
 
@@ -590,7 +643,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateUser,
     connectXionWallet,
     disconnectXionWallet,
-    addActivity
+    addActivity,
+    retryPendingWallet
   };
 
   return (
