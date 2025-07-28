@@ -5,10 +5,10 @@
 
 export const XION_CONFIG = {
   // XION Testnet configuration
-  chainId: 'xion-testnet-1',
-  chainName: 'XION Testnet',
-  rpcUrl: 'https://rpc.xion-testnet-1.burnt.com:443',
-  restUrl: 'https://api.xion-testnet-1.burnt.com',
+  chainId: 'xion-testnet-2',
+  chainName: 'XION Testnet 2',
+  rpcUrl: 'https://rpc.xion-testnet-2.burnt.com:443',
+  restUrl: 'https://api.xion-testnet-2.burnt.com',
   
   // Gas settings
   gasPrice: '0.025uxion',
@@ -37,8 +37,8 @@ export const XION_CONFIG = {
   
   // API endpoints
   api: {
-    faucet: 'https://faucet.xion-testnet-1.burnt.com',
-    explorer: 'https://explorer.xion-testnet-1.burnt.com',
+    faucet: 'https://faucet.xion-testnet-2.burnt.com',
+    explorer: 'https://explorer.xion-testnet-2.burnt.com',
     zkTLS: 'https://zktls.xion.network'
   }
 };

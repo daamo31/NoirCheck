@@ -60,7 +60,7 @@ export default function VerifyScreen() {
     try {
       setIsVerifying(true);
 
-      // Leer archivo para verificación
+      // Read file for verification
       let fileData: string;
       if (selectedFile.base64) {
         fileData = selectedFile.base64;
@@ -68,7 +68,7 @@ export default function VerifyScreen() {
         fileData = selectedFile.uri;
       }
 
-      // Verificar en blockchain
+      // Verify on blockchain
       const result = await xionService.verifyContent(fileData);
 
       if (result) {
@@ -80,29 +80,29 @@ export default function VerifyScreen() {
 
         if (result.isOriginal) {
           Alert.alert(
-            '✅ Contenido Auténtico',
-            `Este contenido es original y está registrado en blockchain.\n\nConfianza: ${Math.round(result.confidence * 100)}%`,
+            '✅ Authentic Content',
+            `This content is original and registered on blockchain.\n\nConfidence: ${Math.round(result.confidence * 100)}%`,
             [{ text: 'OK' }]
           );
         } else {
           Alert.alert(
-            '⚠️ Contenido No Original',
-            `Este contenido no está registrado como original o ha sido modificado.\n\nConfianza: ${Math.round(result.confidence * 100)}%`,
+            '⚠️ Content Not Original',
+            `This content is not registered as original or has been modified.\n\nConfidence: ${Math.round(result.confidence * 100)}%`,
             [{ text: 'OK' }]
           );
         }
       } else {
-        throw new Error('No se pudo verificar el contenido');
+        throw new Error('Could not verify content');
       }
     } catch (error) {
       console.error('Error verifying content:', error);
       Alert.alert(
-        'Error de Verificación',
-        'No se pudo verificar el contenido. Inténtalo de nuevo.'
+        'Verification Error',
+        'Could not verify content. Please try again.'
       );
       setVerificationResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido',
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
       setIsVerifying(false);
@@ -129,9 +129,9 @@ export default function VerifyScreen() {
   };
 
   const getConfidenceText = (confidence: number) => {
-    if (confidence >= 0.8) return 'Alta';
-    if (confidence >= 0.5) return 'Media';
-    return 'Baja';
+    if (confidence >= 0.8) return 'High';
+    if (confidence >= 0.5) return 'Medium';
+    return 'Low';
   };
 
   return (
@@ -140,23 +140,23 @@ export default function VerifyScreen() {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Verificar Contenido</Text>
+        <Text style={styles.headerTitle}>Verify Content</Text>
         <Text style={styles.headerSubtitle}>
-          Comprueba la autenticidad de cualquier archivo
+          Check the authenticity of any file
         </Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* File Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Seleccionar Archivo</Text>
+          <Text style={styles.sectionTitle}>1. Select File</Text>
           
           {!selectedFile ? (
             <TouchableOpacity style={styles.selectButton} onPress={handleSelectFile}>
               <Text style={styles.selectIcon}>🔍</Text>
-              <Text style={styles.selectTitle}>Seleccionar Archivo</Text>
+              <Text style={styles.selectTitle}>Select File</Text>
               <Text style={styles.selectSubtitle}>
-                Toca para elegir el archivo a verificar
+                Tap to choose the file to verify
               </Text>
             </TouchableOpacity>
           ) : (
@@ -189,7 +189,7 @@ export default function VerifyScreen() {
         {/* Verification Button */}
         {selectedFile && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>2. Verificar Autenticidad</Text>
+            <Text style={styles.sectionTitle}>2. Verify Authenticity</Text>
             <TouchableOpacity
               style={[styles.verifyButton, isVerifying && styles.verifyButtonDisabled]}
               onPress={handleVerifyContent}
@@ -198,12 +198,12 @@ export default function VerifyScreen() {
               {isVerifying ? (
                 <View style={styles.verifyButtonContent}>
                   <ActivityIndicator color="white" size="small" />
-                  <Text style={styles.verifyButtonText}>Verificando...</Text>
+                  <Text style={styles.verifyButtonText}>Verifying...</Text>
                 </View>
               ) : (
                 <View style={styles.verifyButtonContent}>
                   <Text style={styles.verifyIcon}>🔍</Text>
-                  <Text style={styles.verifyButtonText}>Verificar Contenido</Text>
+                  <Text style={styles.verifyButtonText}>Verify Content</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -225,12 +225,12 @@ export default function VerifyScreen() {
               </Text>
               <View style={styles.resultInfo}>
                 <Text style={styles.resultTitle}>
-                  {verificationResult.isOriginal ? 'Contenido Auténtico' : 'Contenido No Original'}
+                  {verificationResult.isOriginal ? 'Authentic Content' : 'Content Not Original'}
                 </Text>
                 <Text style={styles.resultSubtitle}>
                   {verificationResult.isOriginal 
-                    ? 'Este archivo está registrado como original'
-                    : 'Este archivo no está registrado o ha sido modificado'
+                    ? 'This file is registered as original'
+                    : 'This file is not registered or has been modified'
                   }
                 </Text>
               </View>
@@ -238,7 +238,7 @@ export default function VerifyScreen() {
 
             {/* Confidence Level */}
             <View style={styles.confidenceCard}>
-              <Text style={styles.confidenceLabel}>Nivel de Confianza</Text>
+              <Text style={styles.confidenceLabel}>Confidence Level</Text>
               <View style={styles.confidenceBar}>
                 <View 
                   style={[

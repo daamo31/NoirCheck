@@ -327,22 +327,75 @@ class XionService {
     networkName: string;
   }> {
     try {
-      // Always use real XION blockchain API
-      const response = await fetch(`${this.baseUrl}/blocks/latest`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
+      console.log('🌐 Checking XION network status...');
       
-      if (!response.ok) {
-        throw new Error(`Network status request failed: ${response.status}`);
+      // Try multiple endpoints to check connectivity
+      const endpoints = [
+        `${this.baseUrl}/cosmos/base/tendermint/v1beta1/node_info`,
+        `${this.baseUrl}/node_info`,
+        `${this.baseUrl}/status`
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          // Create abort controller for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ XION network is reachable');
+            
+            // Try to extract block height if available
+            let blockHeight = 0;
+            if (data.default_node_info?.network || data.node_info?.network) {
+              // If we can get node info, try to get latest block
+              try {
+                const blockController = new AbortController();
+                const blockTimeoutId = setTimeout(() => blockController.abort(), 5000);
+                
+                const blockResponse = await fetch(`${this.baseUrl}/cosmos/base/tendermint/v1beta1/blocks/latest`, {
+                  signal: blockController.signal,
+                });
+                
+                clearTimeout(blockTimeoutId);
+                
+                if (blockResponse.ok) {
+                  const blockData = await blockResponse.json();
+                  blockHeight = parseInt(blockData.block?.header?.height || '0');
+                }
+              } catch (blockError) {
+                console.log('ℹ️ Could not fetch block height, using 0');
+              }
+            }
+            
+            return {
+              isConnected: true,
+              blockHeight,
+              networkName: XION_CONFIG.chainName,
+            };
+          }
+        } catch (endpointError) {
+          console.log(`⚠️ Endpoint ${endpoint} failed:`, endpointError);
+          continue;
+        }
       }
       
-      const data = await response.json();
+      // If all endpoints fail
+      console.log('⚠️ All XION endpoints unreachable');
       return {
-        isConnected: true,
-        blockHeight: parseInt(data.block.header.height),
+        isConnected: false,
+        blockHeight: 0,
         networkName: XION_CONFIG.chainName,
       };
       

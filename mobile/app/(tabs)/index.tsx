@@ -163,18 +163,18 @@ export default function DashboardScreen() {
           
           <View style={styles.userStats}>
             <View style={styles.statBadge}>
-              <Text style={styles.statLabel}>Registros</Text>
+              <Text style={styles.statLabel}>Registrations</Text>
               <Text style={styles.statValue}>{user.totalRegistrations}</Text>
             </View>
             <View style={[styles.statBadge, { marginLeft: 12 }]}>
-              <Text style={styles.statLabel}>Verificaciones</Text>
+              <Text style={styles.statLabel}>Verifications</Text>
               <Text style={styles.statValue}>{user.totalVerifications}</Text>
             </View>
           </View>
         </View>
 
         {/* Quick Statistics */}
-        <Text style={styles.sectionTitle}>Estadísticas Rápidas</Text>
+        <Text style={styles.sectionTitle}>Quick Statistics</Text>
         <View style={styles.statsGrid}>
           {quickStats.map((stat, index) => (
             <View key={index} style={[styles.statCard, { backgroundColor: stat.color }]}>
@@ -188,23 +188,23 @@ export default function DashboardScreen() {
         </View>
 
         {/* Actions */}
-        <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsGrid}>
-          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Registrar', 'Ir a pantalla de registro')}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Register', 'Go to registration screen')}>
             <Text style={styles.actionIcon}>📝</Text>
-            <Text style={styles.actionTitle}>Registrar Contenido</Text>
-            <Text style={styles.actionSubtitle}>Protege tu contenido original</Text>
+            <Text style={styles.actionTitle}>Register Content</Text>
+            <Text style={styles.actionSubtitle}>Protect your original content</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Verificar', 'Ir a pantalla de verificación')}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Verify', 'Go to verification screen')}>
             <Text style={styles.actionIcon}>🔍</Text>
-            <Text style={styles.actionTitle}>Verificar Contenido</Text>
-            <Text style={styles.actionSubtitle}>Comprueba la autenticidad</Text>
+            <Text style={styles.actionTitle}>Verify Content</Text>
+            <Text style={styles.actionSubtitle}>Check authenticity</Text>
           </TouchableOpacity>
         </View>
 
         {/* Recent Activity */}
-        <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+        <Text style={styles.sectionTitle}>Recent Activity</Text>
         <View style={styles.activityList}>
           {userStats.recentActivity.length > 0 ? (
             userStats.recentActivity.map((activity: any, index) => (
@@ -214,7 +214,7 @@ export default function DashboardScreen() {
                 </Text>
                 <View style={styles.activityDetails}>
                   <Text style={styles.activityTitle}>
-                    {activity.type === 'registration' ? 'Contenido registrado' : 'Contenido verificado'}
+                    {activity.type === 'registration' ? 'Content registered' : 'Content verified'}
                   </Text>
                   <Text style={styles.activitySubtitle}>{activity.filename}</Text>
                   <Text style={styles.activityTime}>
@@ -228,7 +228,7 @@ export default function DashboardScreen() {
             ))
           ) : (
             <View style={styles.emptyActivity}>
-              <Text style={styles.emptyActivityText}>No hay actividad reciente</Text>
+              <Text style={styles.emptyActivityText}>No recent activity</Text>
             </View>
           )}
         </View>
