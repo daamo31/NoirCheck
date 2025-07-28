@@ -57,50 +57,56 @@ export default function DashboardScreen() {
 
   const quickStats = [
     {
-      label: 'Contenido Registrado',
+      label: 'Content Registered',
       value: userStats.totalRegistrations,
       icon: '📝',
       color: '#dbeafe',
       textColor: '#2563eb',
     },
     {
-      label: 'Verificaciones',
+      label: 'Verifications',
       value: userStats.totalVerifications,
       icon: '🛡️',
       color: '#dcfce7',
       textColor: '#16a34a',
     },
     {
-      label: 'Actividad Reciente',
+      label: 'Recent Activity',
       value: userStats.recentActivity.length,
       icon: '📊',
-      color: '#fdf4ff',
-      textColor: '#9333ea',
-    },
-    {
-      label: 'Miembro desde',
-      value: new Date(user.registeredAt).getFullYear(),
-      icon: '📅',
       color: '#fef3c7',
       textColor: '#d97706',
     },
-  ];
-
-  const handleLogout = () => {
+    {
+      label: 'Member Since',
+      value: new Date(user.registeredAt).getFullYear(),
+      icon: '�️',
+      color: '#fce7f3',
+      textColor: '#d97706',
+    },
+  ];  const handleLogout = async () => {
     Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro que quieres cerrar sesión?',
+      'Sign Out',
+      'Are you sure you want to sign out?',
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar Sesión', style: 'destructive', onPress: async () => {
-          try {
-            await logout();
-            router.replace('/login');
-          } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert('Error', 'Error al cerrar sesión');
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              console.log('🚪 Logging out from dashboard...');
+              await logout();
+              console.log('✅ Logout successful, redirecting...');
+              router.replace('/login');
+            } catch (error) {
+              console.error('❌ Logout error:', error);
+              Alert.alert('Error', 'Error signing out. Trying again...');
+              // Force navigation even if logout fails
+              router.replace('/login');
+            }
           }
-        }},
+        },
       ]
     );
   };
@@ -121,8 +127,12 @@ export default function DashboardScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Salir</Text>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
 
@@ -146,7 +156,7 @@ export default function DashboardScreen() {
                   'No wallet connected'}
               </Text>
               <Text style={styles.userJoinDate}>
-                Registrado: {new Date(user.registeredAt).toLocaleDateString()}
+                Registered: {new Date(user.registeredAt).toLocaleDateString()}
               </Text>
             </View>
           </View>
@@ -271,12 +281,18 @@ const styles = StyleSheet.create({
   logoutButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#fee2e2',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logoutText: {
-    color: '#374151',
-    fontWeight: '500',
+    color: '#dc2626',
+    fontWeight: '600',
+    fontSize: 14,
   },
   content: {
     flex: 1,

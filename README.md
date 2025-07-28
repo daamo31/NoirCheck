@@ -10,6 +10,18 @@ NoirCheck is an innovative digital content authenticity verification platform th
 
 ## 🆕 Recent Updates (July 2025)
 
+### 📱 **NEW: Mobile Application (React Native + Expo)**
+- **Cross-platform mobile app** for iOS and Android
+- **Native XION wallet integration** with real blockchain operations
+- **Complete authentication system** with email and wallet login
+- **Real-time user statistics** and activity tracking
+- **Seamless content registration and verification** on mobile
+- **Native camera integration** for instant photo capture
+- **Gallery picker** for existing media verification
+- **Dark theme UI** consistent with web application
+- **Offline data persistence** with AsyncStorage
+- **Push notifications** for verification results (planned)
+
 ### ✨ Frontend Migration Completed
 - **Migrated from Flutter to Next.js 15.3.5** with React 19
 - **Full XION compatibility** in Node.js ecosystem
@@ -98,6 +110,18 @@ NoirCheck is an innovative digital content authenticity verification platform th
 - **Local data management** independent of backend
 - **Real-time status indicators** for all services
 - **Progressive Web App** capabilities for mobile installation
+
+### Mobile Application (React Native + Expo)
+- **Cross-platform development** with React Native 0.74+
+- **Expo managed workflow** for rapid development and deployment
+- **Native XION wallet integration** using XION SDK
+- **AsyncStorage** for local user data persistence
+- **Real-time authentication system** with email and wallet login
+- **Camera and gallery integration** using expo-image-picker
+- **TypeScript** for type safety and better development experience
+- **Material Design 3** for consistent mobile UI/UX
+- **State management** with React Context and Riverpod patterns
+- **Real-time statistics** synchronized across all sessions
 - **SQLite database** with SQLAlchemy ORM
 - **SHA-256 hash services** and secure cryptography
 - **Port 8000** - Fully operational
@@ -141,6 +165,48 @@ npm install
 npm run dev
 ```
 
+#### Mobile Setup (Expo Development)
+```bash
+cd mobile
+npm install
+
+# Start Expo development server
+npx expo start
+
+# Or start with specific platform
+npx expo start --android  # For Android
+npx expo start --ios      # For iOS (macOS only)
+npx expo start --web      # For web preview
+```
+
+### 📱 Mobile Development Setup
+
+#### Prerequisites for Mobile
+- **Node.js 18+** with npm 8+
+- **Expo CLI** (`npm install -g @expo/cli`)
+- **Android Studio** (for Android development)
+- **Xcode** (for iOS development - macOS only)
+- **Expo Go app** on your mobile device for testing
+
+#### Quick Mobile Development
+1. **Install Expo Go** on your mobile device from app store
+2. **Start development server**: `npx expo start`
+3. **Scan QR code** with Expo Go app to run on device
+4. **Enable hot reload** for instant code updates
+
+#### Building for Production
+```bash
+# Build for Android (APK)
+npx expo build:android
+
+# Build for iOS (IPA) - macOS only
+npx expo build:ios
+
+# Create production builds with EAS
+npx eas build --platform android
+npx eas build --platform ios
+```
+
 ### ✅ System Verification
 ```bash
 # Verify backend
@@ -174,10 +240,60 @@ curl http://localhost:3000
 - `@walletconnect/qrcode-modal==2.x` - QR code modal for mobile pairing
 - `@burnt-labs/abstraxion` - XION wallet integration (when available)
 
-#### Development Dependencies
-- `@types/node` - Node.js type definitions
-- `@types/react` - React type definitions
-- `eslint-config-next` - ESLint configuration for Next.js
+#### Mobile Dependencies (React Native + Expo)
+- `expo==~52.0.0` - Mobile development platform
+- `react-native==0.74+` - Cross-platform mobile framework
+- `@react-native-async-storage/async-storage` - Local data persistence
+- `expo-image-picker==16.1.4` - Camera and gallery integration
+- `expo-router==4.x` - File-based navigation for React Native
+- `react-native-safe-area-context` - Safe area handling
+- `@expo/vector-icons` - Icon library for mobile
+- `crypto-js` - Cryptographic operations for mobile
+
+#### Mobile Setup (Expo Development)
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+## 📱 Mobile App Features
+
+### 🏠 Dashboard
+- **Real-time user statistics** with content registrations and verifications
+- **Native XION wallet integration** with connection status
+- **User profile** with activity tracking and member information
+- **Quick actions** for registration and verification
+- **Modern dark theme UI** with Material Design principles
+
+### 📷 Content Registration (Mobile)
+1. **Native camera capture** for instant photo taking
+2. **Gallery picker** for existing photos and videos
+3. **File preview** with metadata display
+4. **Real-time XION blockchain registration**
+5. **Automatic hash generation** using SHA-256
+6. **Registration confirmation** with transaction details
+
+### 🔍 Content Verification (Mobile)
+1. **Camera or gallery selection** for content to verify
+2. **Instant cryptographic hash calculation**
+3. **Blockchain verification** against XION network
+4. **Detailed verification results** with confidence levels
+5. **Verification history** stored locally on device
+
+### 👤 User Management (Mobile)
+- **Email and password authentication** with secure storage
+- **XION wallet connection** and management
+- **User profile** with statistics and activity history
+- **Logout functionality** with session cleanup
+- **Activity tracking** with timestamps and descriptions
+
+### 🔐 Authentication (Mobile)
+- **Email registration** with automatic XION wallet creation
+- **Email login** with existing accounts
+- **XION wallet login** using native wallet integration
+- **Secure session management** with AsyncStorage
+- **Real-time authentication state** across all screens
 
 ## 📱 Web App Features
 
@@ -282,6 +398,43 @@ NoirsCheck/
 │   │   │   ├── Navigation.tsx # Main navigation bar
 │   │   │   ├── ConnectionStatus.tsx # Service status indicators
 │   │   │   ├── FileUpload.tsx # File upload interface
+│   │   │   ├── VerificationResult.tsx # Results display
+│   │   │   ├── WalletManager.tsx # Multi-wallet integration
+│   │   │   └── StatisticsCard.tsx # Real-time statistics
+│   │   ├── lib/               # Utilities and services
+│   │   │   ├── api.ts         # Backend API client
+│   │   │   ├── storage.ts     # LocalStorage management
+│   │   │   ├── statistics.ts  # Stats calculation
+│   │   │   └── wallets/       # Wallet integration
+│   │   │       ├── xion.ts    # XION wallet connection
+│   │   │       ├── metamask.ts # MetaMask integration
+│   │   │       └── manual.ts  # Manual address connection
+│   │   └── types/             # TypeScript definitions
+│   ├── package.json           # Dependencies
+│   └── tailwind.config.js     # Tailwind configuration
+├── mobile/                     # React Native + Expo Mobile App
+│   ├── app/                   # Expo Router file-based navigation
+│   │   ├── (tabs)/           # Tab navigation screens
+│   │   │   ├── index.tsx     # Dashboard/Home screen
+│   │   │   ├── register.tsx  # Content registration
+│   │   │   ├── verify.tsx    # Content verification
+│   │   │   ├── history.tsx   # Activity history
+│   │   │   ├── profile.tsx   # User profile
+│   │   │   └── _layout.tsx   # Tab layout configuration
+│   │   ├── login.tsx         # Authentication screen
+│   │   └── _layout.tsx       # Root layout
+│   ├── src/
+│   │   ├── contexts/         # React Context providers
+│   │   │   └── AuthContext.tsx # Authentication state
+│   │   ├── services/         # Business logic services
+│   │   │   ├── UserStorageService.ts # User data management
+│   │   │   ├── XionService.ts # XION blockchain integration
+│   │   │   ├── CameraService.ts # Camera and gallery
+│   │   │   └── ContentService.ts # Content operations
+│   │   └── config/           # Configuration
+│   │       └── xion.ts       # XION network settings
+│   ├── package.json          # Mobile dependencies
+│   └── app.json             # Expo configuration
 │   │   │   ├── UserRegistrationNew.tsx # Multi-step registration
 │   │   │   ├── UserLoginNew.tsx # Multi-method login
 │   │   │   └── WalletStatusChecker.tsx # Wallet status component
