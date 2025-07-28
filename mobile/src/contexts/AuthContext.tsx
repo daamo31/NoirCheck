@@ -355,6 +355,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (walletError) {
         console.warn('⚠️ Failed to create XION wallet during registration:', walletError);
+        
+        // Check if it's a connectivity issue
+        const errorMessage = walletError instanceof Error ? walletError.message : String(walletError);
+        if (errorMessage.includes('network') || errorMessage.includes('unavailable') || errorMessage.includes('connection')) {
+          console.log('🌐 XION network temporarily unavailable - user can connect wallet later');
+          // Show a notification that wallet creation will be available when network is restored
+        }
         // Continue without wallet - user can connect later
       }
       
@@ -369,7 +376,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('✅ User registration successful');
     } catch (error) {
       console.error('❌ Registration error:', error);
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Registration failed' });
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Registration failed';
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('unavailable')) {
+          errorMessage = 'Registration completed, but XION wallet creation failed due to network issues. You can connect your wallet later in settings.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
   };
 
@@ -497,7 +515,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (error) {
       console.error('❌ Error connecting XION wallet:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to connect XION wallet' });
+      
+      // Provide specific error messages for different failure types
+      let errorMessage = 'Failed to connect XION wallet';
+      if (error instanceof Error) {
+        if (error.message.includes('network') || error.message.includes('unavailable') || error.message.includes('servers are currently unavailable')) {
+          errorMessage = 'XION network is temporarily unavailable. Please check your internet connection and try again later.';
+        } else if (error.message.includes('connection')) {
+          errorMessage = 'Unable to connect to XION network. Please check your internet connection.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
   };
 

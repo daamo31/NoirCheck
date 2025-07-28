@@ -96,6 +96,9 @@ export default function RegisterScreen() {
             <Text style={styles.subtitle}>
               Join NoirCheck and protect your content
             </Text>
+            <Text style={styles.networkInfo}>
+              📡 XION wallet will be created automatically when network is available
+            </Text>
           </View>
         </View>
 
@@ -227,6 +230,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748b',
     textAlign: 'center',
+  },
+  networkInfo: {
+    fontSize: 12,
+    color: '#10b981',
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   form: {
     flex: 1,

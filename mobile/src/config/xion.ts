@@ -10,6 +10,13 @@ export const XION_CONFIG = {
   rpcUrl: 'https://rpc.xion-testnet-2.burnt.com:443',
   restUrl: 'https://api.xion-testnet-2.burnt.com',
   
+  // Fallback endpoints in case primary is down
+  fallbackEndpoints: [
+    'https://api.xion-testnet-2.burnt.com',
+    'https://rpc.xion-testnet-2.burnt.com:443',
+    'https://api.xion-testnet-1.burnt.com', // Previous testnet as fallback
+  ],
+  
   // Gas settings
   gasPrice: '0.025uxion',
   gasPriceAmount: {
