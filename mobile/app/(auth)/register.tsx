@@ -1,3 +1,19 @@
+/**
+ * User Registration Screen
+ * 
+ * Allows new users to create a NoirCheck account with:
+ * - Personal information (first name, last name, email)
+ * - Password creation with confirmation
+ * - Real-time validation and error handling
+ * - XION wallet creation integration
+ * 
+ * Features:
+ * - Form validation (required fields, password matching, minimum length)
+ * - User-friendly error messages
+ * - Loading states during registration
+ * - Navigation to login screen for existing users
+ */
+
 import React, { useState } from 'react';
 import { 
   View, 
@@ -30,17 +46,17 @@ export default function RegisterScreen() {
     const { firstName, lastName, email, password, confirmPassword } = formData;
     
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden');
+      Alert.alert('Error', 'Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 
@@ -69,16 +85,16 @@ export default function RegisterScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.backButtonText}>← Volver</Text>
+            <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
           
           <View style={styles.logoContainer}>
             <View style={styles.logo}>
               <Text style={styles.logoText}>🛡️</Text>
             </View>
-            <Text style={styles.title}>Crear Cuenta</Text>
+            <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
-              Únete a NoirCheck y protege tu contenido
+              Join NoirCheck and protect your content
             </Text>
           </View>
         </View>
@@ -87,22 +103,22 @@ export default function RegisterScreen() {
         <View style={styles.form}>
           <View style={styles.inputRow}>
             <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>Nombre</Text>
+              <Text style={styles.label}>First Name</Text>
               <TextInput
                 style={styles.input}
                 value={formData.firstName}
                 onChangeText={(value) => handleInputChange('firstName', value)}
-                placeholder="Tu nombre"
+                placeholder="Your first name"
               />
             </View>
             
             <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.label}>Apellido</Text>
+              <Text style={styles.label}>Last Name</Text>
               <TextInput
                 style={styles.input}
                 value={formData.lastName}
                 onChangeText={(value) => handleInputChange('lastName', value)}
-                placeholder="Tu apellido"
+                placeholder="Your last name"
               />
             </View>
           </View>
@@ -113,30 +129,30 @@ export default function RegisterScreen() {
               style={styles.input}
               value={formData.email}
               onChangeText={(value) => handleInputChange('email', value)}
-              placeholder="tu@email.com"
+              placeholder="your@email.com"
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Contraseña</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
               value={formData.password}
               onChangeText={(value) => handleInputChange('password', value)}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Minimum 6 characters"
               secureTextEntry
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirmar Contraseña</Text>
+            <Text style={styles.label}>Confirm Password</Text>
             <TextInput
               style={styles.input}
               value={formData.confirmPassword}
               onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              placeholder="Repite tu contraseña"
+              placeholder="Repeat your password"
               secureTextEntry
             />
           </View>
@@ -147,15 +163,15 @@ export default function RegisterScreen() {
             disabled={loading}
           >
             <Text style={styles.primaryButtonText}>
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </Text>
           </TouchableOpacity>
 
           {/* Login Link */}
           <View style={styles.loginLink}>
-            <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+            <Text style={styles.loginText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/login' as any)}>
-              <Text style={styles.loginButtonText}>Iniciar sesión</Text>
+              <Text style={styles.loginButtonText}>Sign in</Text>
             </TouchableOpacity>
           </View>
         </View>

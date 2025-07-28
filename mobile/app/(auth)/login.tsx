@@ -1,3 +1,18 @@
+/**
+ * User Login Screen
+ * 
+ * Handles user authentication with email and password.
+ * Integrates with XION wallet system for blockchain operations.
+ * 
+ * Features:
+ * - Email/password authentication
+ * - XION wallet login option
+ * - Form validation and error handling
+ * - Loading states during authentication
+ * - Navigation to registration for new users
+ * - Secure session management with AuthContext
+ */
+
 import React, { useState } from 'react';
 import { 
   View, 
@@ -57,16 +72,16 @@ export default function LoginScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.backButtonText}>← Volver</Text>
+            <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
           
           <View style={styles.logoContainer}>
             <View style={styles.logo}>
               <Text style={styles.logoText}>🛡️</Text>
             </View>
-            <Text style={styles.title}>Iniciar Sesión</Text>
+            <Text style={styles.title}>Sign In</Text>
             <Text style={styles.subtitle}>
-              Accede a tu cuenta de NoirCheck
+              Access your NoirCheck account
             </Text>
           </View>
         </View>
@@ -79,19 +94,19 @@ export default function LoginScreen() {
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="tu@email.com"
+              placeholder="your@email.com"
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Contraseña</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
               value={password}
               onChangeText={setPassword}
-              placeholder="Tu contraseña"
+              placeholder="Your password"
               secureTextEntry
             />
           </View>
@@ -102,7 +117,7 @@ export default function LoginScreen() {
             disabled={loading}
           >
             <Text style={styles.primaryButtonText}>
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Text>
           </TouchableOpacity>
 
@@ -130,9 +145,9 @@ export default function LoginScreen() {
 
           {/* Register Link */}
           <View style={styles.registerLink}>
-            <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+            <Text style={styles.registerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/register' as any)}>
-              <Text style={styles.registerButtonText}>Crear cuenta</Text>
+              <Text style={styles.registerButtonText}>Create account</Text>
             </TouchableOpacity>
           </View>
         </View>

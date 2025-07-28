@@ -1,3 +1,17 @@
+/**
+ * Authentication Landing Screen
+ * 
+ * This is the initial screen users see when opening the mobile app.
+ * It provides an overview of NoirCheck features and navigation to
+ * login or registration screens.
+ * 
+ * Features:
+ * - App branding and logo
+ * - Feature highlights (register content, verify authenticity, blockchain tech)
+ * - Navigation to login/register screens
+ * - Responsive design with Material Design principles
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Link, router } from 'expo-router';
@@ -18,30 +32,30 @@ export default function AuthIndexScreen() {
           <Text style={styles.title}>NoirCheck</Text>
         </View>
         <Text style={styles.subtitle}>
-          Verificación de autenticidad de contenido digital con blockchain
+          Digital content authenticity verification with blockchain
         </Text>
       </View>
 
       {/* Main Content */}
       <View style={styles.content}>
-        <Text style={styles.welcomeText}>Bienvenido</Text>
+        <Text style={styles.welcomeText}>Welcome</Text>
         <Text style={styles.description}>
-          Protege tu contenido original y verifica la autenticidad de cualquier archivo digital
+          Protect your original content and verify the authenticity of any digital file
         </Text>
 
         {/* Features */}
         <View style={styles.features}>
           <View style={styles.feature}>
             <Text style={styles.featureIcon}>📝</Text>
-            <Text style={styles.featureText}>Registra contenido original</Text>
+            <Text style={styles.featureText}>Register original content</Text>
           </View>
           <View style={styles.feature}>
             <Text style={styles.featureIcon}>🔍</Text>
-            <Text style={styles.featureText}>Verifica autenticidad</Text>
+            <Text style={styles.featureText}>Verify authenticity</Text>
           </View>
           <View style={styles.feature}>
             <Text style={styles.featureIcon}>⛓️</Text>
-            <Text style={styles.featureText}>Tecnología blockchain</Text>
+            <Text style={styles.featureText}>Blockchain technology</Text>
           </View>
         </View>
       </View>
@@ -52,14 +66,14 @@ export default function AuthIndexScreen() {
           style={styles.primaryButton}
           onPress={() => router.push('/(auth)/login')}
         >
-          <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
+          <Text style={styles.primaryButtonText}>Sign In</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={styles.secondaryButton}
           onPress={() => router.push('/(auth)/register')}
         >
-          <Text style={styles.secondaryButtonText}>Crear Cuenta</Text>
+          <Text style={styles.secondaryButtonText}>Create Account</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
