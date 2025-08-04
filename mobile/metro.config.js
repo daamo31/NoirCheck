@@ -9,4 +9,10 @@ config.resolver.alias = {
   '@/src': path.resolve(__dirname, './src'),
 };
 
+// Add support for Buffer and other Node.js polyfills
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Add polyfills for Node.js globals
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+
 module.exports = config;

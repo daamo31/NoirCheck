@@ -58,7 +58,7 @@ export const XION_CONFIG = {
 
 // Development configuration for testing
 export const DEVELOPMENT_CONFIG = {
-  simulateAPI: true,
+  simulateAPI: false, // DISABLED: Using real XION integration like web app
   mockLatency: 1000,
   enableDebugLogs: __DEV__,
   bypassAuthentication: false

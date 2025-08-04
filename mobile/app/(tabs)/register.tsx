@@ -49,7 +49,7 @@ const RegisterScreen = () => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: 'images' as any, // Use string instead of deprecated enum
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,
@@ -74,7 +74,7 @@ const RegisterScreen = () => {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: 'images' as any, // Use string instead of deprecated enum
         allowsEditing: true,
         aspect: [4, 3],
         quality: 1,

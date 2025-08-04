@@ -3,6 +3,7 @@
  * Provides XION blockchain integration with Abstraxion modals
  */
 
+import '../utils/polyfills'; // Import polyfills first!
 import React, { useEffect } from 'react';
 import { AbstraxionProvider } from '@burnt-labs/abstraxion';
 

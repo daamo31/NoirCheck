@@ -1,3 +1,4 @@
+import '../utils/polyfills'; // Import polyfills first!
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateFileHash } from './CameraService';
 import { xionApiService } from './XionApiService';
@@ -43,12 +44,19 @@ class ContentService {
    */
   async calculateFileHash(fileUri: string): Promise<string> {
     try {
+      console.log('🔄 Calculating file hash...');
+      
       // Read the actual file content and calculate real hash
       const response = await fetch(fileUri);
       const arrayBuffer = await response.arrayBuffer();
+      
+      // Use the crypto polyfill from our polyfills
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      console.log('✅ File hash calculated successfully:', hash.substring(0, 16) + '...');
+      return hash;
     } catch (error) {
       console.error('Error calculating file hash:', error);
       throw new Error('Failed to calculate file hash');
