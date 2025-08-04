@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';
-import { xionApiService } from '../src/services/XionApiService';
 
 const LoginScreen = () => {
   const [mode, setMode] = useState<'login' | 'register' | 'wallet'>('login');
@@ -24,7 +23,7 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login, register, connectWithXION } = useAuth();
   const router = useRouter();
 
   const handleEmailLogin = async () => {
@@ -76,13 +75,15 @@ const LoginScreen = () => {
   const handleWalletLogin = async () => {
     try {
       setLoading(true);
-      // Use wallet connection instead of login
-      const wallet = await xionApiService.createWallet({ username: 'guest_' + Date.now() });
-      if (wallet) {
+      // Use Abstraxion modal for XION account creation/connection
+      const success = await connectWithXION();
+      if (success) {
         router.replace('/(tabs)');
+      } else {
+        Alert.alert('XION Connection', 'Connection was cancelled or failed');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to connect XION wallet');
+      Alert.alert('Error', 'Failed to connect with XION');
     } finally {
       setLoading(false);
     }

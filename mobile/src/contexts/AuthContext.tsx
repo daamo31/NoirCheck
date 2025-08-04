@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Alert } from 'react-native';
+import { useAbstraxionAccount, useModal } from '@burnt-labs/abstraxion';
 import { UserStorageService, User as StorageUser, ActivityEntry } from '../services/UserStorageService';
 import { xionApiService, XIONWallet } from '../services/XionApiService';
 
@@ -39,6 +40,7 @@ interface AuthContextType {
     lastName?: string;
   }) => Promise<boolean>;
   logout: () => Promise<void>;
+  connectWithXION: () => Promise<boolean>;
   retryPendingWallet: () => Promise<boolean>;
   addActivity: (activity: Omit<ActivityEntry, 'id' | 'timestamp'>) => Promise<void>;
 }
@@ -67,6 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [wallet, setWallet] = useState<XIONWallet | null>(null);
+
+  // Abstraxion hooks for XION integration
+  const abstraxionAccount = useAbstraxionAccount();
+  const [isShowingModal, setIsShowingModal] = useModal();
 
   const isAuthenticated = !!user;
 
@@ -239,6 +245,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Connect with XION using Abstraxion modal
+   * This provides the same experience as the web app
+   */
+  const connectWithXION = async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Opening XION connection modal...');
+      
+      // Show Abstraxion modal for XION account creation/connection
+      setIsShowingModal(true);
+      
+      // Return a promise that resolves when connection is successful or fails
+      return new Promise((resolve) => {
+        const checkConnection = () => {
+          if (abstraxionAccount.isConnected && abstraxionAccount.data) {
+            console.log('✅ XION account connected via Abstraxion');
+            
+            // Create a temporary user if not logged in
+            if (!user) {
+              const tempUser: User = {
+                id: 'xion_user_' + Date.now(),
+                email: 'xion@temporary.com',
+                username: 'XION User',
+                registeredAt: new Date().toISOString(),
+                totalRegistrations: 0,
+                totalVerifications: 0,
+                address: String(abstraxionAccount.data),
+                isPending: false
+              };
+              setUser(tempUser);
+            }
+            
+            // Set wallet from Abstraxion
+            const xionWallet: XIONWallet = {
+              address: String(abstraxionAccount.data),
+              publicKey: '', // Abstraxion doesn't expose publicKey directly
+              keyType: 'secp256k1' as const,
+              zkTLS: {
+                enabled: true,
+                proofGenerated: false,
+                identityVerified: true,
+                verificationLevel: 'basic'
+              }
+            };
+            setWallet(xionWallet);
+            
+            setIsShowingModal(false);
+            resolve(true);
+          } else if (!isShowingModal) {
+            // Modal was closed without connection
+            console.log('❌ XION connection modal closed without connecting');
+            resolve(false);
+          } else {
+            // Still waiting for connection
+            setTimeout(checkConnection, 500);
+          }
+        };
+        
+        // Start checking after a brief delay
+        setTimeout(checkConnection, 1000);
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+          console.log('⏰ XION connection timeout');
+          setIsShowingModal(false);
+          resolve(false);
+        }, 30000);
+      });
+    } catch (error) {
+      console.error('❌ XION connection error:', error);
+      setIsShowingModal(false);
+      return false;
+    }
+  };
+
   const retryPendingWallet = async (): Promise<boolean> => {
     if (!user || !user.isPending) {
       return false;
@@ -305,6 +386,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        connectWithXION,
         retryPendingWallet,
         addActivity
       }}
