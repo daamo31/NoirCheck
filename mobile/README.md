@@ -1,22 +1,67 @@
-# Welcome to your Expo app 👋
+# 📱 NoirCheck Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **React Native + Expo application with full XION Abstraxion integration for digital content authenticity verification**
 
-## Get started
+[![React Native](https://img.shields.io/badge/React%20Native-0.79+-61DAFB.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-53.0+-000000.svg)](https://expo.dev/)
+[![XION](https://img.shields.io/badge/XION-Blockchain-orange.svg)](https://xion.network/)
+[![Abstraxion](https://img.shields.io/badge/Abstraxion-SDK-purple.svg)](https://abstraxion.burnt.labs/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-blue.svg)](https://www.typescriptlang.org/)
 
-1. Install dependencies
+## 🚀 Características Principales
 
-   ```bash
-   npm install
-   ```
+### 🔐 Autenticación Completa
+- **Abstraxion Integration**: Creación de cuentas XION sin fricción
+- **Registro de usuarios**: Email + contraseña con validación
+- **Persistencia de sesión**: Mantiene usuarios autenticados
+- **Gestión de wallets**: Integración nativa con XION blockchain
 
-2. Start the app
+### 📸 Registro de Contenido
+- **Captura de cámara**: Tomar fotos directamente desde la app
+- **Selección de galería**: Importar imágenes existentes
+- **Hash SHA-256**: Cálculo seguro de hashes con crypto-js
+- **Registro blockchain**: Almacenamiento permanente en XION
+- **Metadatos enriquecidos**: Información completa del archivo
 
-   ```bash
-   npx expo start
-   ```
+### 🔍 Verificación de Autenticidad
+- **Selección de archivos**: Verificar cualquier imagen
+- **Análisis de integridad**: Detección de modificaciones
+- **Consulta blockchain**: Verificación en tiempo real contra XION
+- **Niveles de confianza**: Sistema de scoring de autenticidad
+- **Histórico de verificaciones**: Registro completo de actividad
 
-In the output, you'll find options to open the app in a
+### 📊 Dashboard Personal
+- **Estadísticas en tiempo real**: Contadores de actividad
+- **Histórico de actividad**: Lista completa de acciones
+- **Estado de wallet**: Información de conexión XION
+- **Navegación fluida**: Tabs inferiores para fácil acceso
+
+## 🔧 Instalación y Setup
+
+### Prerrequisitos
+- **Node.js** 18+ con npm
+- **Expo CLI**: `npm install -g @expo/cli`
+- **Dispositivo físico** o **emulador** (iOS Simulator/Android Emulator)
+
+### Instalación
+```bash
+cd mobile
+npm install --legacy-peer-deps
+```
+
+### Desarrollo
+```bash
+# Iniciar servidor de desarrollo
+npx expo start
+
+# Específico para plataforma
+npx expo start --ios
+npx expo start --android
+npx expo start --web
+
+# Limpiar cache
+npx expo start --clear
+```
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)

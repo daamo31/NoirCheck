@@ -19,7 +19,13 @@ const crypto = {
       if (algorithm === 'SHA-256') {
         const uint8Array = new Uint8Array(data);
         const hash = sha256(uint8Array);
-        return hash.buffer;
+        
+        // Convert the hash result to a proper ArrayBuffer
+        const hashBuffer = new ArrayBuffer(hash.length);
+        const hashView = new Uint8Array(hashBuffer);
+        hashView.set(hash);
+        
+        return hashBuffer;
       }
       throw new Error(`Unsupported algorithm: ${algorithm}`);
     }
