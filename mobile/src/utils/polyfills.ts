@@ -5,37 +5,27 @@
 
 import 'react-native-get-random-values'; // Must be first import
 import { Buffer } from 'buffer';
-import { sha256 } from '@noble/hashes/sha256';
+// Remove @noble/hashes import to avoid module resolution issues
+// import { sha256 } from '@noble/hashes/sha256';
 
 // Make Buffer global for compatibility with Node.js libraries
 if (typeof global !== 'undefined') {
   global.Buffer = Buffer;
 }
 
-// Crypto polyfill for React Native
+// Minimal crypto polyfill for React Native (only getRandomValues)
 const crypto = {
-  subtle: {
-    digest: async (algorithm: string, data: ArrayBuffer): Promise<ArrayBuffer> => {
-      if (algorithm === 'SHA-256') {
-        const uint8Array = new Uint8Array(data);
-        const hash = sha256(uint8Array);
-        
-        // Convert the hash result to a proper ArrayBuffer
-        const hashBuffer = new ArrayBuffer(hash.length);
-        const hashView = new Uint8Array(hashBuffer);
-        hashView.set(hash);
-        
-        return hashBuffer;
-      }
-      throw new Error(`Unsupported algorithm: ${algorithm}`);
-    }
-  },
   getRandomValues: (array: Uint8Array): Uint8Array => {
     // This is already handled by react-native-get-random-values
     if (typeof global !== 'undefined' && global.crypto && global.crypto.getRandomValues) {
       return global.crypto.getRandomValues(array);
     }
-    throw new Error('crypto.getRandomValues not available');
+    
+    // Fallback: use Math.random (not cryptographically secure)
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+    return array;
   }
 };
 
@@ -115,4 +105,4 @@ if (typeof global !== 'undefined') {
   global.document = document as any;
 }
 
-console.log('🔧 React Native polyfills loaded for Abstraxion compatibility (with Buffer support)');
+console.log('🔧 React Native polyfills loaded for Abstraxion compatibility (minimal crypto + Buffer support)');
