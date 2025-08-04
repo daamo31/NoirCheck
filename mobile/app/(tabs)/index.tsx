@@ -22,6 +22,20 @@ export default function DashboardScreen() {
     recentActivity: [],
     joinDate: new Date().toISOString(),
   });
+  
+  // Wallet pending UI state - moved here to avoid conditional hook
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  const handleRetryWallet = async () => {
+    setPendingLoading(true);
+    const result = await retryPendingWallet();
+    setPendingLoading(false);
+    if (result) {
+      Alert.alert('Success', 'Your XION wallet has been created and connected!');
+    } else {
+      Alert.alert('Network Issue', 'XION network is still unavailable. Please try again later.');
+    }
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -52,21 +66,6 @@ export default function DashboardScreen() {
       </SafeAreaView>
     );
   }
-
-  // Wallet pending UI state
-  const [pendingLoading, setPendingLoading] = useState(false);
-  const handleRetryWallet = async () => {
-    setPendingLoading(true);
-    const result = await retryPendingWallet();
-    setPendingLoading(false);
-    if (result) {
-      Alert.alert('Success', 'Your XION wallet has been created and connected!');
-    } else {
-      Alert.alert('Network Issue', 'XION network is still unavailable. Please try again later.');
-    }
-  };
-
-  
 
   const quickStats = [
     {

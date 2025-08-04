@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 
 const ProfileScreen = () => {
-  const { user, logout, updateUser, connectXionWallet, disconnectXionWallet, addActivity, retryPendingWallet } = useAuth();
+  const { user, logout, addActivity, retryPendingWallet, wallet } = useAuth();
   const [pendingLoading, setPendingLoading] = useState(false);
   const handleRetryWallet = async () => {
     setPendingLoading(true);
@@ -55,14 +55,8 @@ const ProfileScreen = () => {
   const handleConnectWallet = async () => {
     try {
       setLoading(true);
-      await connectXionWallet();
-      
-      await addActivity({
-        type: 'profile_update',
-        description: 'XION wallet connected'
-      });
-      
-      Alert.alert('Success', 'XION wallet connected successfully!');
+      // This functionality would be handled during registration
+      Alert.alert('Info', 'Wallet connection is handled during user registration.');
     } catch (error) {
       console.error('Error connecting wallet:', error);
       Alert.alert('Error', 'Failed to connect XION wallet. Please try again.');
@@ -74,26 +68,13 @@ const ProfileScreen = () => {
   const handleDisconnectWallet = async () => {
     Alert.alert(
       'Disconnect Wallet',
-      'Are you sure you want to disconnect your XION wallet?',
+      'This would disconnect your wallet. This is not currently supported.',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Disconnect', 
-          style: 'destructive', 
-          onPress: async () => {
-            try {
-              await disconnectXionWallet();
-              
-              await addActivity({
-                type: 'profile_update',
-                description: 'XION wallet disconnected'
-              });
-              
-              Alert.alert('Success', 'XION wallet disconnected.');
-            } catch (error) {
-              console.error('Error disconnecting wallet:', error);
-              Alert.alert('Error', 'Failed to disconnect wallet.');
-            }
+          text: 'OK', 
+          onPress: () => {
+            Alert.alert('Info', 'Wallet disconnection not implemented yet.');
           }
         },
       ]
@@ -174,7 +155,7 @@ const ProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>XION Wallet</Text>
           
-          {user.xionWallet ? (
+          {wallet || user.address ? (
             <View style={styles.walletCard}>
               <View style={styles.walletHeader}>
                 <Ionicons name="wallet" size={24} color="#00D4AA" />
@@ -182,13 +163,13 @@ const ProfileScreen = () => {
               </View>
               
               <Text style={styles.walletAddress}>
-                {user.xionWallet.address.slice(0, 20)}...{user.xionWallet.address.slice(-10)}
+                {(wallet?.address || user.address)?.slice(0, 20)}...{(wallet?.address || user.address)?.slice(-10)}
               </Text>
               
               <View style={styles.walletActions}>
                 <TouchableOpacity 
                   style={styles.walletActionButton}
-                  onPress={() => copyToClipboard(user.xionWallet!.address)}
+                  onPress={() => copyToClipboard((wallet?.address || user.address) || '')}
                 >
                   <Ionicons name="copy" size={16} color="#00D4AA" />
                   <Text style={styles.walletActionText}>Copy Address</Text>

@@ -27,9 +27,10 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { xionApiService } from '../../src/services/XionApiService';
 
 export default function LoginScreen() {
-  const { loginWithEmail, login, isLoading, error } = useAuth();
+  const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -40,9 +41,9 @@ export default function LoginScreen() {
     }
 
     try {
-      await loginWithEmail(email, password);
+      await login(email, password);
       
-      // Si llegamos aquí, el login fue exitoso
+      // If we get here, login was successful
       console.log('✅ Login successful, navigating to dashboard...');
       router.replace('/(tabs)');
     } catch (error) {
@@ -53,11 +54,14 @@ export default function LoginScreen() {
 
   const handleXionLogin = async () => {
     try {
-      await login(); // Este método ya maneja XION wallet
-      console.log('✅ XION login successful, navigating to dashboard...');
-      router.replace('/(tabs)');
+      // Use wallet connection instead of login for XION
+      const wallet = await xionApiService.createWallet({ username: 'guest_' + Date.now() });
+      if (wallet) {
+        console.log('✅ XION wallet connected, navigating to dashboard...');
+        router.replace('/(tabs)');
+      }
     } catch (error) {
-      console.error('❌ XION login error:', error);
+      console.error('❌ XION wallet connection error:', error);
       Alert.alert('Error', 'Failed to connect XION wallet');
     }
   };
@@ -151,7 +155,7 @@ export default function LoginScreen() {
 
           {/* Register Link */}
           <View style={styles.registerLink}>
-            <Text style={styles.registerText}>Don't have an account? </Text>
+            <Text style={styles.registerText}>Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.registerButtonText}>Create account</Text>
             </TouchableOpacity>

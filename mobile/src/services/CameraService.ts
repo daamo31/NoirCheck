@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { Alert } from 'react-native';
+import CryptoJS from 'crypto-js';
 
 export interface CameraResult {
   uri: string;
@@ -9,6 +10,7 @@ export interface CameraResult {
   fileSize: number;
   mimeType: string;
   base64?: string;
+  hash?: string; // Add hash to the result
 }
 
 export interface CameraPermissions {
@@ -17,7 +19,7 @@ export interface CameraPermissions {
 }
 
 class CameraService {
-  // Verificar y solicitar permisos
+  // Check and request permissions
   async requestPermissions(): Promise<CameraPermissions> {
     try {
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
@@ -36,7 +38,7 @@ class CameraService {
     }
   }
 
-  // Verificar permisos actuales
+  // Check current permissions
   async checkPermissions(): Promise<CameraPermissions> {
     try {
       const cameraPermission = await ImagePicker.getCameraPermissionsAsync();
@@ -55,7 +57,7 @@ class CameraService {
     }
   }
 
-  // Capturar foto con la cámara
+  // Capture photo with camera
   async capturePhoto(options?: {
     includeBase64?: boolean;
     quality?: number;
@@ -67,8 +69,8 @@ class CameraService {
         const granted = await this.requestPermissions();
         if (!granted.camera) {
           Alert.alert(
-            'Permiso necesario',
-            'Se necesita acceso a la cámara para capturar fotos.'
+            'Permission Required',
+            'Camera access is needed to capture photos.'
           );
           return null;
         }
@@ -97,7 +99,7 @@ class CameraService {
       };
     } catch (error) {
       console.error('Error capturing photo:', error);
-      Alert.alert('Error', 'No se pudo capturar la foto.');
+      Alert.alert('Error', 'Could not capture photo.');
       return null;
     }
   }
@@ -114,8 +116,8 @@ class CameraService {
         const granted = await this.requestPermissions();
         if (!granted.camera) {
           Alert.alert(
-            'Permiso necesario',
-            'Se necesita acceso a la cámara para grabar videos.'
+            'Permission Required',
+            'Camera access is needed to record videos.'
           );
           return null;
         }
@@ -146,7 +148,7 @@ class CameraService {
     }
   }
 
-  // Seleccionar desde galería
+  // Select from gallery
   async pickFromGallery(options?: {
     mediaTypes?: ImagePicker.MediaTypeOptions;
     allowsEditing?: boolean;
@@ -161,8 +163,8 @@ class CameraService {
         const granted = await this.requestPermissions();
         if (!granted.mediaLibrary) {
           Alert.alert(
-            'Permiso necesario',
-            'Se necesita acceso a la galería para seleccionar archivos.'
+            'Permission Required',
+            'Gallery access is needed to select files.'
           );
           return null;
         }
@@ -191,12 +193,12 @@ class CameraService {
       }));
     } catch (error) {
       console.error('Error picking from gallery:', error);
-      Alert.alert('Error', 'No se pudo seleccionar el archivo.');
+      Alert.alert('Error', 'Could not select file.');
       return null;
     }
   }
 
-  // Guardar archivo en galería
+  // Save file to gallery
   async saveToGallery(uri: string): Promise<boolean> {
     try {
       const permissions = await this.checkPermissions();
@@ -205,8 +207,8 @@ class CameraService {
         const granted = await this.requestPermissions();
         if (!granted.mediaLibrary) {
           Alert.alert(
-            'Permiso necesario',
-            'Se necesita acceso a la galería para guardar archivos.'
+            'Permission Required',
+            'Gallery access is needed to save files.'
           );
           return false;
         }
@@ -215,7 +217,7 @@ class CameraService {
       const asset = await MediaLibrary.createAssetAsync(uri);
       
       if (asset) {
-        Alert.alert('Éxito', 'Archivo guardado en la galería.');
+        Alert.alert('Success', 'File saved to gallery.');
         return true;
       }
       
@@ -244,29 +246,29 @@ class CameraService {
     }
   }
 
-  // Mostrar opciones de selección
+  // Show selection options
   showSelectionOptions(onCamera: () => void, onGallery: () => void) {
     Alert.alert(
-      'Seleccionar archivo',
-      'Elige cómo quieres seleccionar tu contenido',
+      'Select file',
+      'Choose how you want to select your content',
       [
         {
-          text: 'Cámara',
+          text: 'Camera',
           onPress: onCamera,
         },
         {
-          text: 'Galería',
+          text: 'Gallery',
           onPress: onGallery,
         },
         {
-          text: 'Cancelar',
+          text: 'Cancel',
           style: 'cancel',
         },
       ]
     );
   }
 
-  // Validar tipo de archivo
+  // Validate file type
   isValidFileType(mimeType: string, allowedTypes: string[]): boolean {
     return allowedTypes.some(type => mimeType.includes(type));
   }
@@ -280,6 +282,25 @@ class CameraService {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+}
+
+// Utility function to calculate file hash
+export function calculateFileHash(data: string): string {
+  try {
+    // If it's base64, use it directly; if it's a URI, we'll need to handle differently
+    if (data.startsWith('data:')) {
+      // Extract base64 part
+      const base64Data = data.split(',')[1];
+      return CryptoJS.SHA256(base64Data).toString();
+    } else {
+      // For URI, we'll calculate hash of the URI for now
+      // In production, you'd want to read the actual file data
+      return CryptoJS.SHA256(data).toString();
+    }
+  } catch (error) {
+    console.error('Hash calculation error:', error);
+    return CryptoJS.SHA256(data).toString();
   }
 }
 

@@ -14,62 +14,78 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { contentService } from '../../src/services/ContentService';
-import { xionService } from '../../src/services/XionService';
+import { xionApiService } from '../../src/services/XionApiService';
 
 const RegisterScreen = () => {
-  const { user, updateUser } = useAuth();
+  const { user, wallet, addActivity } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [registrationResult, setRegistrationResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
-  const requestPermissions = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'We need access to your photos to register content.',
-        [{ text: 'OK' }]
-      );
-      return false;
+  const connectWallet = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const newWallet = await xionApiService.createWallet({ username: user?.username });
+      if (newWallet) {
+        Alert.alert('Success', 'XION wallet connected successfully!');
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      Alert.alert('Error', 'Failed to connect XION wallet. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    return true;
   };
 
   const pickImage = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert('Permission required', 'Please allow access to your photo library');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      quality: 1,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-      setRegistrationResult(null);
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to select image');
     }
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'We need camera access to take photos.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+    try {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert('Permission required', 'Please allow camera access');
+        return;
+      }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 1,
-    });
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-      setRegistrationResult(null);
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
     }
   };
 
@@ -79,238 +95,162 @@ const RegisterScreen = () => {
       return;
     }
 
-    // Check if wallet is connected
-    const wallet = xionService.getWallet();
     if (!wallet) {
-      Alert.alert(
-        'Wallet Required',
-        'You need to connect a XION wallet to register content on the blockchain.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Connect Wallet', onPress: () => handleConnectWallet() },
-        ]
-      );
+      Alert.alert('Error', 'Please connect your XION wallet first');
       return;
     }
 
+    setRegistering(true);
     try {
-      setLoading(true);
-      
-      // Get image info
-      const imageInfo = await getImageInfo(selectedImage);
-      
-      console.log('📝 Starting content registration...');
-      
-      // Register content on blockchain
-      const content = await contentService.registerContent(
+      // Get file info
+      const response = await fetch(selectedImage);
+      const blob = await response.blob();
+      const fileSize = blob.size;
+      const mimeType = blob.type || 'image/jpeg';
+      const fileName = `content_${Date.now()}.jpg`;
+
+      // Register content
+      const registeredContent = await contentService.registerContent(
         selectedImage,
-        imageInfo.fileName,
-        imageInfo.fileSize,
-        imageInfo.mimeType,
+        fileName,
+        fileSize,
+        mimeType,
         {
-          description: 'Content registered via NoirCheck mobile app',
+          description: 'Content registered via mobile app',
           tags: ['mobile', 'original'],
-          deviceInfo: 'Mobile App',
+          deviceInfo: 'Mobile device',
         }
       );
 
-      setRegistrationResult(content);
-      
-      // Update user statistics
-      if (user) {
-        updateUser({
-          totalRegistrations: (user.totalRegistrations || 0) + 1,
-          lastActivity: new Date().toISOString(),
+      // Add to user activity
+      if (addActivity) {
+        addActivity({
+          type: 'registration',
+          description: `Registered content: ${fileName}`,
+          details: {
+            fileName: fileName,
+            hash: registeredContent.hash,
+            status: 'completed',
+          },
         });
       }
 
       Alert.alert(
         'Success!',
-        'Your content has been registered on the XION blockchain.',
-        [{ text: 'OK' }]
+        'Your content has been registered on the blockchain',
+        [
+          {
+            text: 'OK',
+            onPress: () => setSelectedImage(null),
+          },
+        ]
       );
-
     } catch (error) {
-      console.error('Registration error:', error);
-      Alert.alert(
-        'Registration Failed',
-        error instanceof Error ? error.message : 'An error occurred during registration'
-      );
+      console.error('Error registering content:', error);
+      Alert.alert('Error', 'Failed to register content. Please try again.');
     } finally {
-      setLoading(false);
+      setRegistering(false);
     }
-  };
-
-  const handleConnectWallet = async () => {
-    try {
-      const wallet = await xionService.connectWallet();
-      if (wallet && user) {
-        updateUser({ 
-          xionWallet: wallet, 
-          address: wallet.address,
-          lastActivity: new Date().toISOString()
-        });
-        Alert.alert('Success', 'XION wallet connected successfully!');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to connect XION wallet');
-    }
-  };
-
-  const getImageInfo = async (uri: string) => {
-    // In a real implementation, you would get actual file info
-    return {
-      fileName: `image_${Date.now()}.jpg`,
-      fileSize: 1024 * 1024, // 1MB placeholder
-      mimeType: 'image/jpeg',
-    };
-  };
-
-  const resetRegistration = () => {
-    setSelectedImage(null);
-    setRegistrationResult(null);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {/* Header */}
+      <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <Text style={styles.title}>Register Content</Text>
           <Text style={styles.subtitle}>
-            Register your original content on the XION blockchain
+            Register your original content on the blockchain
           </Text>
         </View>
 
         {/* Wallet Status */}
-        <View style={styles.walletStatus}>
-          <Ionicons 
-            name={xionService.getWallet() ? "wallet" : "wallet-outline"} 
-            size={20} 
-            color={xionService.getWallet() ? "#00D4AA" : "#888"} 
-          />
-          <Text style={[
-            styles.walletText,
-            { color: xionService.getWallet() ? "#00D4AA" : "#888" }
-          ]}>
-            {xionService.getWallet() 
-              ? `Connected: ${xionService.getWallet()?.address.slice(0, 10)}...`
-              : 'Wallet not connected'
-            }
-          </Text>
-          {!xionService.getWallet() && (
-            <TouchableOpacity 
-              style={styles.connectButton}
-              onPress={handleConnectWallet}
+        <View style={styles.walletSection}>
+          <View style={styles.walletHeader}>
+            <Ionicons 
+              name={wallet ? "wallet" : "wallet-outline"} 
+              size={24} 
+              color={wallet ? "#00D4AA" : "#888"} 
+            />
+            <Text 
+              style={[
+                styles.walletText, 
+                { color: wallet ? "#00D4AA" : "#888" }
+              ]}
             >
-              <Text style={styles.connectButtonText}>Connect</Text>
+              {wallet 
+                ? `Connected: ${wallet.address.slice(0, 10)}...`
+                : "XION Wallet Not Connected"
+              }
+            </Text>
+          </View>
+          
+          {!wallet && (
+            <TouchableOpacity 
+              style={styles.connectButton} 
+              onPress={connectWallet}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#1a1a1a" size="small" />
+              ) : (
+                <Text style={styles.connectButtonText}>Connect Wallet</Text>
+              )}
             </TouchableOpacity>
           )}
         </View>
 
         {/* Image Selection */}
-        {!selectedImage ? (
-          <View style={styles.selectionContainer}>
-            <View style={styles.placeholderContainer}>
-              <Ionicons name="image-outline" size={64} color="#666" />
-              <Text style={styles.placeholderText}>Select content to register</Text>
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-                <Ionicons name="camera" size={24} color="#FFF" />
-                <Text style={styles.actionButtonText}>Take Photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-                <Ionicons name="images" size={24} color="#FFF" />
-                <Text style={styles.actionButtonText}>Choose from Gallery</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
-            
-            <View style={styles.imageActions}>
-              <TouchableOpacity style={styles.changeButton} onPress={resetRegistration}>
-                <Ionicons name="refresh" size={16} color="#888" />
-                <Text style={styles.changeButtonText}>Change Image</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Registration Result */}
-            {registrationResult && (
-              <View style={styles.resultContainer}>
-                <View style={styles.resultHeader}>
-                  <Ionicons name="checkmark-circle" size={24} color="#00D4AA" />
-                  <Text style={styles.resultTitle}>Registration Complete</Text>
-                </View>
-                
-                <View style={styles.resultDetails}>
-                  <Text style={styles.resultLabel}>Content Hash:</Text>
-                  <Text style={styles.resultValue}>
-                    {registrationResult.hash.slice(0, 20)}...
-                  </Text>
-                  
-                  {registrationResult.blockchainTxHash && (
-                    <>
-                      <Text style={styles.resultLabel}>Transaction ID:</Text>
-                      <Text style={styles.resultValue}>
-                        {registrationResult.blockchainTxHash.slice(0, 20)}...
-                      </Text>
-                    </>
-                  )}
-                  
-                  <Text style={styles.resultLabel}>Registered:</Text>
-                  <Text style={styles.resultValue}>
-                    {new Date(registrationResult.registeredAt).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* Register Button */}
-            {!registrationResult && (
-              <TouchableOpacity
-                style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-                onPress={registerContent}
-                disabled={loading}
+        <View style={styles.imageSection}>
+          <Text style={styles.sectionTitle}>Select Content</Text>
+          
+          {selectedImage && (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+              <TouchableOpacity 
+                style={styles.removeButton}
+                onPress={() => setSelectedImage(null)}
               >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : (
-                  <Ionicons name="shield-checkmark" size={20} color="#000" />
-                )}
-                <Text style={styles.registerButtonText}>
-                  {loading ? 'Registering...' : 'Register on Blockchain'}
-                </Text>
+                <Ionicons name="close-circle" size={24} color="#ff6b6b" />
               </TouchableOpacity>
-            )}
-          </View>
-        )}
+            </View>
+          )}
 
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>How it works:</Text>
-          <View style={styles.infoItem}>
-            <Ionicons name="finger-print" size={16} color="#00D4AA" />
-            <Text style={styles.infoText}>
-              Your content is hashed using SHA-256 encryption
-            </Text>
+          <View style={styles.imageButtons}>
+            <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
+              <Ionicons name="camera" size={24} color="#00D4AA" />
+              <Text style={styles.imageButtonText}>Take Photo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+              <Ionicons name="image" size={24} color="#00D4AA" />
+              <Text style={styles.imageButtonText}>From Gallery</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="link" size={16} color="#00D4AA" />
-            <Text style={styles.infoText}>
-              Hash is registered on XION blockchain with timestamp
-            </Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="shield-checkmark" size={16} color="#00D4AA" />
-            <Text style={styles.infoText}>
-              Creates immutable proof of authenticity and ownership
-            </Text>
-          </View>
+        </View>
+
+        {/* Register Button */}
+        <View style={styles.registerSection}>
+          <TouchableOpacity 
+            style={[
+              styles.registerButton,
+              (!selectedImage || !wallet || registering) && styles.registerButtonDisabled
+            ]}
+            onPress={registerContent}
+            disabled={!selectedImage || !wallet || registering}
+          >
+            {registering ? (
+              <ActivityIndicator color="#1a1a1a" size="small" />
+            ) : (
+              <>
+                <Ionicons name="shield-checkmark" size={24} color="#1a1a1a" />
+                <Text style={styles.registerButtonText}>Register on Blockchain</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.registerInfo}>
+            Registering content creates a permanent record of ownership and authenticity
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -320,21 +260,19 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0a0a0a',
   },
   scrollView: {
     flex: 1,
-  },
-  content: {
     padding: 20,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 30,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#fff',
     marginBottom: 8,
   },
   subtitle: {
@@ -342,171 +280,111 @@ const styles = StyleSheet.create({
     color: '#888',
     lineHeight: 22,
   },
-  walletStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#111',
-    padding: 16,
+  walletSection: {
+    backgroundColor: '#1a1a1a',
     borderRadius: 12,
+    padding: 20,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: '#333',
   },
+  walletHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   walletText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
+    marginLeft: 12,
+    fontSize: 16,
     fontWeight: '500',
   },
   connectButton: {
     backgroundColor: '#00D4AA',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   connectButtonText: {
-    color: '#000',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  selectionContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  placeholderContainer: {
-    alignItems: 'center',
-    padding: 40,
-    borderWidth: 2,
-    borderColor: '#333',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  placeholderText: {
-    color: '#666',
-    fontSize: 16,
-    marginTop: 12,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#333',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  actionButtonText: {
-    color: '#FFF',
+    color: '#1a1a1a',
     fontSize: 16,
     fontWeight: '600',
   },
-  imageContainer: {
+  imageSection: {
     marginBottom: 24,
   },
-  selectedImage: {
-    width: '100%',
-    height: 300,
-    borderRadius: 12,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#fff',
     marginBottom: 16,
   },
-  imageActions: {
-    alignItems: 'center',
-    marginBottom: 24,
+  imagePreview: {
+    position: 'relative',
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  changeButton: {
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+  },
+  imageButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  imageButton: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    marginHorizontal: 6,
     borderWidth: 1,
     borderColor: '#333',
-    borderRadius: 8,
-    gap: 6,
   },
-  changeButtonText: {
-    color: '#888',
+  imageButtonText: {
+    color: '#00D4AA',
     fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  registerSection: {
+    marginTop: 20,
   },
   registerButton: {
+    backgroundColor: '#00D4AA',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#00D4AA',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   registerButtonDisabled: {
+    backgroundColor: '#333',
     opacity: 0.6,
   },
   registerButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  resultContainer: {
-    backgroundColor: '#111',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#00D4AA',
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
-  resultTitle: {
+    color: '#1a1a1a',
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#00D4AA',
+    fontWeight: '600',
+    marginLeft: 8,
   },
-  resultDetails: {
-    gap: 8,
-  },
-  resultLabel: {
+  registerInfo: {
     fontSize: 14,
     color: '#888',
-    fontWeight: '600',
-  },
-  resultValue: {
-    fontSize: 14,
-    color: '#FFF',
-    fontFamily: 'monospace',
-    marginBottom: 8,
-  },
-  infoSection: {
-    backgroundColor: '#111',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 12,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-    gap: 8,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#CCC',
+    textAlign: 'center',
     lineHeight: 20,
   },
 });

@@ -70,7 +70,7 @@ export default function RegisterScreen() {
         lastName
       });
       
-      // Si llegamos aquí, el registro fue exitoso
+      // If we get here, registration was successful
       console.log('✅ Registration successful, navigating to dashboard...');
       router.replace('/(tabs)');
     } catch (error) {

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { xionService } from './XionService';
+import { calculateFileHash } from './CameraService';
+import { xionApiService } from './XionApiService';
 
 export interface Content {
   id: string;
@@ -69,7 +70,7 @@ class ContentService {
       const hash = await this.calculateFileHash(fileUri);
       
       // Check if wallet is connected
-      const wallet = xionService.getWallet();
+      const wallet = xionApiService.getCurrentWallet();
       if (!wallet) {
         throw new Error('XION wallet not connected');
       }
@@ -77,10 +78,14 @@ class ContentService {
       console.log('📝 Registering content on XION blockchain...');
       
       // Register on blockchain
-      const txResult = await xionService.registerContent(hash, {
-        filename: fileName,
-        size: fileSize,
-        mimeType,
+      const txResult = await xionApiService.registerContent({
+        contentHash: hash,
+        metadata: {
+          filename: fileName,
+          size: fileSize,
+          mimeType,
+          timestamp: new Date().toISOString()
+        }
       });
 
       // Create content record
@@ -91,7 +96,7 @@ class ContentService {
         fileSize,
         mimeType,
         registeredAt: new Date().toISOString(),
-        blockchainTxHash: txResult?.txId || undefined,
+        blockchainTxHash: txResult?.txHash || undefined,
         isVerified: true,
         verificationLevel: 'high',
         registeredBy: wallet.address,
@@ -103,7 +108,7 @@ class ContentService {
       
       console.log('✅ Content registered successfully:', {
         hash: hash.slice(0, 16) + '...',
-        txHash: txResult?.txId?.slice(0, 16) + '...',
+        txHash: txResult?.txHash?.slice(0, 16) + '...',
         fileName,
       });
 
@@ -144,20 +149,20 @@ class ContentService {
       const hash = await this.calculateFileHash(fileUri);
       
       // Check on XION blockchain
-      const blockchainResult = await xionService.verifyContent(hash);
+      const blockchainResult = await xionApiService.verifyContent({ contentHash: hash });
       
       if (blockchainResult) {
         console.log('✅ Content found on blockchain');
         
         const result: VerificationResult = {
-          isAuthentic: blockchainResult.isOriginal,
+          isAuthentic: blockchainResult.isAuthentic,
           confidence: blockchainResult.confidence,
           verificationLevel: blockchainResult.confidence > 80 ? 'high' : 'medium',
-          registrationDate: blockchainResult.registrationDate,
-          registeredBy: blockchainResult.originalOwner,
-          blockchainTxHash: blockchainResult.blockchainProof,
+          registrationDate: blockchainResult.registrationInfo?.registrationDate,
+          registeredBy: blockchainResult.registrationInfo?.originalCreator,
+          blockchainTxHash: blockchainResult.registrationInfo?.blockchain.transactionHash,
           additionalInfo: {
-            modifications: blockchainResult.modifications,
+            warnings: blockchainResult.zkTLS?.sourceVerified === false ? ['Source URL not verified'] : undefined,
           }
         };
 

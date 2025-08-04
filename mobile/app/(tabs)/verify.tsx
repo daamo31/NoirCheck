@@ -11,8 +11,9 @@ import {
   Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { cameraService, CameraResult } from '../../src/services/CameraService';
-import { xionService } from '../../src/services/XionService';
+import { useAuth } from '../../src/contexts/AuthContext';
+import { cameraService, CameraResult, calculateFileHash } from '../../src/services/CameraService';
+import { xionApiService } from '../../src/services/XionApiService';
 
 export default function VerifyScreen() {
   const [selectedFile, setSelectedFile] = useState<CameraResult | null>(null);
@@ -53,14 +54,14 @@ export default function VerifyScreen() {
 
   const handleVerifyContent = async () => {
     if (!selectedFile) {
-      Alert.alert('Error', 'Selecciona un archivo primero');
+      Alert.alert('Error', 'Select a file first');
       return;
     }
 
     try {
       setIsVerifying(true);
 
-      // Read file for verification
+      // Calculate hash from file data
       let fileData: string;
       if (selectedFile.base64) {
         fileData = selectedFile.base64;
@@ -68,8 +69,13 @@ export default function VerifyScreen() {
         fileData = selectedFile.uri;
       }
 
+      const contentHash = calculateFileHash(fileData);
+
       // Verify on blockchain
-      const result = await xionService.verifyContent(fileData);
+      const result = await xionApiService.verifyContent({
+        contentHash: contentHash,
+        sourceUrl: undefined
+      });
 
       if (result) {
         setVerificationResult({
@@ -78,7 +84,7 @@ export default function VerifyScreen() {
           verifiedAt: new Date().toISOString(),
         });
 
-        if (result.isOriginal) {
+        if (result.isAuthentic) {
           Alert.alert(
             '✅ Authentic Content',
             `This content is original and registered on blockchain.\n\nConfidence: ${Math.round(result.confidence * 100)}%`,
@@ -175,7 +181,7 @@ export default function VerifyScreen() {
                   {cameraService.formatFileSize(selectedFile.fileSize)} • {selectedFile.mimeType}
                 </Text>
                 <Text style={styles.fileType}>
-                  {selectedFile.type === 'image' ? 'Imagen' : 'Video'}
+                  {selectedFile.type === 'image' ? 'Image' : 'Video'}
                 </Text>
               </View>
               
@@ -337,16 +343,16 @@ export default function VerifyScreen() {
 
         {/* Info Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ℹ️ Cómo Funciona</Text>
+          <Text style={styles.sectionTitle}>ℹ️ How It Works</Text>
           <View style={styles.infoCard}>
             <Text style={styles.infoText}>
-              • Se calcula un hash único del archivo seleccionado
+              • A unique hash is calculated from the selected file
             </Text>
             <Text style={styles.infoText}>
-              • Se busca el hash en registros blockchain
+              • The hash is searched in blockchain records
             </Text>
             <Text style={styles.infoText}>
-              • Se analiza la integridad y autenticidad
+              • File integrity and authenticity are analyzed
             </Text>
             <Text style={styles.infoText}>
               • Se proporciona un nivel de confianza del resultado

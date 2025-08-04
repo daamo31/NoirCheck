@@ -28,10 +28,10 @@ export const XION_CONFIG = {
   bech32Prefix: 'xion',
   coinType: 118,
   
-  // Contract addresses (if using smart contracts)
+  // Contract addresses
   contracts: {
-    contentRegistry: process.env.EXPO_PUBLIC_CONTENT_REGISTRY_CONTRACT || '',
-    verification: process.env.EXPO_PUBLIC_VERIFICATION_CONTRACT || ''
+    contentRegistry: process.env.EXPO_PUBLIC_CONTENT_REGISTRY_CONTRACT || 'xion1hwlc07l2kyw309vemx4ptz0yggxx6683nww6rs8fdvy0px008nesu0zymq',
+    verification: process.env.EXPO_PUBLIC_VERIFICATION_CONTRACT || 'xion1nmdmd3tg26cm3c6ullt3adzehfh3rf2j49aqj88pm9s5hyk9qm2swun3qp'
   },
   
   // Feature flags
@@ -47,12 +47,19 @@ export const XION_CONFIG = {
     faucet: 'https://faucet.xion-testnet-2.burnt.com',
     explorer: 'https://explorer.xion-testnet-2.burnt.com',
     zkTLS: 'https://zktls.xion.network'
-  }
+  },
+
+  // Abstraxion configuration
+  testnet: true,
+  dev: __DEV__,
+  autoConnect: false,
+  stake: false
 };
 
+// Development configuration for testing
 export const DEVELOPMENT_CONFIG = {
-  // Production settings - Real blockchain integration only
-  useMockData: false, // Always use real blockchain
-  enableLogging: true,
-  simulateNetworkDelay: 0, // No artificial delays
+  simulateAPI: true,
+  mockLatency: 1000,
+  enableDebugLogs: __DEV__,
+  bypassAuthentication: false
 };

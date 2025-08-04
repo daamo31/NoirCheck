@@ -10,7 +10,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { xionService } from '../../src/services/XionService';
+import { useAuth } from '../../src/contexts/AuthContext';
+import { UserStorageService } from '../../src/services/UserStorageService';
+import { xionApiService } from '../../src/services/XionApiService';
 
 interface HistoryItem {
   id: string;
@@ -32,12 +34,12 @@ export default function HistoryScreen() {
 
   const loadHistory = async () => {
     try {
-      // Simular carga de historial
+      // Simulate history loading
       const mockHistory: HistoryItem[] = [
         {
           id: '1',
           type: 'registration',
-          filename: 'documento_importante.pdf',
+          filename: 'important_document.pdf',
           timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           status: 'completed',
           details: {
@@ -49,7 +51,7 @@ export default function HistoryScreen() {
         {
           id: '2',
           type: 'verification',
-          filename: 'imagen_sospechosa.jpg',
+          filename: 'suspicious_image.jpg',
           timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
           status: 'completed',
           details: {
@@ -61,7 +63,7 @@ export default function HistoryScreen() {
         {
           id: '3',
           type: 'registration',
-          filename: 'video_original.mp4',
+          filename: 'original_video.mp4',
           timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           status: 'completed',
           details: {
@@ -97,7 +99,7 @@ export default function HistoryScreen() {
       setHistoryItems(mockHistory);
     } catch (error) {
       console.error('Error loading history:', error);
-      Alert.alert('Error', 'No se pudo cargar el historial');
+      Alert.alert('Error', 'Could not load history');
     }
   };
 
@@ -161,7 +163,7 @@ export default function HistoryScreen() {
   };
 
   const handleItemPress = (item: HistoryItem) => {
-    let message = `Archivo: ${item.filename}\n`;
+    let message = `File: ${item.filename}\n`;
     message += `Tipo: ${getTypeText(item.type)}\n`;
     message += `Estado: ${getStatusText(item.status)}\n`;
     message += `Fecha: ${new Date(item.timestamp).toLocaleString()}\n\n`;
@@ -208,7 +210,7 @@ export default function HistoryScreen() {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Historial</Text>
+        <Text style={styles.headerTitle}>History</Text>
         <Text style={styles.headerSubtitle}>
           Tu actividad de registros y verificaciones
         </Text>
@@ -350,18 +352,18 @@ export default function HistoryScreen() {
           <View style={styles.quickActions}>
             <TouchableOpacity 
               style={styles.quickActionButton}
-              onPress={() => Alert.alert('Info', 'Ir a pantalla de registro')}
+              onPress={() => Alert.alert('Info', 'Go to registration screen')}
             >
               <Text style={styles.quickActionIcon}>📝</Text>
-              <Text style={styles.quickActionText}>Nuevo Registro</Text>
+              <Text style={styles.quickActionText}>New Registration</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.quickActionButton}
-              onPress={() => Alert.alert('Info', 'Ir a pantalla de verificación')}
+              onPress={() => Alert.alert('Info', 'Go to verification screen')}
             >
               <Text style={styles.quickActionIcon}>🔍</Text>
-              <Text style={styles.quickActionText}>Nueva Verificación</Text>
+              <Text style={styles.quickActionText}>New Verification</Text>
             </TouchableOpacity>
           </View>
         </View>
