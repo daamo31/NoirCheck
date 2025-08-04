@@ -13,7 +13,7 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
-  const { user, isAuthenticated, logout, retryPendingWallet } = useAuth();
+  const { user, isAuthenticated, logout, retryPendingWallet, connectWithXION } = useAuth();
   const router = useRouter();
   
   const [userStats, setUserStats] = useState({
@@ -34,6 +34,22 @@ export default function DashboardScreen() {
       Alert.alert('Success', 'Your XION wallet has been created and connected!');
     } else {
       Alert.alert('Network Issue', 'XION network is still unavailable. Please try again later.');
+    }
+  };
+
+  // Test XION connection directly
+  const handleTestXionConnection = async () => {
+    try {
+      console.log('🔄 Testing XION connection directly...');
+      const success = await connectWithXION();
+      if (success) {
+        Alert.alert('Success', 'XION connection initiated successfully!');
+      } else {
+        Alert.alert('Error', 'Failed to initiate XION connection');
+      }
+    } catch (error) {
+      console.error('❌ Test connection error:', error);
+      Alert.alert('Error', 'Failed to test XION connection');
     }
   };
 
@@ -231,6 +247,12 @@ export default function DashboardScreen() {
             <Text style={styles.actionIcon}>🔍</Text>
             <Text style={styles.actionTitle}>Verify Content</Text>
             <Text style={styles.actionSubtitle}>Check authenticity</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[styles.actionCard, { backgroundColor: '#4f46e5' }]} onPress={handleTestXionConnection}>
+            <Text style={styles.actionIcon}>⛓️</Text>
+            <Text style={[styles.actionTitle, { color: 'white' }]}>Test XION</Text>
+            <Text style={[styles.actionSubtitle, { color: '#e0e7ff' }]}>Test Abstraxion connection</Text>
           </TouchableOpacity>
         </View>
 
@@ -432,15 +454,16 @@ const styles = StyleSheet.create({
   },
   actionsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 24,
   },
   actionCard: {
-    flex: 1,
+    width: '31%',
     backgroundColor: 'white',
     padding: 16,
     borderRadius: 12,
-    marginHorizontal: 4,
+    marginBottom: 8,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

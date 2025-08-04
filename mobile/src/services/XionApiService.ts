@@ -107,31 +107,24 @@ class XIONApiService {
 
   /**
    * Create a new XION wallet with enhanced zkTLS support
-   * Falls back to simulation if real API is not available
+   * Uses Abstraxion for real integration only
    */
   async createWallet(request: CreateWalletRequest): Promise<XIONWallet> {
     try {
       console.log('🔄 Creating XION wallet...');
 
-      // Always use real implementation, not simulation
-      if (DEVELOPMENT_CONFIG.simulateAPI) {
-        console.log('🔧 Development mode: Using simulated wallet creation');
-        return this.createSimulatedWallet(request);
+      // Always use real XION integration via Abstraxion
+      console.log('⛓️ Creating real XION wallet with Abstraxion...');
+      
+      // The wallet creation should be handled by Abstraxion modal
+      // Return a pending wallet that will be updated by AuthContext
+      const wallet = await this.createAbstraxionWallet(request);
+      if (wallet) {
+        return wallet;
       }
 
-      // Use real Cosmos SDK approach with Abstraxion integration
-      try {
-        console.log('⛓️ Creating real XION wallet with Abstraxion...');
-        const wallet = await this.createRealWallet(request);
-        if (wallet) {
-          return wallet;
-        }
-      } catch (error) {
-        console.warn('⚠️ Real wallet creation failed, using simulation:', error);
-      }
-
-      // Fallback to simulation
-      return this.createSimulatedWallet(request);
+      // If Abstraxion fails, throw error
+      throw new Error('Abstraxion wallet creation failed');
     } catch (error) {
       console.error('❌ Wallet creation error:', error);
       throw new Error('Failed to create wallet: ' + (error as Error).message);
@@ -139,7 +132,40 @@ class XIONApiService {
   }
 
   /**
-   * Create a real wallet using Cosmos SDK
+   * Create a wallet using Abstraxion (recommended for XION)
+   */
+  private async createAbstraxionWallet(request: CreateWalletRequest): Promise<XIONWallet | null> {
+    try {
+      console.log('🔄 Creating wallet via Abstraxion...');
+      
+      // Abstraxion handles wallet creation through its modal
+      // The actual wallet details will be available through useAbstraxionAccount hook
+      // after the user completes the Abstraxion flow in the UI
+      
+      // For now, return a temporary pending wallet that will be updated by AuthContext
+      // when the real Abstraxion account becomes available
+      const pendingWallet: XIONWallet = {
+        address: 'pending_abstraxion_creation',
+        publicKey: 'pending_abstraxion_creation',
+        keyType: 'secp256k1',
+        zkTLS: request.zkTLS ? {
+          enabled: true,
+          proofGenerated: false,
+          identityVerified: false,
+          verificationLevel: 'basic'
+        } : undefined
+      };
+
+      console.log('✅ Abstraxion wallet creation initiated - waiting for user completion');
+      return pendingWallet;
+    } catch (error) {
+      console.error('❌ Abstraxion wallet creation failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a real wallet using Cosmos SDK (fallback method)
    */
   private async createRealWallet(request: CreateWalletRequest): Promise<XIONWallet | null> {
     try {
@@ -184,81 +210,6 @@ class XIONApiService {
       console.error('❌ Real wallet creation failed:', error);
       return null;
     }
-  }
-
-  /**
-   * Create a simulated wallet for development and testing
-   */
-  private createSimulatedWallet(request: CreateWalletRequest): XIONWallet {
-    // Generate a realistic XION address
-    const randomBytes = new Uint8Array(20);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      crypto.getRandomValues(randomBytes);
-    } else {
-      // Fallback for environments without crypto.getRandomValues
-      for (let i = 0; i < randomBytes.length; i++) {
-        randomBytes[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    
-    const addressSuffix = Array.from(randomBytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-      .substring(0, 39);
-    
-    const address = `xion1${addressSuffix}`;
-    
-    // Generate public key
-    const pubKeyBytes = new Uint8Array(33);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      crypto.getRandomValues(pubKeyBytes);
-    } else {
-      for (let i = 0; i < pubKeyBytes.length; i++) {
-        pubKeyBytes[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    pubKeyBytes[0] = 0x02; // Set first byte for compressed public key
-    const publicKey = Array.from(pubKeyBytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    const wallet = {
-      address,
-      publicKey,
-      mnemonic: this.generateMnemonic(),
-      keyType: request.keyType || 'secp256k1' as const,
-      zkTLS: request.zkTLS ? {
-        enabled: true,
-        proofGenerated: true,
-        identityVerified: false,
-        verificationLevel: 'basic' as const
-      } : undefined
-    };
-
-    // Store wallet
-    this.storeWalletSecurely(wallet);
-    this.wallet = wallet;
-
-    console.log('✅ Simulated XION wallet created:', address);
-    return wallet;
-  }
-
-  /**
-   * Generate a BIP39 compatible mnemonic phrase
-   */
-  private generateMnemonic(): string {
-    const words = [
-      'abandon', 'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract',
-      'absurd', 'abuse', 'access', 'accident', 'account', 'accuse', 'achieve', 'acid',
-      'acoustic', 'acquire', 'across', 'action', 'actor', 'actress', 'actual', 'adapt',
-      'add', 'addict', 'address', 'adjust', 'admit', 'adult', 'advance', 'advice',
-      'aerobic', 'affair', 'afford', 'afraid', 'again', 'agent', 'agree', 'ahead',
-      'aim', 'air', 'airport', 'aisle', 'alarm', 'album', 'alcohol', 'alert'
-    ];
-    
-    return Array.from({ length: 12 }, () => 
-      words[Math.floor(Math.random() * words.length)]
-    ).join(' ');
   }
 
   /**
@@ -320,38 +271,39 @@ class XIONApiService {
   }
 
   /**
+   * Check if the current wallet is connected and valid (not pending)
+   */
+  isWalletConnected(): boolean {
+    return !!(this.wallet && 
+      this.wallet.address !== 'pending_abstraxion_creation' && 
+      this.wallet.publicKey !== 'pending_abstraxion_creation');
+  }
+
+  /**
+   * Update the current wallet (used by AuthContext when Abstraxion connects)
+   */
+  updateWallet(wallet: XIONWallet): void {
+    this.wallet = wallet;
+    // Store the updated wallet
+    this.storeWalletSecurely(wallet);
+    console.log('✅ Wallet updated:', wallet.address);
+  }
+
+  /**
    * Complete zkTLS verification for an existing wallet
    */
   async completeZkTLSVerification(address: string): Promise<{ success: boolean; verificationLevel: string }> {
     try {
-      // Check if we're in development mode
-      const isDevelopment = __DEV__;
+      console.log('� Attempting real zkTLS verification...');
       
-      if (isDevelopment || DEVELOPMENT_CONFIG.simulateAPI) {
-        console.log('🔧 Development mode: Simulating zkTLS verification');
-        // Simulate verification process
-        await new Promise(resolve => setTimeout(resolve, DEVELOPMENT_CONFIG.mockLatency));
-        return {
-          success: true,
-          verificationLevel: 'enhanced'
-        };
-      }
-
-      // In a real implementation, this would call the actual zkTLS service
-      console.log('🔄 Attempting real zkTLS verification...');
+      // TODO: Implement real zkTLS service integration
+      // This would call the actual XION zkTLS verification service
       
-      // For now, simulate success
-      return {
-        success: true,
-        verificationLevel: 'basic'
-      };
+      // For now, throw error until real implementation is ready
+      throw new Error('Real zkTLS verification not yet implemented');
     } catch (error) {
       console.error('❌ zkTLS verification failed:', error);
-      // Return simulated success for development
-      return {
-        success: true,
-        verificationLevel: 'basic'
-      };
+      throw error;
     }
   }
 
@@ -360,51 +312,33 @@ class XIONApiService {
    */
   async requestFaucetTokens(address: string): Promise<{ success: boolean; txHash?: string }> {
     try {
-      // Check if we're in development mode
-      const isDevelopment = __DEV__;
+      console.log('� Requesting tokens from XION faucet...');
       
-      if (isDevelopment || DEVELOPMENT_CONFIG.simulateAPI) {
-        console.log('🔧 Development mode: Simulating faucet request');
-        // Simulate faucet request
-        await new Promise(resolve => setTimeout(resolve, DEVELOPMENT_CONFIG.mockLatency));
+      // Real faucet request
+      const response = await fetch(`${XION_CONFIG.api.faucet}/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          address,
+          denom: 'uxion'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Faucet request successful:', data.txHash);
         return {
           success: true,
-          txHash: `xion${Math.random().toString(16).substring(2, 58)}`
+          txHash: data.txHash
         };
+      } else {
+        throw new Error(`Faucet request failed: ${response.status}`);
       }
-
-      // Try real faucet request
-      try {
-        const response = await fetch(`${XION_CONFIG.api.faucet}/request`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            address,
-            denom: 'uxion'
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            success: true,
-            txHash: data.txHash
-          };
-        }
-      } catch (error) {
-        console.warn('⚠️ Real faucet failed, using simulation:', error);
-      }
-
-      // Fallback to simulation
-      return {
-        success: true,
-        txHash: `xion${Math.random().toString(16).substring(2, 58)}`
-      };
     } catch (error) {
       console.error('❌ Faucet request failed:', error);
-      return { success: false };
+      throw error;
     }
   }
 
@@ -415,30 +349,23 @@ class XIONApiService {
     try {
       console.log('🔄 Registering content on XION blockchain...');
 
-      // Always use real implementation, not simulation
-      if (DEVELOPMENT_CONFIG.simulateAPI) {
-        console.log('🔧 Development mode: Simulating content registration');
-        await new Promise(resolve => setTimeout(resolve, DEVELOPMENT_CONFIG.mockLatency));
-        
-        return {
-          success: true,
-          txHash: `xion${Math.random().toString(16).substring(2, 58)}`
-        };
+      // Check if wallet is properly connected
+      if (!this.isWalletConnected()) {
+        console.error('❌ XION wallet not connected');
+        throw new Error('XION wallet not connected');
       }
 
+      console.log('✅ Wallet is connected:', this.wallet?.address);
+
       // Real blockchain implementation using Abstraxion
-      // We need to use the contracts and submit transactions
       console.log('⛓️ Submitting to real XION blockchain...');
       
-      // For now, simulate success until we implement the smart contract call
-      // This would normally call the content registry contract
-      return {
-        success: true,
-        txHash: `xion${Math.random().toString(16).substring(2, 58)}`
-      };
+      // TODO: Implement real smart contract call
+      // This would normally call the content registry contract via Abstraxion signing client
+      throw new Error('Real blockchain integration not yet implemented');
     } catch (error) {
       console.error('❌ Content registration failed:', error);
-      return { success: false };
+      throw error;
     }
   }
 
@@ -449,47 +376,12 @@ class XIONApiService {
     try {
       console.log('🔄 Verifying content authenticity...');
 
-      // Always use real implementation, not simulation
-      if (DEVELOPMENT_CONFIG.simulateAPI) {
-        console.log('🔧 Development mode: Simulating content verification');
-        await new Promise(resolve => setTimeout(resolve, DEVELOPMENT_CONFIG.mockLatency));
-        
-        // Simulate verification result
-        const isAuthentic = Math.random() > 0.3; // 70% chance of being authentic
-        
-        return {
-          contentHash: request.contentHash,
-          isAuthentic,
-          confidence: isAuthentic ? 0.85 + Math.random() * 0.15 : Math.random() * 0.4,
-          registrationInfo: isAuthentic ? {
-            originalCreator: 'xion1abc...def',
-            registrationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            blockchain: {
-              network: 'xion-testnet-2',
-              blockHeight: Math.floor(6000000 + Math.random() * 100000),
-              transactionHash: `xion${Math.random().toString(16).substring(2, 58)}`
-            }
-          } : undefined,
-          zkTLS: {
-            sourceVerified: request.sourceUrl ? Math.random() > 0.2 : false,
-            identityConfirmed: isAuthentic,
-            proofValidated: isAuthentic
-          }
-        };
-      }
-
-      // In a real implementation, this would query the blockchain
-      // For now, simulate success
-      return {
-        contentHash: request.contentHash,
-        isAuthentic: false,
-        confidence: 0.1,
-        zkTLS: {
-          sourceVerified: false,
-          identityConfirmed: false,
-          proofValidated: false
-        }
-      };
+      // Real blockchain implementation
+      console.log('⛓️ Querying real XION blockchain...');
+      
+      // TODO: Implement real blockchain query
+      // This would query the content registry contract on XION blockchain
+      throw new Error('Real blockchain verification not yet implemented');
     } catch (error) {
       console.error('❌ Content verification failed:', error);
       throw new Error('Verification failed: ' + (error as Error).message);

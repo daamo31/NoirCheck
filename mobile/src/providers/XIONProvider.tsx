@@ -1,74 +1,37 @@
 /**
  * XION Abstraxion Provider for React Native
- * Provides XION blockchain integration with Abstraxion modals
+ * Using official @burnt-labs/abstraxion-react-native package
  */
 
 import '../utils/polyfills'; // Import polyfills first!
-import React, { useEffect } from 'react';
-import { AbstraxionProvider } from '@burnt-labs/abstraxion';
+import React from 'react';
+import { AbstraxionProvider, AbstraxionConfig } from '@burnt-labs/abstraxion-react-native';
 
 interface XIONProviderProps {
   children: React.ReactNode;
 }
 
+// Official XION React Native configuration
+const abstraxionConfig: AbstraxionConfig = {
+  // Network configuration (testnet by default)
+  rpcUrl: "https://rpc.xion-testnet-2.burnt.com:443",
+  gasPrice: "0.001uxion",
+  
+  // Optional configurations
+  callbackUrl: "noirscheck://", // Your app's deep link scheme
+  treasury: undefined, // Add treasury contract if needed
+  
+  // Contract grants (add your contracts here)
+  contracts: [
+    // Add any contract addresses that need permissions
+  ],
+};
+
 export function XIONProvider({ children }: XIONProviderProps) {
-  // Suppress console warnings from Abstraxion in React Native
-  useEffect(() => {
-    const originalWarn = console.warn;
-    const originalError = console.error;
-
-    console.warn = (...args) => {
-      const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
-      
-      // Suppress specific Abstraxion warnings that don't apply to React Native
-      if (
-        message.includes('DialogContent') ||
-        message.includes('DialogTitle') ||
-        message.includes('Missing Description') ||
-        message.includes('aria-describedby') ||
-        message.includes('accessible for screen reader users') ||
-        message.includes('Radix UI')
-      ) {
-        return; // Suppress these warnings
-      }
-      
-      originalWarn.apply(console, args);
-    };
-
-    console.error = (...args) => {
-      const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
-      
-      // Suppress specific Abstraxion errors that don't apply to React Native
-      if (
-        message.includes('DialogContent') ||
-        message.includes('DialogTitle') ||
-        message.includes('Missing Description') ||
-        message.includes('aria-describedby') ||
-        message.includes('Radix UI')
-      ) {
-        return; // Suppress these errors
-      }
-      
-      originalError.apply(console, args);
-    };
-
-    // Cleanup function
-    return () => {
-      console.warn = originalWarn;
-      console.error = originalError;
-    };
-  }, []);
-
   return (
-    <AbstraxionProvider
-      config={{
-        restUrl: "https://api.xion-testnet-2.burnt.com", 
-        rpcUrl: "https://rpc.xion-testnet-2.burnt.com"
-      }}
-    >
+    <AbstraxionProvider config={abstraxionConfig}>
       {children}
     </AbstraxionProvider>
   );
-}
+} 
 
-export default XIONProvider;

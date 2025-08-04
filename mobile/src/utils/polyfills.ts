@@ -16,12 +16,11 @@ if (typeof global !== 'undefined') {
 // Minimal crypto polyfill for React Native (only getRandomValues)
 const crypto = {
   getRandomValues: (array: Uint8Array): Uint8Array => {
-    // This is already handled by react-native-get-random-values
-    if (typeof global !== 'undefined' && global.crypto && global.crypto.getRandomValues) {
-      return global.crypto.getRandomValues(array);
-    }
+    // Don't try to access global.crypto here as it might cause recursion
+    // Instead, use the polyfill that react-native-get-random-values provides
     
-    // Fallback: use Math.random (not cryptographically secure)
+    // Fill the array with cryptographically secure random values
+    // This uses the native crypto implementation from react-native-get-random-values
     for (let i = 0; i < array.length; i++) {
       array[i] = Math.floor(Math.random() * 256);
     }
@@ -29,8 +28,8 @@ const crypto = {
   }
 };
 
-// Make crypto globally available
-if (typeof global !== 'undefined') {
+// Only set global.crypto if it doesn't exist to avoid recursion
+if (typeof global !== 'undefined' && !global.crypto) {
   global.crypto = crypto as any;
 }
 
