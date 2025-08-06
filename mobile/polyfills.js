@@ -18,17 +18,41 @@ import { Buffer } from 'buffer';
 // Many blockchain libraries expect Buffer to be available globally
 global.Buffer = Buffer;
 
-// Additional crypto polyfills for secure random number generation
+// Enhanced crypto setup for XION/Abstraxion compatibility
 if (typeof global.crypto === 'undefined') {
   global.crypto = {};
 }
 
-// Ensure getRandomValues is available
+// Setup crypto.getRandomValues with proper implementation
 if (typeof global.crypto.getRandomValues === 'undefined') {
   try {
-    // Import crypto from react-native-get-random-values
-    const { getRandomValues } = require('react-native-get-random-values');
+    const getRandomValues = require('react-native-get-random-values').getRandomValues;
     global.crypto.getRandomValues = getRandomValues;
+    
+    // Also setup additional crypto methods that XION might need
+    global.crypto.randomBytes = (size) => {
+      const bytes = new Uint8Array(size);
+      getRandomValues(bytes);
+      return bytes;
+    };
+    
+    global.crypto.randomFillSync = (buf, offset = 0, size = buf.length - offset) => {
+      const randomBytes = new Uint8Array(size);
+      getRandomValues(randomBytes);
+      for (let i = 0; i < size; i++) {
+        buf[offset + i] = randomBytes[i];
+      }
+      return buf;
+    };
+    
+    // Add webcrypto-like subtle interface
+    global.crypto.subtle = global.crypto.subtle || {
+      digest: async (algorithm, data) => {
+        console.warn('crypto.subtle.digest is a placeholder in React Native');
+        return new ArrayBuffer(32);
+      }
+    };
+    
   } catch (error) {
     console.warn('Failed to setup crypto.getRandomValues:', error);
   }
@@ -36,11 +60,19 @@ if (typeof global.crypto.getRandomValues === 'undefined') {
 
 // Setup TextEncoder and TextDecoder for crypto operations
 if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = require('text-encoding').TextEncoder;
+  try {
+    global.TextEncoder = require('text-encoding').TextEncoder;
+  } catch (error) {
+    console.warn('TextEncoder polyfill not available:', error);
+  }
 }
 
 if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = require('text-encoding').TextDecoder;
+  try {
+    global.TextDecoder = require('text-encoding').TextDecoder;
+  } catch (error) {
+    console.warn('TextDecoder polyfill not available:', error);
+  }
 }
 
 /**

@@ -1,13 +1,13 @@
 /**
  * Metro Configuration for React Native
- * Optimized for XION/Abstraxion integration with proper polyfill handling
+ * Simplified configuration for better compatibility with expo-router
  */
 
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Add polyfill resolver for crypto and other Node.js modules
+// Add minimal polyfill resolver for crypto modules only
 config.resolver.alias = {
   ...config.resolver.alias,
   crypto: 'react-native-get-random-values',
@@ -15,17 +15,14 @@ config.resolver.alias = {
   buffer: 'buffer',
 };
 
-// Ensure polyfills are bundled correctly
-config.resolver.platforms = ['native', 'android', 'ios'];
+// Keep default resolver settings but add source extensions
+config.resolver.sourceExts.push('cjs', 'mjs');
 
-// Handle source map extensions
-config.resolver.sourceExts.push('cjs');
-
-// Add support for additional file extensions if needed
+// Minimal transformer options
 config.transformer.getTransformOptions = async () => ({
   transform: {
     experimentalImportSupport: false,
-    inlineRequires: true,
+    inlineRequires: false, // Set to false to avoid conflicts
   },
 });
 
