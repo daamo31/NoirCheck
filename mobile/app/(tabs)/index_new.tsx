@@ -1,18 +1,6 @@
 /**
- * Content Registration Screen
- * 
- * This screen allows authenticated users to register original content on the
- * XION blockchain for authenticity verification. Users must first connect their
- * XION wallet before they can register content.
- * 
- * Features:
- * - XION wallet connection status display
- * - Content registration form (title and description)
- * - User Map contract interaction for blockchain storage
- * - Real-time wallet connection feedback
- * - Content hash generation and storage
- * 
- * @requires XION wallet connection for content registration
+ * Pantalla de Registro de Contenido
+ * Solo muestra funcionalidad si el usuario está conectado a XION
  */
 
 import React, { useState } from 'react';
@@ -29,54 +17,41 @@ import {
 import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function TabOneScreen() {
-  // Content form state
   const [contentTitle, setContentTitle] = useState('');
   const [contentDescription, setContentDescription] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   
-  // Authentication and wallet context
   const { user, wallet, connectXION, updateUserMap, logout } = useAuth();
 
-  /**
-   * Handle XION wallet connection
-   * Initiates Meta Account login flow for blockchain access
-   */
   const handleConnectXION = async () => {
     try {
       const success = await connectXION();
       if (success) {
-        Alert.alert('Success', 'Connected to XION blockchain');
+        Alert.alert('Éxito', 'Conectado a XION blockchain');
       } else {
-        Alert.alert('Error', 'Could not connect to XION');
+        Alert.alert('Error', 'No se pudo conectar a XION');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to connect to XION');
+      Alert.alert('Error', 'Error al conectar con XION');
     }
   };
 
-  /**
-   * Register content on XION blockchain
-   * Creates a hash of the content and stores it in the User Map contract
-   */
   const handleRegisterContent = async () => {
-    // Validate wallet connection
     if (!wallet?.connected) {
-      Alert.alert('Error', 'Please connect your XION wallet first');
+      Alert.alert('Error', 'Primero debes conectar tu wallet XION');
       return;
     }
 
-    // Validate content input
     if (!contentTitle.trim()) {
-      Alert.alert('Error', 'Please enter a content title');
+      Alert.alert('Error', 'Ingresa un título para el contenido');
       return;
     }
 
     setIsRegistering(true);
     try {
-      // Generate content hash (in production, this would be a proper hash of the actual content)
+      // Simular hash del contenido
       const contentHash = `hash_${Date.now()}`;
       
-      // Prepare content data for blockchain storage
       const contentData = {
         title: contentTitle,
         description: contentDescription,
@@ -85,19 +60,17 @@ export default function TabOneScreen() {
         creator: user?.email,
       };
 
-      // Store content data in XION User Map contract
       const success = await updateUserMap(contentData);
       
       if (success) {
-        Alert.alert('Success', 'Content registered on blockchain');
-        // Clear form after successful registration
+        Alert.alert('Éxito', 'Contenido registrado en blockchain');
         setContentTitle('');
         setContentDescription('');
       } else {
-        Alert.alert('Error', 'Could not register content');
+        Alert.alert('Error', 'No se pudo registrar el contenido');
       }
     } catch (error) {
-      Alert.alert('Error', 'Content registration failed');
+      Alert.alert('Error', 'Error al registrar contenido');
     } finally {
       setIsRegistering(false);
     }
@@ -107,50 +80,48 @@ export default function TabOneScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <Text style={styles.title}>Content Registration</Text>
-          <Text style={styles.subtitle}>User: {user?.email}</Text>
+          <Text style={styles.title}>Registro de Contenido</Text>
+          <Text style={styles.subtitle}>Usuario: {user?.email}</Text>
         </View>
 
-        {/* XION Wallet Status Section */}
+        {/* Estado de XION */}
         <View style={styles.xionSection}>
-          <Text style={styles.sectionTitle}>XION Status</Text>
+          <Text style={styles.sectionTitle}>Estado XION</Text>
           {wallet?.connected ? (
             <View style={styles.walletInfo}>
-              <Text style={styles.walletText}>✅ Connected</Text>
+              <Text style={styles.walletText}>✅ Conectado</Text>
               <Text style={styles.addressText}>
                 {wallet.address?.slice(0, 10)}...{wallet.address?.slice(-6)}
               </Text>
             </View>
           ) : (
             <TouchableOpacity style={styles.connectButton} onPress={handleConnectXION}>
-              <Text style={styles.connectButtonText}>Connect XION Wallet</Text>
+              <Text style={styles.connectButtonText}>Conectar XION Wallet</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Content Registration Form */}
+        {/* Formulario de registro */}
         {wallet?.connected && (
           <View style={styles.form}>
-            <Text style={styles.sectionTitle}>Register New Content</Text>
+            <Text style={styles.sectionTitle}>Registrar Nuevo Contenido</Text>
             
             <TextInput
               style={styles.input}
-              placeholder="Content title"
+              placeholder="Título del contenido"
               placeholderTextColor="#666"
               value={contentTitle}
               onChangeText={setContentTitle}
-              editable={!isRegistering}
             />
 
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Description (optional)"
+              placeholder="Descripción (opcional)"
               placeholderTextColor="#666"
               value={contentDescription}
               onChangeText={setContentDescription}
               multiline
               numberOfLines={4}
-              editable={!isRegistering}
             />
 
             <TouchableOpacity
@@ -159,15 +130,15 @@ export default function TabOneScreen() {
               disabled={isRegistering}
             >
               <Text style={styles.registerButtonText}>
-                {isRegistering ? 'Registering...' : 'Register on Blockchain'}
+                {isRegistering ? 'Registrando...' : 'Registrar en Blockchain'}
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Logout Button */}
+        {/* Botón de logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutButtonText}>Sign Out</Text>
+          <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
