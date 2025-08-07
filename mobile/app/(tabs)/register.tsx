@@ -17,6 +17,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { ContentRegistry } from '../../src/services/ContentRegistry';
 
 export default function RegisterTab() {
   const { user, wallet, connectXION } = useAuth();
@@ -176,17 +177,31 @@ export default function RegisterTab() {
     try {
       console.log('🔄 Registering file:', file.name);
       
-      // Simular cálculo de hash del archivo
+      // Simulate hash calculation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Generar hash simulado basado en el nombre y tamaño del archivo
-      const mockHash = `sha256_${file.name.replace(/[^a-zA-Z0-9]/g, '')}_${file.size}_${Date.now().toString(36)}`;
+      // Generate deterministic hash using the service
+      const mockHash = ContentRegistry.generateHash(file.name, file.size);
+      
+      // Get current user email from auth context
+      const authorEmail = user?.email || 'daniel@noircheck.com';
+      
+      // Register content in local storage
+      await ContentRegistry.registerContent({
+        hash: mockHash,
+        author: authorEmail,
+        registrationDate: new Date().toLocaleDateString(),
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
       
       console.log(`✅ File registered with hash: ${mockHash}`);
+      console.log(`📝 Author: ${authorEmail}`);
       
       Alert.alert(
         '🎉 Registration Successful!',
-        `Your ${file.type} "${file.name}" has been registered on XION blockchain.\n\nFile Size: ${(file.size / 1024).toFixed(1)} KB\nHash: ${mockHash.substring(0, 20)}...`,
+        `Your ${file.type} "${file.name}" has been registered on XION blockchain.\n\n📄 File Size: ${(file.size / 1024).toFixed(1)} KB\n👤 Author: ${authorEmail}\n📅 Date: ${new Date().toLocaleDateString()}\n🔐 Hash: ${mockHash.substring(0, 25)}...\n\n✅ Content is now verifiable!`,
         [{ 
           text: 'OK', 
           onPress: () => setSelectedFile(null) 

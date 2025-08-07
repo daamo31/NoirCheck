@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { ContentRegistry } from '../../src/services/ContentRegistry';
 
 interface SelectedFile {
   uri: string;
@@ -171,27 +172,38 @@ export default function VerifyTab() {
       // Simulate hash calculation and blockchain verification
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Generate mock hash based on file properties
-      const mockHash = `sha256_${file.name.replace(/[^a-zA-Z0-9]/g, '')}_${file.size}_${Date.now().toString(36)}`;
+      // Generate deterministic hash using the same method as registration
+      const mockHash = ContentRegistry.generateHash(file.name, file.size);
       
-      // Simulate verification result
-      const isAuthentic = Math.random() > 0.3; // 70% chance of being authentic
-      const confidenceScore = isAuthentic ? Math.floor(85 + Math.random() * 15) : Math.floor(20 + Math.random() * 40);
+      console.log('🔍 Generated hash for verification:', mockHash);
       
-      console.log(`✅ Verification completed: ${isAuthentic ? 'Authentic' : 'Suspicious'}`);
+      // Check if this content is registered
+      const registeredContent = await ContentRegistry.findByHash(mockHash);
       
-      Alert.alert(
-        isAuthentic ? '✅ Content Verified!' : '⚠️ Verification Warning',
-        `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n\n${
-          isAuthentic 
-            ? `This content is registered on XION blockchain.\nConfidence: ${confidenceScore}%\nHash: ${mockHash.substring(0, 20)}...`
-            : `This content could not be verified or may be modified.\nConfidence: ${confidenceScore}%\nRecommendation: Verify with original creator.`
-        }`,
-        [{ 
-          text: 'OK', 
-          onPress: () => setSelectedFile(null)
-        }]
-      );
+      const isRegistered = !!registeredContent;
+      const confidenceScore = isRegistered ? Math.floor(88 + Math.random() * 12) : Math.floor(15 + Math.random() * 35);
+      
+      console.log(`✅ Verification completed: ${isRegistered ? 'Authentic' : 'Not Found'}`);
+      
+      if (isRegistered && registeredContent) {
+        Alert.alert(
+          '✅ Content Verified!',
+          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n\n🎉 This content is registered on XION blockchain!\n\n👤 Original Author: ${registeredContent.author}\n📅 Registration Date: ${registeredContent.registrationDate}\n📊 Confidence: ${confidenceScore}%\n🔐 Hash: ${mockHash.substring(0, 30)}...\n\n✅ Content is authentic!`,
+          [{ 
+            text: 'OK', 
+            onPress: () => setSelectedFile(null)
+          }]
+        );
+      } else {
+        Alert.alert(
+          '⚠️ Content Not Verified',
+          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n\n❌ This content is not registered on XION blockchain or may have been modified.\n\n📊 Confidence: ${confidenceScore}%\n💡 Recommendation: Verify with original creator or register if you are the author.\n🔐 Hash: ${mockHash.substring(0, 30)}...`,
+          [{ 
+            text: 'OK', 
+            onPress: () => setSelectedFile(null)
+          }]
+        );
+      }
       
     } catch (error) {
       console.error('❌ Verification failed:', error);
