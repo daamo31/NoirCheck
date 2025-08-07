@@ -13,6 +13,11 @@ export interface RegisteredContent {
   fileName: string;
   fileSize: number;
   fileType: string;
+  // Added fields for better file identification
+  originalUri?: string;
+  width?: number;
+  height?: number;
+  mimeType?: string;
 }
 
 const STORAGE_KEY = '@NoirCheck:RegisteredContent';
@@ -81,10 +86,38 @@ export class ContentRegistry {
   
   /**
    * Generate deterministic hash for a file
+   * Uses file size and type instead of filename to avoid timestamp issues
    */
-  static generateHash(fileName: string, fileSize: number): string {
-    const fileIdentifier = `${fileName}_${fileSize}`;
-    return `sha256_${fileIdentifier.replace(/[^a-zA-Z0-9]/g, '')}`;
+  static generateHash(fileName: string, fileSize: number, fileUri?: string): string {
+    // Extract file extension for better identification
+    const fileExtension = fileName.split('.').pop() || 'unknown';
+    
+    // Create a more stable identifier based on size and type
+    const fileIdentifier = `${fileSize}_${fileExtension}`;
+    
+    // If file URI is available, use a portion of it for better uniqueness
+    let uriSuffix = '';
+    if (fileUri) {
+      // Use last 8 characters of the URI path (excluding timestamp parts)
+      const uriParts = fileUri.split('/');
+      const lastPart = uriParts[uriParts.length - 1];
+      // Remove timestamp patterns and keep meaningful parts
+      const cleanPart = lastPart.replace(/\d{13,}/g, ''); // Remove long timestamps
+      uriSuffix = `_${cleanPart.slice(-8)}`;
+    }
+    
+    return `sha256_${fileIdentifier}${uriSuffix}`.replace(/[^a-zA-Z0-9_]/g, '');
+  }
+
+  /**
+   * Generate hash based on file content characteristics
+   * More reliable method for same image detection
+   */
+  static generateContentHash(fileSize: number, width?: number, height?: number, fileType?: string): string {
+    const dimensions = width && height ? `${width}x${height}` : 'unknown';
+    const type = fileType || 'unknown';
+    const identifier = `${fileSize}_${dimensions}_${type}`;
+    return `sha256_content_${identifier}`.replace(/[^a-zA-Z0-9_]/g, '');
   }
   
   /**
@@ -96,6 +129,26 @@ export class ContentRegistry {
       console.log('🗑️ Cleared all registered content');
     } catch (error) {
       console.error('❌ Failed to clear content:', error);
+    }
+  }
+
+  /**
+   * Debug function to show all registered content
+   */
+  static async debugShowAll(): Promise<void> {
+    try {
+      const allContent = await this.getAllRegisteredContent();
+      console.log('📋 All registered content:');
+      allContent.forEach((content, index) => {
+        console.log(`${index + 1}. ${content.fileName}`);
+        console.log(`   Hash: ${content.hash}`);
+        console.log(`   Size: ${content.fileSize}`);
+        console.log(`   Dimensions: ${content.width}x${content.height}`);
+        console.log(`   Author: ${content.author}`);
+        console.log('---');
+      });
+    } catch (error) {
+      console.error('❌ Failed to debug content:', error);
     }
   }
 }

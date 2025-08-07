@@ -82,20 +82,21 @@ export default function RegisterTab() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0];
-        setSelectedFile({
-          uri: file.uri,
-          name: file.uri.split('/').pop() || 'image.jpg',
-          type: 'image',
-          size: file.fileSize || 0
-        });
+        const asset = result.assets[0];
         
-        await registerSelectedFile({
-          uri: file.uri,
-          name: file.uri.split('/').pop() || 'image.jpg',
+        // Create consistent file object for gallery images
+        const file = {
+          uri: asset.uri,
+          name: asset.uri.split('/').pop() || 'gallery_image.jpg',
           type: 'image',
-          size: file.fileSize || 0
-        });
+          size: asset.fileSize || 0,
+          width: asset.width,
+          height: asset.height,
+          mimeType: asset.type || 'image/jpeg'
+        };
+        
+        setSelectedFile(file);
+        await registerSelectedFile(file);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -119,20 +120,21 @@ export default function RegisterTab() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0];
-        setSelectedFile({
-          uri: file.uri,
-          name: `photo_${Date.now()}.jpg`,
-          type: 'image',
-          size: file.fileSize || 0
-        });
+        const asset = result.assets[0];
         
-        await registerSelectedFile({
-          uri: file.uri,
-          name: `photo_${Date.now()}.jpg`,
+        // Create consistent file object for camera photos
+        const file = {
+          uri: asset.uri,
+          name: 'camera_photo.jpg', // Consistent name for all camera photos
           type: 'image',
-          size: file.fileSize || 0
-        });
+          size: asset.fileSize || 0,
+          width: asset.width,
+          height: asset.height,
+          mimeType: 'image/jpeg'
+        };
+        
+        setSelectedFile(file);
+        await registerSelectedFile(file);
       }
     } catch (error) {
       console.error('Error taking picture:', error);
@@ -176,32 +178,49 @@ export default function RegisterTab() {
     
     try {
       console.log('🔄 Registering file:', file.name);
+      console.log('📏 File details:', {
+        size: file.size,
+        width: file.width,
+        height: file.height,
+        type: file.type
+      });
       
       // Simulate hash calculation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Generate deterministic hash using the service
-      const mockHash = ContentRegistry.generateHash(file.name, file.size);
+      // Generate deterministic hash using content-based approach
+      const contentHash = ContentRegistry.generateContentHash(
+        file.size,
+        file.width,
+        file.height,
+        file.type
+      );
+      
+      console.log('🔑 Generated content hash:', contentHash);
       
       // Get current user email from auth context
       const authorEmail = user?.email || 'daniel@noircheck.com';
       
       // Register content in local storage
       await ContentRegistry.registerContent({
-        hash: mockHash,
+        hash: contentHash,
         author: authorEmail,
         registrationDate: new Date().toLocaleDateString(),
         fileName: file.name,
         fileSize: file.size,
-        fileType: file.type
+        fileType: file.type,
+        originalUri: file.uri,
+        width: file.width,
+        height: file.height,
+        mimeType: file.mimeType
       });
       
-      console.log(`✅ File registered with hash: ${mockHash}`);
+      console.log(`✅ File registered with hash: ${contentHash}`);
       console.log(`📝 Author: ${authorEmail}`);
       
       Alert.alert(
         '🎉 Registration Successful!',
-        `Your ${file.type} "${file.name}" has been registered on XION blockchain.\n\n📄 File Size: ${(file.size / 1024).toFixed(1)} KB\n👤 Author: ${authorEmail}\n📅 Date: ${new Date().toLocaleDateString()}\n🔐 Hash: ${mockHash.substring(0, 25)}...\n\n✅ Content is now verifiable!`,
+        `Your ${file.type} "${file.name}" has been registered on XION blockchain.\n\n📄 File Size: ${(file.size / 1024).toFixed(1)} KB\n👤 Author: ${authorEmail}\n📅 Date: ${new Date().toLocaleDateString()}\n🔐 Hash: ${contentHash.substring(0, 25)}...\n\n✅ Content is now verifiable!`,
         [{ 
           text: 'OK', 
           onPress: () => setSelectedFile(null) 
@@ -263,6 +282,29 @@ export default function RegisterTab() {
                 {isRegistering ? 'Processing...' : selectedFile ? 'Register Another File' : 'Select & Register File'}
               </Text>
             </TouchableOpacity>
+
+            {/* Debug Buttons */}
+            <View style={styles.debugContainer}>
+              <TouchableOpacity 
+                style={styles.debugButton} 
+                onPress={async () => {
+                  await ContentRegistry.debugShowAll();
+                  Alert.alert('Debug', 'Check console for registered content list');
+                }}
+              >
+                <Text style={styles.debugButtonText}>Show Registered</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.debugButton} 
+                onPress={async () => {
+                  await ContentRegistry.clearAll();
+                  Alert.alert('Debug', 'All registered content cleared');
+                }}
+              >
+                <Text style={styles.debugButtonText}>Clear All</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -387,5 +429,21 @@ const styles = StyleSheet.create({
   fileSize: {
     color: '#A0A0A0',
     fontSize: 12,
+  },
+  debugContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+  },
+  debugButton: {
+    backgroundColor: '#333',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

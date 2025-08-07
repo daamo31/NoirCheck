@@ -24,6 +24,8 @@ interface SelectedFile {
   type: 'image' | 'document';
   size: number;
   mimeType?: string;
+  width?: number;
+  height?: number;
 }
 
 export default function VerifyTab() {
@@ -78,10 +80,12 @@ export default function VerifyTab() {
         const asset = result.assets[0];
         const file = {
           uri: asset.uri,
-          name: `photo_${Date.now()}.jpg`,
+          name: 'camera_photo.jpg', // Same consistent name as registration
           type: 'image' as const,
           size: asset.fileSize || 0,
-          mimeType: 'image/jpeg'
+          mimeType: 'image/jpeg',
+          width: asset.width,
+          height: asset.height
         };
         
         setSelectedFile(file);
@@ -116,10 +120,12 @@ export default function VerifyTab() {
         const asset = result.assets[0];
         const file = {
           uri: asset.uri,
-          name: asset.fileName || `image_${Date.now()}.jpg`,
+          name: asset.fileName || asset.uri.split('/').pop() || 'gallery_image.jpg',
           type: 'image' as const,
           size: asset.fileSize || 0,
-          mimeType: asset.type || 'image/jpeg'
+          mimeType: asset.type || 'image/jpeg',
+          width: asset.width,
+          height: asset.height
         };
         
         setSelectedFile(file);
@@ -168,17 +174,28 @@ export default function VerifyTab() {
     
     try {
       console.log('🔄 Verifying file:', file.name);
+      console.log('📏 File details:', {
+        size: file.size,
+        width: file.width,
+        height: file.height,
+        type: file.type
+      });
       
       // Simulate hash calculation and blockchain verification
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Generate deterministic hash using the same method as registration
-      const mockHash = ContentRegistry.generateHash(file.name, file.size);
+      // Generate deterministic hash using content-based approach (same as registration)
+      const contentHash = ContentRegistry.generateContentHash(
+        file.size,
+        file.width,
+        file.height,
+        file.type
+      );
       
-      console.log('🔍 Generated hash for verification:', mockHash);
+      console.log('🔍 Generated content hash for verification:', contentHash);
       
       // Check if this content is registered
-      const registeredContent = await ContentRegistry.findByHash(mockHash);
+      const registeredContent = await ContentRegistry.findByHash(contentHash);
       
       const isRegistered = !!registeredContent;
       const confidenceScore = isRegistered ? Math.floor(88 + Math.random() * 12) : Math.floor(15 + Math.random() * 35);
@@ -188,7 +205,7 @@ export default function VerifyTab() {
       if (isRegistered && registeredContent) {
         Alert.alert(
           '✅ Content Verified!',
-          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n\n🎉 This content is registered on XION blockchain!\n\n👤 Original Author: ${registeredContent.author}\n📅 Registration Date: ${registeredContent.registrationDate}\n📊 Confidence: ${confidenceScore}%\n🔐 Hash: ${mockHash.substring(0, 30)}...\n\n✅ Content is authentic!`,
+          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n${file.width && file.height ? `Dimensions: ${file.width}x${file.height}px\n` : ''}\n🎉 This content is registered on XION blockchain!\n\n👤 Original Author: ${registeredContent.author}\n📅 Registration Date: ${registeredContent.registrationDate}\n📊 Confidence: ${confidenceScore}%\n🔐 Hash: ${contentHash.substring(0, 30)}...\n\n✅ Content is authentic!`,
           [{ 
             text: 'OK', 
             onPress: () => setSelectedFile(null)
@@ -197,7 +214,7 @@ export default function VerifyTab() {
       } else {
         Alert.alert(
           '⚠️ Content Not Verified',
-          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n\n❌ This content is not registered on XION blockchain or may have been modified.\n\n📊 Confidence: ${confidenceScore}%\n💡 Recommendation: Verify with original creator or register if you are the author.\n🔐 Hash: ${mockHash.substring(0, 30)}...`,
+          `File: "${file.name}"\nSize: ${(file.size / 1024).toFixed(1)} KB\n${file.width && file.height ? `Dimensions: ${file.width}x${file.height}px\n` : ''}\n❌ This content is not registered on XION blockchain or may have been modified.\n\n📊 Confidence: ${confidenceScore}%\n💡 Recommendation: Verify with original creator or register if you are the author.\n🔐 Hash: ${contentHash.substring(0, 30)}...`,
           [{ 
             text: 'OK', 
             onPress: () => setSelectedFile(null)
@@ -264,6 +281,29 @@ export default function VerifyTab() {
               {isVerifying ? 'Verifying...' : 'Select & Verify Content'}
             </Text>
           </TouchableOpacity>
+
+          {/* Debug Buttons */}
+          <View style={styles.debugContainer}>
+            <TouchableOpacity 
+              style={styles.debugButton} 
+              onPress={async () => {
+                await ContentRegistry.debugShowAll();
+                Alert.alert('Debug', 'Check console for registered content list');
+              }}
+            >
+              <Text style={styles.debugButtonText}>Show Registered</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.debugButton} 
+              onPress={async () => {
+                await ContentRegistry.clearAll();
+                Alert.alert('Debug', 'All registered content cleared');
+              }}
+            >
+              <Text style={styles.debugButtonText}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.featuresCard}>
@@ -431,5 +471,21 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     color: '#A0A0A0',
+  },
+  debugContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+  },
+  debugButton: {
+    backgroundColor: '#333',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
