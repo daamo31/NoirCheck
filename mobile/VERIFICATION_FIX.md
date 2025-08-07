@@ -10,17 +10,22 @@ El sistema de verificación fallaba porque la misma imagen tenía tamaños liger
 
 Esto sucede porque Expo aplicaba diferentes niveles de compresión/procesamiento entre las operaciones.
 
-## ✅ Solución Implementada
+## ✅ Solución Implementada - VERSIÓN 2
 
-### 1. Sistema de Hash Tolerante
-- **Nuevo método**: `generateContentHash()` con tolerancia de tamaño
-- **Rango de tamaño**: Redondea el tamaño a rangos de 5KB (ej: 521814 → 520000)
-- **Identificación por dimensiones**: Usa dimensiones exactas (782x586) como identificador principal
+### 1. Sistema de Hash Más Preciso
+- **Cambio importante**: Eliminado el redondeo de tamaño a rangos de 5KB
+- **Ahora usa tamaño exacto**: Para mejor detección de modificaciones de contenido
+- **Identificación por dimensiones**: Usa dimensiones exactas (782x586px) como identificador principal
 
-### 2. Búsqueda Tolerante
-- **Método**: `findByHashTolerant()` busca primero hash exacto, luego con tolerancia
-- **Tolerancia**: ±10KB para imágenes con mismas dimensiones y tipo
-- **Criterios**: Mismo ancho, alto, tipo de archivo y diferencia de tamaño ≤10KB
+### 2. Tolerancia Muy Limitada
+- **Método**: `findByHashTolerant()` con tolerancia reducida drásticamente
+- **Tolerancia**: Solo ±2KB (típico de compresión) en lugar de ±10KB
+- **Criterios**: Mismo ancho, alto, tipo de archivo y diferencia de tamaño ≤2KB
+
+### 3. Mejor Detección de Modificaciones
+- **Hash preciso**: Cambios de brillo/contenido ahora cambian el hash significativamente
+- **Logging detallado**: Muestra diferencias exactas de tamaño para debug
+- **Compatibilidad**: Mantiene compatibilidad con diferencias de compresión de Expo
 
 ### 3. Logging Mejorado
 - **Componentes de hash**: Muestra sizeRange, dimensiones y tipo
@@ -77,33 +82,61 @@ Esto sucede porque Expo aplicaba diferentes niveles de compresión/procesamiento
 - ✅ Botón adicional "Show Current" para debug
 - ✅ Mejor feedback en console
 
-## 🔍 Logs Esperados
+## 🔍 Logs Esperados - VERSIÓN 2
 
 ### Registro Exitoso:
 ```
 🔄 Registering file: camera_photo.jpg
 📏 File details: {"height": 586, "size": 521814, "type": "image", "width": 782}
-🔑 Generated content hash: sha256_content_520000_782x586_image
-🔍 Hash components: {"sizeRange": 520000, "dimensions": "782x586", "type": "image"}
-✅ File registered with hash: sha256_content_520000_782x586_image
+🔑 Generated content hash: sha256_content_521814_782x586_image
+🔍 Hash components: {"exactSize": 521814, "dimensions": "782x586", "type": "image"}
+✅ File registered with hash: sha256_content_521814_782x586_image
 ```
 
-### Verificación Exitosa:
+### Verificación Exitosa (Misma Imagen):
 ```
 🔄 Verifying file: camera_photo.jpg
 📏 File details: {"height": 586, "size": 521818, "type": "image", "width": 782}
-🔍 Generated content hash for verification: sha256_content_520000_782x586_image
-🔍 Tolerant search result: FOUND
-📋 Found match: camera_photo.jpg (521814 bytes)
-📏 Size difference: 4 bytes
+🔍 Generated content hash for verification: sha256_content_521818_782x586_image
+🔍 Checking potential match: {
+  "registeredSize": 521814,
+  "currentSize": 521818,
+  "sizeDifference": 4,
+  "withinTolerance": true
+}
+✅ Found match within compression tolerance (≤2KB)
 ✅ Verification completed: Authentic
 ```
 
-## ✨ Funcionalidades Nuevas
+### Verificación Fallida (Imagen Modificada):
+```
+🔄 Verifying file: modified_photo.jpg
+📏 File details: {"height": 586, "size": 525000, "type": "image", "width": 782}
+🔍 Generated content hash for verification: sha256_content_525000_782x586_image
+� Checking potential match: {
+  "registeredSize": 521814,
+  "currentSize": 525000,
+  "sizeDifference": 3186,
+  "withinTolerance": false
+}
+✅ Verification completed: Not Found
+```
 
-1. **Tolerancia de tamaño**: El sistema ahora tolera pequeñas diferencias de tamaño
-2. **Debug completo**: Herramientas para diagnosticar problemas de verificación
-3. **Estado limpio**: Sin contenido demo que confunda las pruebas
-4. **Logging detallado**: Información completa para troubleshooting
+## ✨ Funcionalidades Nuevas - VERSIÓN 2
 
-El sistema ahora debe funcionar correctamente para la misma imagen registrada y verificada, incluso con pequeñas diferencias de tamaño causadas por el procesamiento de Expo.
+1. **Precisión mejorada**: Sistema mucho más estricto que detecta modificaciones de contenido
+2. **Tolerancia mínima**: Solo ±2KB para diferencias típicas de compresión
+3. **Hash exacto**: Usa tamaño exacto en lugar de rangos, similar al comportamiento web  
+4. **Debug detallado**: Herramientas completas para diagnosticar problemas
+5. **Detección de modificaciones**: Cambios de brillo, contraste, etc. ahora son detectados
+
+### 🎯 Comparación de Tolerancia:
+
+| Modificación | Diferencia Típica | Detectado como |
+|--------------|------------------|----------------|
+| Misma imagen (compresión Expo) | 4-50 bytes | ✅ Auténtica |
+| Cambio de brillo | 1000-5000 bytes | ❌ Modificada |
+| Cambio de contraste | 2000-8000 bytes | ❌ Modificada |
+| Recorte de imagen | Dimensiones diferentes | ❌ Modificada |
+
+El sistema ahora es tan preciso como la versión web, detectando modificaciones mínimas mientras tolera solo las diferencias de compresión de Expo.

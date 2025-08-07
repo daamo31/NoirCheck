@@ -98,21 +98,44 @@ export class ContentRegistry {
 
   /**
    * Generate hash based on file content characteristics
-   * More reliable method for same image detection with size tolerance
+   * More precise method with smaller tolerance for compression differences only
    */
   static generateContentHash(fileSize: number, width?: number, height?: number, fileType?: string): string {
     const dimensions = width && height ? `${width}x${height}` : 'unknown';
     const type = fileType || 'unknown';
     
-    // Create size ranges for tolerance (±5KB tolerance for image processing differences)
-    const sizeRange = fileSize ? Math.floor(fileSize / 5000) * 5000 : 0; // Round to nearest 5KB
-    
-    const identifier = `${sizeRange}_${dimensions}_${type}`;
+    // Use exact size for better precision - no rounding
+    const identifier = `${fileSize}_${dimensions}_${type}`;
     return `sha256_content_${identifier}`.replace(/[^a-zA-Z0-9_]/g, '');
   }
   
   /**
-   * Find content by hash with tolerance for slight size differences
+   * Simulate a more realistic content-based hash (like web version would use)
+   * This would normally use actual file content, but we simulate it with precise metadata
+   */
+  static generateSimulatedContentHash(fileSize: number, width?: number, height?: number, fileType?: string, uri?: string): string {
+    const dimensions = width && height ? `${width}x${height}` : 'unknown';
+    const type = fileType || 'unknown';
+    
+    // Create a more complex identifier that would change with content modifications
+    // In reality, this would be a hash of the actual pixel data
+    let contentSignature = fileSize.toString();
+    
+    // Add dimension-based signature
+    if (width && height) {
+      contentSignature += `_${width}x${height}`;
+    }
+    
+    // Add a simulated "content fingerprint" based on file characteristics
+    // This simulates what a real content hash would detect
+    const contentFingerprint = (fileSize * (width || 1) * (height || 1)) % 100000;
+    contentSignature += `_${contentFingerprint}`;
+    
+    return `sha256_realistic_${contentSignature}_${type}`.replace(/[^a-zA-Z0-9_]/g, '');
+  }
+  
+  /**
+   * Find content by hash with very limited tolerance for compression differences only
    */
   static async findByHashTolerant(targetSize: number, width?: number, height?: number, fileType?: string): Promise<RegisteredContent | null> {
     try {
@@ -123,19 +146,37 @@ export class ContentRegistry {
       let match = allContent.find(content => content.hash === exactHash);
       
       if (match) {
+        console.log('🎯 Found exact hash match');
         return match;
       }
       
-      // If no exact match, try with tolerance for images
+      // If no exact match, try with VERY limited tolerance for images (compression only)
       if (fileType === 'image' && width && height) {
         match = allContent.find(content => {
-          // Same dimensions and similar size (within 10KB)
+          // Same dimensions and very similar size (within 2KB - typical compression difference)
           const sizeDiff = Math.abs((content.fileSize || 0) - targetSize);
           const sameDimensions = content.width === width && content.height === height;
           const sameType = content.fileType === fileType;
           
-          return sameDimensions && sameType && sizeDiff <= 10000; // 10KB tolerance
+          // Much stricter tolerance: only 2KB difference (typical for compression)
+          const isCompressionDifference = sizeDiff <= 2048; // 2KB tolerance
+          
+          console.log(`🔍 Checking potential match:`, {
+            registeredFile: content.fileName,
+            registeredSize: content.fileSize,
+            currentSize: targetSize,
+            sizeDifference: sizeDiff,
+            sameDimensions,
+            sameType,
+            withinTolerance: isCompressionDifference
+          });
+          
+          return sameDimensions && sameType && isCompressionDifference;
         });
+        
+        if (match) {
+          console.log('✅ Found match within compression tolerance (≤2KB)');
+        }
       }
       
       return match || null;

@@ -199,7 +199,7 @@ export default function RegisterTab() {
       
       console.log('🔑 Generated content hash:', contentHash);
       console.log('🔍 Hash components:', {
-        sizeRange: Math.floor(file.size / 5000) * 5000,
+        exactSize: file.size, // Now using exact size instead of ranges
         dimensions: `${file.width}x${file.height}`,
         type: file.type
       });

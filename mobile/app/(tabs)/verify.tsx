@@ -195,7 +195,7 @@ export default function VerifyTab() {
       
       console.log('🔍 Generated content hash for verification:', contentHash);
       console.log('🔍 Hash components for verification:', {
-        sizeRange: Math.floor(file.size / 5000) * 5000,
+        exactSize: file.size, // Now using exact size
         dimensions: `${file.width}x${file.height}`,
         type: file.type
       });
