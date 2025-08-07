@@ -49,21 +49,8 @@ export class ContentRegistry {
         return JSON.parse(data);
       }
       
-      // Return some pre-registered content for demo
-      const demoContent: RegisteredContent[] = [
-        {
-          hash: 'sha256_democontent1',
-          author: 'demo@noircheck.com',
-          registrationDate: '2024-11-15',
-          fileName: 'demo_image_1.png',
-          fileSize: 521814,
-          fileType: 'image'
-        }
-      ];
-      
-      // Save demo content
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(demoContent));
-      return demoContent;
+      // Start with empty array - no demo content
+      return [];
       
     } catch (error) {
       console.error('❌ Failed to get registered content:', error);
@@ -111,13 +98,51 @@ export class ContentRegistry {
 
   /**
    * Generate hash based on file content characteristics
-   * More reliable method for same image detection
+   * More reliable method for same image detection with size tolerance
    */
   static generateContentHash(fileSize: number, width?: number, height?: number, fileType?: string): string {
     const dimensions = width && height ? `${width}x${height}` : 'unknown';
     const type = fileType || 'unknown';
-    const identifier = `${fileSize}_${dimensions}_${type}`;
+    
+    // Create size ranges for tolerance (±5KB tolerance for image processing differences)
+    const sizeRange = fileSize ? Math.floor(fileSize / 5000) * 5000 : 0; // Round to nearest 5KB
+    
+    const identifier = `${sizeRange}_${dimensions}_${type}`;
     return `sha256_content_${identifier}`.replace(/[^a-zA-Z0-9_]/g, '');
+  }
+  
+  /**
+   * Find content by hash with tolerance for slight size differences
+   */
+  static async findByHashTolerant(targetSize: number, width?: number, height?: number, fileType?: string): Promise<RegisteredContent | null> {
+    try {
+      const allContent = await this.getAllRegisteredContent();
+      
+      // First try exact match
+      const exactHash = this.generateContentHash(targetSize, width, height, fileType);
+      let match = allContent.find(content => content.hash === exactHash);
+      
+      if (match) {
+        return match;
+      }
+      
+      // If no exact match, try with tolerance for images
+      if (fileType === 'image' && width && height) {
+        match = allContent.find(content => {
+          // Same dimensions and similar size (within 10KB)
+          const sizeDiff = Math.abs((content.fileSize || 0) - targetSize);
+          const sameDimensions = content.width === width && content.height === height;
+          const sameType = content.fileType === fileType;
+          
+          return sameDimensions && sameType && sizeDiff <= 10000; // 10KB tolerance
+        });
+      }
+      
+      return match || null;
+    } catch (error) {
+      console.error('❌ Failed to find content with tolerance:', error);
+      return null;
+    }
   }
   
   /**
@@ -142,11 +167,17 @@ export class ContentRegistry {
       allContent.forEach((content, index) => {
         console.log(`${index + 1}. ${content.fileName}`);
         console.log(`   Hash: ${content.hash}`);
-        console.log(`   Size: ${content.fileSize}`);
-        console.log(`   Dimensions: ${content.width}x${content.height}`);
+        console.log(`   Size: ${content.fileSize} bytes`);
+        console.log(`   Dimensions: ${content.width || 'unknown'}x${content.height || 'unknown'}`);
+        console.log(`   Type: ${content.fileType}`);
         console.log(`   Author: ${content.author}`);
+        console.log(`   Date: ${content.registrationDate}`);
         console.log('---');
       });
+      
+      if (allContent.length === 0) {
+        console.log('No content registered yet.');
+      }
     } catch (error) {
       console.error('❌ Failed to debug content:', error);
     }

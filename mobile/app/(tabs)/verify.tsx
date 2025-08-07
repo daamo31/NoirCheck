@@ -178,7 +178,8 @@ export default function VerifyTab() {
         size: file.size,
         width: file.width,
         height: file.height,
-        type: file.type
+        type: file.type,
+        uri: file.uri.substring(file.uri.length - 50) // Last 50 chars of URI for debugging
       });
       
       // Simulate hash calculation and blockchain verification
@@ -193,9 +194,25 @@ export default function VerifyTab() {
       );
       
       console.log('🔍 Generated content hash for verification:', contentHash);
+      console.log('🔍 Hash components for verification:', {
+        sizeRange: Math.floor(file.size / 5000) * 5000,
+        dimensions: `${file.width}x${file.height}`,
+        type: file.type
+      });
       
-      // Check if this content is registered
-      const registeredContent = await ContentRegistry.findByHash(contentHash);
+      // Check if this content is registered using tolerant matching
+      const registeredContent = await ContentRegistry.findByHashTolerant(
+        file.size,
+        file.width,
+        file.height,
+        file.type
+      );
+      
+      console.log(`🔍 Tolerant search result: ${registeredContent ? 'FOUND' : 'NOT FOUND'}`);
+      if (registeredContent) {
+        console.log(`📋 Found match: ${registeredContent.fileName} (${registeredContent.fileSize} bytes)`);
+        console.log(`📏 Size difference: ${Math.abs(registeredContent.fileSize - file.size)} bytes`);
+      }
       
       const isRegistered = !!registeredContent;
       const confidenceScore = isRegistered ? Math.floor(88 + Math.random() * 12) : Math.floor(15 + Math.random() * 35);
@@ -303,6 +320,29 @@ export default function VerifyTab() {
             >
               <Text style={styles.debugButtonText}>Clear All</Text>
             </TouchableOpacity>
+            
+            {selectedFile && (
+              <TouchableOpacity 
+                style={styles.debugButton} 
+                onPress={() => {
+                  console.log('🔍 Current file for verification:', {
+                    name: selectedFile.name,
+                    size: selectedFile.size,
+                    dimensions: `${selectedFile.width}x${selectedFile.height}`,
+                    type: selectedFile.type,
+                    hash: ContentRegistry.generateContentHash(
+                      selectedFile.size,
+                      selectedFile.width,
+                      selectedFile.height,
+                      selectedFile.type
+                    )
+                  });
+                  Alert.alert('Debug', 'Current file details logged to console');
+                }}
+              >
+                <Text style={styles.debugButtonText}>Show Current</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

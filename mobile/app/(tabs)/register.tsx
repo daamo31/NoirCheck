@@ -182,13 +182,14 @@ export default function RegisterTab() {
         size: file.size,
         width: file.width,
         height: file.height,
-        type: file.type
+        type: file.type,
+        uri: file.uri.substring(file.uri.length - 50) // Last 50 chars of URI for debugging
       });
       
       // Simulate hash calculation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Generate deterministic hash using content-based approach
+      // Generate deterministic hash using content-based approach with size tolerance
       const contentHash = ContentRegistry.generateContentHash(
         file.size,
         file.width,
@@ -197,6 +198,11 @@ export default function RegisterTab() {
       );
       
       console.log('🔑 Generated content hash:', contentHash);
+      console.log('🔍 Hash components:', {
+        sizeRange: Math.floor(file.size / 5000) * 5000,
+        dimensions: `${file.width}x${file.height}`,
+        type: file.type
+      });
       
       // Get current user email from auth context
       const authorEmail = user?.email || 'daniel@noircheck.com';
