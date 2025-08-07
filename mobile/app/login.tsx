@@ -28,17 +28,17 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';
 
 export default function LoginScreen() {
-  // Local state for form inputs
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Local state for form inputs con valores predefinidos para demo
+  const [email, setEmail] = useState('by.cozyhome@gmail.com');
+  const [password, setPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Authentication context and navigation
+    // Authentication context and navigation
   const { createAccount } = useAuth();
   const router = useRouter();
 
   /**
-   * Handle user login
+   * Handle user login with automatic XION connection
    * Currently uses createAccount method as we're doing local auth simulation
    * In production, this would validate against a backend or local storage
    */
@@ -51,17 +51,26 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
+      console.log('🔄 Authenticating user...');
       // Perform authentication (currently using createAccount for demo)
       // In production: validate credentials against backend or local storage
       const success = await createAccount(email, password);
       
       if (success) {
-        // Navigate to main app on successful login
-        router.replace('/(tabs)');
+        console.log('✅ User authenticated successfully');
+        
+        // NO intentar conectar XION automáticamente para evitar bloqueos
+        console.log('ℹ️ User ready. XION connection available from dashboard.');
+        
+        // Navigate to main app directly
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 500);
       } else {
         Alert.alert('Error', 'Invalid credentials');
       }
     } catch (error) {
+      console.error('❌ Login failed:', error);
       Alert.alert('Error', 'Login failed');
     } finally {
       setIsLoading(false);

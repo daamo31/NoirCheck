@@ -1,9 +1,6 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-import Colors from '@/constants/Colors';
+import { Tabs } from 'expo-router';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
@@ -12,7 +9,7 @@ function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
 }) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
 }
 
 export default function TabLayout() {
@@ -21,23 +18,48 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#666',
+        tabBarStyle: {
+          backgroundColor: '#1a1a1a',
+          borderTopColor: '#333',
+        },
         headerShown: useClientOnlyValue(false, true),
+        headerStyle: {
+          backgroundColor: '#1a1a1a',
+        },
+        headerTintColor: '#fff',
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Register',
-          tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />,
+          title: 'Overview',
+          tabBarIcon: ({ color }) => <TabBarIcon name="dashboard" color={color} />,
+          headerTitle: 'NoirCheck Dashboard',
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="register"
+        options={{
+          title: 'Register',
+          tabBarIcon: ({ color }) => <TabBarIcon name="plus-circle" color={color} />,
+          headerTitle: 'Register Content',
+        }}
+      />
+      <Tabs.Screen
+        name="verify"
         options={{
           title: 'Verify',
-          tabBarIcon: ({ color }) => <TabBarIcon name="shield" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="search" color={color} />,
+          headerTitle: 'Verify Content',
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          headerTitle: 'User Profile',
         }}
       />
     </Tabs>

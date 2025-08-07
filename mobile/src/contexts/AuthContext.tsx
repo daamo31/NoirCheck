@@ -1,10 +1,9 @@
 /**
- * Contexto de Autenticación XION
- * Implementación completa según documentación oficial
+ * Contexto de Autenticación simplificado
+ * Versión temporal sin hooks de Abstraxion para evitar problemas de Metro
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAbstraxionAccount, useAbstraxionSigningClient } from '@burnt-labs/abstraxion-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Interfaces TypeScript
@@ -14,6 +13,7 @@ interface User {
   createdAt: string;
   xionConnected: boolean;
   metaAddress?: string;
+  predefinedWallet?: string; // Dirección predefinida para demo
 }
 
 interface Wallet {
@@ -47,27 +47,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Hooks oficiales de Abstraxion
-  const abstraxionAccount = useAbstraxionAccount();
-  const { client: signingClient } = useAbstraxionSigningClient();
+  // TEMPORAL: Comentado para evitar problemas de Metro con Abstraxion
+  // const abstraxionAccount = useAbstraxionAccount();
+  // const { client: signingClient } = useAbstraxionSigningClient();
 
   // Cargar usuario desde AsyncStorage al iniciar
   useEffect(() => {
     loadUserFromStorage();
   }, []);
 
-  // Sincronizar estado de XION con usuario local
-  useEffect(() => {
-    if (abstraxionAccount.isConnected && user) {
-      const updatedUser = { 
-        ...user, 
-        xionConnected: true,
-        metaAddress: abstraxionAccount.data?.bech32Address 
-      };
-      setUser(updatedUser);
-      AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-    }
-  }, [abstraxionAccount.isConnected, abstraxionAccount.data]);
+  // TEMPORAL: Comentado para evitar problemas con Abstraxion
+  // useEffect(() => {
+  //   if (abstraxionAccount.isConnected && user) {
+  //     const updatedUser = { 
+  //       ...user, 
+  //       xionConnected: true,
+  //       metaAddress: abstraxionAccount.data?.bech32Address 
+  //     };
+  //     setUser(updatedUser);
+  //     AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+  //   }
+  // }, [abstraxionAccount.isConnected, abstraxionAccount.data]);
 
   const loadUserFromStorage = async () => {
     try {
@@ -85,18 +85,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       console.log('🔄 Creating NoirCheck account...');
       
+      // Asignar dirección predefinida del env para demo
+      const predefinedWallet = "xion1h0ryxfpzsza9hrwwknyszl8rnx63cafh02l4q82wyssycq39vsyqpjts45";
+      
       // Guardar datos del usuario localmente (NO conectar XION automáticamente)
       const userData: User = {
         id: Date.now().toString(),
         email,
         createdAt: new Date().toISOString(),
-        xionConnected: false
+        xionConnected: false,
+        predefinedWallet
       };
       
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       
-      console.log('✅ NoirCheck account created successfully');
+      console.log('✅ NoirCheck account created successfully with wallet:', predefinedWallet);
       return true;
     } catch (error) {
       console.error('❌ Account creation failed:', error);
@@ -111,21 +115,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       console.log('🔄 Connecting to XION via Meta Account...');
       
-      // Usar el método oficial de Abstraxion
-      await abstraxionAccount.login();
+      // TEMPORAL: Simular conexión XION exitosa para evitar bloqueos con Metro
+      console.log('⚠️ XION connection simulated for demo purposes');
       
-      if (abstraxionAccount.isConnected && user) {
+      if (user) {
+        // Simular conexión exitosa usando la dirección predefinida
+        const simulatedAddress = "xion1h0ryxfpzsza9hrwwknyszl8rnx63cafh02l4q82wyssycq39vsyqpjts45";
         const updatedUser = { 
           ...user, 
           xionConnected: true,
-          metaAddress: abstraxionAccount.data?.bech32Address 
+          metaAddress: simulatedAddress
         };
         await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
         setUser(updatedUser);
-        console.log('✅ XION connected successfully');
+        console.log('✅ XION connection simulated successfully');
+        return true;
       }
       
-      return true;
+      return false;
+      
     } catch (error) {
       console.error('❌ XION connection failed:', error);
       return false;
@@ -136,32 +144,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUserMap = async (data: UserMapData): Promise<boolean> => {
     try {
-      if (!signingClient || !abstraxionAccount.data?.bech32Address) {
-        console.warn('⚠️ XION not connected, skipping User Map update');
-        return false;
-      }
-
-      const contractAddress = process.env.EXPO_PUBLIC_USER_MAP_CONTRACT_ADDRESS;
-      if (!contractAddress) {
-        console.warn('⚠️ User Map contract address not configured');
-        return false;
-      }
-
-      const msg = {
-        update_user_map: {
-          user_data: JSON.stringify(data)
-        }
-      };
-
-      console.log('🔄 Updating User Map contract...');
-      const result = await signingClient.execute(
-        abstraxionAccount.data.bech32Address,
-        contractAddress,
-        msg,
-        'auto'
-      );
-
-      console.log('✅ User Map updated:', result);
+      // TEMPORAL: Simulación sin cliente de signing real
+      console.warn('⚠️ User Map update simulated - XION integration temporarily disabled');
       return true;
     } catch (error) {
       console.error('❌ User Map update failed:', error);
@@ -171,27 +155,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getUserMapData = async (): Promise<UserMapData | null> => {
     try {
-      if (!signingClient || !abstraxionAccount.data?.bech32Address) {
-        console.warn('⚠️ XION not connected, cannot query User Map');
-        return null;
-      }
-
-      const contractAddress = process.env.EXPO_PUBLIC_USER_MAP_CONTRACT_ADDRESS;
-      if (!contractAddress) {
-        console.warn('⚠️ User Map contract address not configured');
-        return null;
-      }
-
-      const query = {
-        get_user_map: {
-          user_address: abstraxionAccount.data.bech32Address
-        }
-      };
-
-      console.log('🔄 Querying User Map contract...');
-      const result = await signingClient.queryContractSmart(contractAddress, query);
-      
-      return result ? JSON.parse(result.user_data || '{}') : null;
+      // TEMPORAL: Simulación sin cliente de signing real
+      console.warn('⚠️ User Map query simulated - XION integration temporarily disabled');
+      return null;
     } catch (error) {
       console.error('❌ User Map query failed:', error);
       return null;
@@ -203,10 +169,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await AsyncStorage.removeItem('user');
       setUser(null);
       
-      // Logout de Abstraxion si está disponible
-      if (abstraxionAccount.logout) {
-        abstraxionAccount.logout();
-      }
+      // TEMPORAL: Comentado logout de Abstraxion
+      // if (abstraxionAccount.logout) {
+      //   abstraxionAccount.logout();
+      // }
       
       console.log('✅ User logged out');
     } catch (error) {
@@ -214,9 +180,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const wallet: Wallet | null = abstraxionAccount.isConnected ? {
-    address: abstraxionAccount.data?.bech32Address,
-    connected: true
+  const wallet: Wallet | null = user?.predefinedWallet ? {
+    address: user.predefinedWallet,
+    connected: user.xionConnected || false // Usar el estado real de conexión XION
   } : null;
 
   const value: AuthContextType = {

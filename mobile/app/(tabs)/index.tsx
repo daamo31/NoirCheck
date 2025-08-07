@@ -1,16 +1,8 @@
 /**
- * NoirCheck Mobile Dashboard
+ * NoirCheck Mobile Dashboard - Overview Tab
  * 
- * Main dashboard screen similar to web version with overview, content registration,
- * verification, and user management features. Integrates with XION blockchain
- * for content authenticity verification.
- * 
- * Features:
- * - User overview with stats
- * - Content registration and verification
- * - XION wallet integration
- * - Activity history
- * - Profile management
+ * Main overview screen showing user statistics, XION status, and recent activity.
+ * This is now just the overview tab, other functionality moved to separate tabs.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -22,11 +14,8 @@ import {
   Alert,
   SafeAreaView,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
-
-const { width } = Dimensions.get('window');
 
 interface ActivityItem {
   id: number;
@@ -41,15 +30,14 @@ interface UserStats {
   recentActivity: ActivityItem[];
 }
 
-export default function DashboardScreen() {
-  const [activeTab, setActiveTab] = useState('overview');
+export default function OverviewScreen() {
   const [userStats, setUserStats] = useState<UserStats>({
     totalRegistrations: 0,
     totalVerifications: 0,
     recentActivity: [],
   });
   
-  const { user, wallet, connectXION, logout } = useAuth();
+  const { user, wallet, connectXION } = useAuth();
 
   // Load user statistics (mock data for now)
   useEffect(() => {
@@ -81,167 +69,69 @@ export default function DashboardScreen() {
     }
   };
 
-  const renderTabButton = (tabId: string, label: string, icon: string) => (
-    <TouchableOpacity
-      key={tabId}
-      style={[
-        styles.tabButton,
-        activeTab === tabId && styles.tabButtonActive
-      ]}
-      onPress={() => setActiveTab(tabId)}
-    >
-      <Text style={styles.tabIcon}>{icon}</Text>
-      <Text style={[
-        styles.tabLabel,
-        activeTab === tabId && styles.tabLabelActive
-      ]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const renderOverview = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Dashboard Overview</Text>
-      
-      {/* User Stats Cards */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{userStats.totalRegistrations}</Text>
-          <Text style={styles.statLabel}>Registrations</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{userStats.totalVerifications}</Text>
-          <Text style={styles.statLabel}>Verifications</Text>
-        </View>
-      </View>
-
-      {/* XION Status */}
-      <View style={styles.xionCard}>
-        <Text style={styles.cardTitle}>XION Blockchain Status</Text>
-        {wallet?.connected ? (
-          <View>
-            <Text style={styles.connectedText}>✅ Connected</Text>
-            <Text style={styles.addressText}>
-              {wallet.address?.slice(0, 10)}...{wallet.address?.slice(-6)}
-            </Text>
-          </View>
-        ) : (
-          <View>
-            <Text style={styles.disconnectedText}>❌ Not Connected</Text>
-            <TouchableOpacity style={styles.connectButton} onPress={handleConnectXION}>
-              <Text style={styles.connectButtonText}>Connect XION</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* Recent Activity */}
-      <View style={styles.activityCard}>
-        <Text style={styles.cardTitle}>Recent Activity</Text>
-        {userStats.recentActivity.map((activity) => (
-          <View key={activity.id} style={styles.activityItem}>
-            <Text style={styles.activityIcon}>
-              {activity.type === 'registration' ? '📝' : '🔍'}
-            </Text>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityTitle}>{activity.title}</Text>
-              <Text style={styles.activityDate}>{activity.date}</Text>
-            </View>
-            <Text style={styles.activityType}>
-              {activity.type === 'registration' ? 'Registered' : 'Verified'}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderRegister = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Register Content</Text>
-      
-      {!wallet?.connected ? (
-        <View style={styles.requirementCard}>
-          <Text style={styles.requirementTitle}>XION Connection Required</Text>
-          <Text style={styles.requirementText}>
-            Connect your XION wallet to register content on the blockchain
-          </Text>
-          <TouchableOpacity style={styles.connectButton} onPress={handleConnectXION}>
-            <Text style={styles.connectButtonText}>Connect XION Wallet</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View style={styles.featureCard}>
-          <Text style={styles.featureTitle}>📱 Content Registration</Text>
-          <Text style={styles.featureText}>
-            Register your original content on XION blockchain for authenticity verification
-          </Text>
-          <TouchableOpacity style={styles.featureButton}>
-            <Text style={styles.featureButtonText}>Upload & Register</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-
-  const renderVerify = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Verify Content</Text>
-      
-      <View style={styles.featureCard}>
-        <Text style={styles.featureTitle}>🔍 Content Verification</Text>
-        <Text style={styles.featureText}>
-          Verify the authenticity of any digital content against blockchain records
-        </Text>
-        <TouchableOpacity style={styles.featureButton}>
-          <Text style={styles.featureButtonText}>Select & Verify</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderProfile = () => (
-    <View style={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Profile</Text>
-      
-      <View style={styles.profileCard}>
-        <Text style={styles.profileEmail}>{user?.email}</Text>
-        <Text style={styles.profileDate}>
-          Member since: {new Date(user?.createdAt || '').toLocaleDateString()}
-        </Text>
-        
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>NoirCheck</Text>
-        <Text style={styles.subtitle}>Digital Content Verification</Text>
-      </View>
-
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {renderTabButton('overview', 'Overview', '📊')}
-          {renderTabButton('register', 'Register', '📝')}
-          {renderTabButton('verify', 'Verify', '🔍')}
-          {renderTabButton('profile', 'Profile', '👤')}
-        </ScrollView>
-      </View>
-
-      {/* Content */}
       <ScrollView style={styles.content}>
-        {activeTab === 'overview' && renderOverview()}
-        {activeTab === 'register' && renderRegister()}
-        {activeTab === 'verify' && renderVerify()}
-        {activeTab === 'profile' && renderProfile()}
+        <Text style={styles.welcomeTitle}>Welcome back!</Text>
+        <Text style={styles.welcomeSubtitle}>Here's your NoirCheck overview</Text>
+        
+        {/* User Stats Cards */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{userStats.totalRegistrations}</Text>
+            <Text style={styles.statLabel}>Registrations</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{userStats.totalVerifications}</Text>
+            <Text style={styles.statLabel}>Verifications</Text>
+          </View>
+        </View>
+
+        {/* XION Status */}
+        <View style={styles.xionCard}>
+          <Text style={styles.cardTitle}>XION Blockchain Status</Text>
+          {wallet?.address ? (
+            <View>
+              <Text style={styles.connectedText}>
+                {wallet.connected ? '✅ Connected' : '🔶 Demo Wallet'}
+              </Text>
+              <Text style={styles.addressText}>
+                {wallet.address.slice(0, 15)}...{wallet.address.slice(-10)}
+              </Text>
+              {!wallet.connected && (
+                <TouchableOpacity style={styles.connectButton} onPress={handleConnectXION}>
+                  <Text style={styles.connectButtonText}>Connect Real XION</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.disconnectedText}>❌ Not Connected</Text>
+              <TouchableOpacity style={styles.connectButton} onPress={handleConnectXION}>
+                <Text style={styles.connectButtonText}>Connect XION</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Recent Activity */}
+        <View style={styles.activityCard}>
+          <Text style={styles.cardTitle}>Recent Activity</Text>
+          {userStats.recentActivity.map((activity) => (
+            <View key={activity.id} style={styles.activityItem}>
+              <Text style={styles.activityIcon}>
+                {activity.type === 'registration' ? '📝' : '🔍'}
+              </Text>
+              <View style={styles.activityInfo}>
+                <Text style={styles.activityTitle}>{activity.title}</Text>
+                <Text style={styles.activityDate}>{activity.date}</Text>
+              </View>
+              <Text style={styles.activityType}>
+                {activity.type === 'registration' ? 'Registered' : 'Verified'}
+              </Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -252,67 +142,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  header: {
+  content: {
+    flex: 1,
     padding: 20,
-    paddingTop: 10,
-    backgroundColor: '#1a1a1a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  title: {
+  welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
-    textAlign: 'center',
+    marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  tabContainer: {
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  tabButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 4,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    minWidth: 100,
-  },
-  tabButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  tabIcon: {
+  welcomeSubtitle: {
     fontSize: 16,
-    marginRight: 6,
-  },
-  tabLabel: {
     color: '#666',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabLabelActive: {
-    color: '#fff',
-  },
-  content: {
-    flex: 1,
-  },
-  tabContent: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
+    marginBottom: 30,
+    lineHeight: 22,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -368,6 +212,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontFamily: 'monospace',
+    marginBottom: 12,
   },
   connectButton: {
     backgroundColor: '#007AFF',
@@ -415,86 +260,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#00D4AA',
     fontWeight: '500',
-  },
-  requirementCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  requirementTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FF6B6B',
-    marginBottom: 8,
-  },
-  requirementText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  featureCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  featureText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  featureButton: {
-    backgroundColor: '#00D4AA',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-  },
-  featureButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  profileCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  profileEmail: {
-    fontSize: 18,
-    color: '#fff',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  profileDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

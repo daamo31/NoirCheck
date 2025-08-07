@@ -29,10 +29,10 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';
 
 export default function RegisterScreen() {
-  // Form state management
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Form state management con valores predefinidos para demo
+  const [email, setEmail] = useState('by.cozyhome@gmail.com');
+  const [password, setPassword] = useState('123456');
+  const [confirmPassword, setConfirmPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
   
   // Authentication context and navigation
@@ -40,7 +40,7 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   /**
-   * Handle user registration with validation
+   * Handle user registration with validation and automatic XION connection
    */
   const handleRegister = async () => {
     // Validate required fields
@@ -63,20 +63,25 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
+      console.log('🔄 Creating NoirCheck account...');
       const success = await createAccount(email, password);
       
       if (success) {
-        Alert.alert(
-          'Account Created',
-          'Your NoirCheck account has been created successfully. You can now connect to XION blockchain for advanced features.',
-          [
-            { text: 'Continue', onPress: () => router.replace('/(tabs)') }
-          ]
-        );
+        console.log('✅ Account created successfully');
+        
+        // NO intentar conectar XION automáticamente para evitar bloqueos
+        console.log('ℹ️ Account ready. XION connection can be done later from dashboard.');
+        
+        // Navegar directamente al dashboard
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 500);
+        
       } else {
         Alert.alert('Error', 'Could not create account');
       }
     } catch (error) {
+      console.error('❌ Registration failed:', error);
       Alert.alert('Error', 'Registration failed');
     } finally {
       setIsLoading(false);
