@@ -7,9 +7,8 @@
 ![Blockchain](https://img.shields.io/badge/Blockchain-XION%20zkTLS-purple)
 ![Last Update](https://img.shields.io/badge/Updated-December%202024-yellow)
 
-NoirCheck is an innovative digital content authenticity verification platform that combats misinformation using blockchain technology and zkTLS (Zero-Knowledge Transport Layer Security). Now featuring a complete **mobile application** with real file upload capabilities.
+NoirCheck is an innovative digital content authenticity verification platform that combats misinformation using blockchain technology and zkTLS (Zero-Knowledge Transport Layer Security). Now featuring a complete **mobile application** with real file upload 
 
-## 🆕 Latest Updates (December 2024)
 
 ### 📱 **Mobile App - FULLY FUNCTIONAL**
 - ✅ **Real file upload system** - Upload photos from gallery, camera, and documents
