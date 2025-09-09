@@ -1,29 +1,25 @@
 /**
  * Metro Configuration for React Native
- * Simplified configuration for better compatibility with expo-router
+ * Basado en abstraxion-expo-demo oficial
  */
 
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require("expo/metro-config");
+const {
+  withLibsodiumResolver,
+} = require("@burnt-labs/abstraxion-react-native/metro.libsodium");
 
 const config = getDefaultConfig(__dirname);
+config.resolver.unstable_enablePackageExports = false;
 
-// Add minimal polyfill resolver for crypto modules only
+// Agregar alias para polyfills
 config.resolver.alias = {
   ...config.resolver.alias,
-  crypto: 'react-native-get-random-values',
-  stream: 'readable-stream',
+  crypto: 'react-native-quick-crypto',
+  stream: 'stream-browserify',
   buffer: 'buffer',
 };
 
-// Keep default resolver settings but add source extensions
-config.resolver.sourceExts.push('cjs', 'mjs');
+// Configurar polyfills globales
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
-// Minimal transformer options
-config.transformer.getTransformOptions = async () => ({
-  transform: {
-    experimentalImportSupport: false,
-    inlineRequires: false, // Set to false to avoid conflicts
-  },
-});
-
-module.exports = config;
+module.exports = withLibsodiumResolver(config);

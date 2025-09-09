@@ -17,10 +17,12 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useRefresh } from '../../src/contexts/RefreshContext';
 import { ContentRegistry } from '../../src/services/ContentRegistry';
 
 export default function RegisterTab() {
   const { user, wallet, connectXION } = useAuth();
+  const { triggerRefresh } = useRefresh();
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
@@ -205,7 +207,12 @@ export default function RegisterTab() {
       });
       
       // Get current user email from auth context
-      const authorEmail = user?.email || 'daniel@noircheck.com';
+      const authorEmail = user?.email;
+      
+      if (!authorEmail) {
+        Alert.alert('Error', 'No authenticated user found');
+        return;
+      }
       
       // Register content in local storage
       await ContentRegistry.registerContent({
@@ -220,6 +227,9 @@ export default function RegisterTab() {
         height: file.height,
         mimeType: file.mimeType
       });
+      
+      // Trigger refresh across all tabs
+      triggerRefresh();
       
       console.log(`✅ File registered with hash: ${contentHash}`);
       console.log(`📝 Author: ${authorEmail}`);

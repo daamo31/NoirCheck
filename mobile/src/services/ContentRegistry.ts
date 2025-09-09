@@ -25,6 +25,33 @@ const STORAGE_KEY = '@NoirCheck:RegisteredContent';
 export class ContentRegistry {
   
   /**
+   * Clear ALL content (including demo/predefined content)
+   */
+  static async clearAllContent(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      console.log('🗑️ Cleared all registered content (including demo data)');
+    } catch (error) {
+      console.error('❌ Failed to clear content:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Initialize clean storage (no predefined content)
+   */
+  static async initializeCleanStorage(): Promise<void> {
+    try {
+      // Always start with empty array - no predefined content
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+      console.log('✅ Initialized clean content registry');
+    } catch (error) {
+      console.error('❌ Failed to initialize storage:', error);
+      throw error;
+    }
+  }
+  
+  /**
    * Register new content
    */
   static async registerContent(content: RegisteredContent): Promise<void> {
@@ -49,7 +76,8 @@ export class ContentRegistry {
         return JSON.parse(data);
       }
       
-      // Start with empty array - no demo content
+      // Always start clean - NO demo/predefined content
+      await this.initializeCleanStorage();
       return [];
       
     } catch (error) {

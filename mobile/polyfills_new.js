@@ -3,89 +3,6 @@ const CryptoJS = require('crypto-js');
 
 console.log('🚀 Initializing comprehensive crypto polyfills...');
 
-// Polyfill para libsodium si no está disponible
-if (typeof global._sodium === 'undefined') {
-  global._sodium = {
-    ready: Promise.resolve(),
-    // Funciones principales que XION puede necesitar
-    crypto_sign_keypair: () => {
-      console.log('⚠️ libsodium crypto_sign_keypair mock called');
-      const publicKey = new Uint8Array(32);
-      const privateKey = new Uint8Array(64);
-      global.crypto.getRandomValues(publicKey);
-      global.crypto.getRandomValues(privateKey);
-      return { publicKey, privateKey, keyType: 'ed25519' };
-    },
-    crypto_sign_detached: (message, privateKey) => {
-      console.log('⚠️ libsodium crypto_sign_detached mock called');
-      const signature = new Uint8Array(64);
-      global.crypto.getRandomValues(signature);
-      return signature;
-    },
-    crypto_sign_verify_detached: (signature, message, publicKey) => {
-      console.log('⚠️ libsodium crypto_sign_verify_detached mock called');
-      return true; // Siempre retorna true en modo mock
-    },
-    crypto_hash_sha256: (message) => {
-      console.log('⚠️ libsodium crypto_hash_sha256 mock called');
-      const hash = new Uint8Array(32);
-      global.crypto.getRandomValues(hash);
-      return hash;
-    },
-    crypto_secretbox_easy: (message, nonce, key) => {
-      console.log('⚠️ libsodium crypto_secretbox_easy mock called');
-      const ciphertext = new Uint8Array(message.length + 16);
-      global.crypto.getRandomValues(ciphertext);
-      return ciphertext;
-    },
-    crypto_secretbox_open_easy: (ciphertext, nonce, key) => {
-      console.log('⚠️ libsodium crypto_secretbox_open_easy mock called');
-      return new Uint8Array(ciphertext.length - 16);
-    },
-    randombytes_buf: (length) => {
-      const buffer = new Uint8Array(length);
-      global.crypto.getRandomValues(buffer);
-      return buffer;
-    },
-    // Utilidades de conversión
-    from_string: (str) => new TextEncoder().encode(str),
-    to_string: (bytes) => new TextDecoder().decode(bytes),
-    to_hex: (bytes) => Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(''),
-    from_hex: (hex) => new Uint8Array(hex.match(/.{2}/g).map(byte => parseInt(byte, 16))),
-    to_base64: (bytes) => {
-      if (typeof btoa !== 'undefined') {
-        return btoa(String.fromCharCode(...bytes));
-      }
-      // Fallback básico para base64
-      return Buffer.from(bytes).toString('base64');
-    },
-    from_base64: (base64) => {
-      if (typeof atob !== 'undefined') {
-        return new Uint8Array([...atob(base64)].map(c => c.charCodeAt(0)));
-      }
-      // Fallback básico
-      return new Uint8Array(Buffer.from(base64, 'base64'));
-    },
-    // Constantes comunes
-    crypto_sign_PUBLICKEYBYTES: 32,
-    crypto_sign_SECRETKEYBYTES: 64,
-    crypto_sign_BYTES: 64,
-    crypto_hash_sha256_BYTES: 32,
-    crypto_secretbox_NONCEBYTES: 24,
-    crypto_secretbox_KEYBYTES: 32,
-    crypto_secretbox_MACBYTES: 16
-  };
-  console.log('📦 libsodium comprehensive mock initialized');
-}
-
-// Hacer disponible globalmente para módulos que lo busquen
-if (typeof global.sodium === 'undefined') {
-  global.sodium = global._sodium;
-}
-
-// Mock básico para libsodium - React Native no permite interceptar require
-console.log('📦 libsodium mock available as global._sodium and global.sodium');
-
 // Intentar usar react-native-quick-crypto para mejor compatibilidad
 let usingQuickCrypto = false;
 let nativeSubtle = null;
@@ -109,26 +26,6 @@ if (!global.crypto) {
   global.crypto = {};
 }
 
-// Buffer polyfill si no está disponible
-if (typeof global.Buffer === 'undefined') {
-  try {
-    global.Buffer = require('buffer').Buffer;
-    console.log('✅ Buffer polyfill initialized');
-  } catch (error) {
-    console.log('⚠️ Buffer not available, creating basic polyfill');
-    global.Buffer = {
-      from: (data, encoding = 'utf8') => {
-        if (typeof data === 'string') {
-          return new TextEncoder().encode(data);
-        }
-        return new Uint8Array(data);
-      },
-      alloc: (size) => new Uint8Array(size),
-      isBuffer: (obj) => obj instanceof Uint8Array
-    };
-  }
-}
-
 // getRandomValues esencial para crypto
 if (typeof global.crypto.getRandomValues === 'undefined') {
   const { getRandomValues } = require('react-native-get-random-values');
@@ -148,26 +45,19 @@ global.crypto.subtle = {
       const salt = new Uint8Array(algorithm.salt);
       const hash = algorithm.hash.name.toLowerCase().replace('sha-', 'SHA');
       
-      // Validar y normalizar salt length - ser muy permisivo
+      // Validar salt length - PBKDF2 necesita al menos 8 bytes
       let validSalt = salt;
-      if (salt.length === 0) {
-        console.log('⚠️ Empty salt, using default 16-byte salt');
-        validSalt = new Uint8Array(16);
-        global.crypto.getRandomValues(validSalt);
-      } else if (salt.length < 8) {
-        console.log(`⚠️ Salt too short (${salt.length} bytes), padding to minimum 8 bytes`);
-        validSalt = new Uint8Array(Math.max(8, 16)); // Usar 16 como mínimo recomendado
+      if (salt.length < 8) {
+        console.log(`⚠️ Salt too short (${salt.length} bytes), padding to 8 bytes`);
+        validSalt = new Uint8Array(8);
         validSalt.set(salt);
-        // Rellenar con patrón repetitivo del salt original
-        for (let i = salt.length; i < validSalt.length; i++) {
+        // Rellenar con ceros o repetir patrón
+        for (let i = salt.length; i < 8; i++) {
           validSalt[i] = salt[i % salt.length] || 0;
         }
-      } else if (salt.length > 1024) {
-        console.log(`⚠️ Salt too long (${salt.length} bytes), truncating to 1024 bytes`);
-        validSalt = salt.slice(0, 1024);
       }
       
-      // Extraer la clave desde baseKey con más flexibilidad
+      // Extraer la clave desde baseKey
       let password;
       if (baseKey && baseKey._key) {
         if (baseKey._key instanceof Uint8Array) {
@@ -176,58 +66,38 @@ global.crypto.subtle = {
           password = CryptoJS.enc.Utf8.parse(baseKey._key);
         } else if (baseKey._key.words && Array.isArray(baseKey._key.words)) {
           password = baseKey._key;
-        } else if (baseKey._key instanceof ArrayBuffer) {
-          password = CryptoJS.lib.WordArray.create(Array.from(new Uint8Array(baseKey._key)));
         } else {
-          console.log('⚠️ Unknown baseKey format, attempting string conversion');
-          password = CryptoJS.enc.Utf8.parse(String(baseKey._key));
+          throw new Error('Unsupported baseKey format');
         }
-      } else if (baseKey instanceof Uint8Array) {
-        password = CryptoJS.lib.WordArray.create(Array.from(baseKey));
       } else {
-        console.error('❌ Invalid baseKey for PBKDF2:', baseKey);
         throw new Error('Invalid baseKey for PBKDF2');
       }
       
       const saltWords = CryptoJS.lib.WordArray.create(Array.from(validSalt));
       
       try {
-        // Usar parámetros más robustos
-        const keySize = Math.max(1, Math.ceil(length / 32)); // Al menos 1 palabra de 32 bits
-        const hasher = CryptoJS.algo[hash] || CryptoJS.algo.SHA256;
-        
-        console.log(`🔐 PBKDF2 params: iterations=${iterations}, keySize=${keySize}, hash=${hash}, saltLength=${validSalt.length}`);
-        
         const derived = CryptoJS.PBKDF2(password, saltWords, {
-          keySize: keySize,
+          keySize: length / 32, // CryptoJS usa keySize en palabras de 32 bits
           iterations: iterations,
-          hasher: hasher
+          hasher: CryptoJS.algo[hash] || CryptoJS.algo.SHA256
         });
         
-        // Convertir resultado a ArrayBuffer con longitud exacta
-        const targetBytes = length / 8;
-        const result = new ArrayBuffer(targetBytes);
+        // Convertir resultado a ArrayBuffer
+        const result = new ArrayBuffer(length / 8);
         const view = new Uint8Array(result);
         
-        // Extraer bytes del WordArray de CryptoJS con manejo seguro
-        let byteIndex = 0;
-        for (let i = 0; i < derived.words.length && byteIndex < targetBytes; i++) {
-          const word = derived.words[i];
-          for (let j = 0; j < 4 && byteIndex < targetBytes; j++) {
-            view[byteIndex] = (word >>> (24 - j * 8)) & 0xff;
-            byteIndex++;
-          }
-        }
-        
-        // Llenar bytes restantes si es necesario
-        if (byteIndex < targetBytes) {
-          console.log(`⚠️ Padding result from ${byteIndex} to ${targetBytes} bytes`);
-          for (let i = byteIndex; i < targetBytes; i++) {
+        // Extraer bytes del WordArray de CryptoJS
+        for (let i = 0; i < view.length; i++) {
+          const wordIndex = Math.floor(i / 4);
+          const byteIndex = i % 4;
+          if (wordIndex < derived.words.length) {
+            view[i] = (derived.words[wordIndex] >>> (24 - byteIndex * 8)) & 0xff;
+          } else {
             view[i] = 0;
           }
         }
         
-        console.log(`✅ PBKDF2 success, generated ${view.length} bytes (requested ${targetBytes})`);
+        console.log(`✅ PBKDF2 success, generated ${view.length} bytes`);
         return result;
       } catch (error) {
         console.error('❌ PBKDF2 deriveBits failed:', error);
@@ -242,14 +112,7 @@ global.crypto.subtle = {
         console.log('✅ Native deriveBits success');
         return result;
       } catch (error) {
-        console.log('⚠️ Native deriveBits failed:', error.message);
-        
-        // Si el error es "invalid salt length", intentar nuestro fallback
-        if (error.message.includes('salt length') || error.message.includes('invalid salt')) {
-          console.log('🔄 Retrying with custom PBKDF2 due to salt length error');
-          return this.deriveBits(algorithm, baseKey, length);
-        }
-        
+        console.log('⚠️ Native deriveBits failed, no fallback available:', error.message);
         throw error;
       }
     }
@@ -260,24 +123,16 @@ global.crypto.subtle = {
   async importKey(format, keyData, algorithm, extractable, usages) {
     console.log('🔑 importKey called:', { format, algorithm: algorithm.name });
     
-    // Para formato raw, usar siempre nuestro fallback más robusto
+    // Para formato raw, usar siempre nuestro fallback
     if (format === 'raw') {
       let keyDataArray;
       if (keyData instanceof ArrayBuffer) {
         keyDataArray = new Uint8Array(keyData);
       } else if (keyData instanceof Uint8Array) {
         keyDataArray = keyData;
-      } else if (typeof keyData === 'string') {
-        // Convertir string a bytes usando TextEncoder
-        keyDataArray = new TextEncoder().encode(keyData);
-      } else if (Array.isArray(keyData)) {
-        keyDataArray = new Uint8Array(keyData);
       } else {
-        console.log('⚠️ Unusual keyData format, attempting conversion:', typeof keyData);
-        keyDataArray = new Uint8Array([...String(keyData)].map(c => c.charCodeAt(0)));
+        throw new Error('Unsupported keyData format for raw import');
       }
-      
-      console.log(`✅ Raw key imported, length: ${keyDataArray.length} bytes`);
       
       return {
         type: 'secret',
@@ -288,7 +143,7 @@ global.crypto.subtle = {
       };
     }
     
-    // Para otros formatos, intentar native primero con fallback robusto
+    // Para otros formatos, intentar native primero
     if (nativeSubtle) {
       try {
         const result = await nativeSubtle.importKey(format, keyData, algorithm, extractable, usages);
@@ -296,11 +151,6 @@ global.crypto.subtle = {
         return result;
       } catch (error) {
         console.log('⚠️ Native importKey failed, using fallback:', error.message);
-        
-        // Si el error es relacionado con salt/key length, usar fallback
-        if (error.message.includes('salt length') || error.message.includes('key length') || error.message.includes('invalid')) {
-          console.log('🔄 Using fallback importKey due to validation error');
-        }
       }
     }
     
@@ -609,12 +459,7 @@ global.crypto.subtle = {
 };
 
 // localStorage mock usando AsyncStorage (compatible con sincronización)
-let AsyncStorage = null;
-try {
-  AsyncStorage = require('@react-native-async-storage/async-storage');
-} catch (error) {
-  console.log('⚠️ AsyncStorage not available, using memory-only localStorage');
-}
+const AsyncStorage = require('@react-native-async-storage/async-storage');
 
 const localStorageMock = {
   getItem: (key) => {
@@ -622,52 +467,41 @@ const localStorageMock = {
     return global._localStorageCache?.[key] || null;
   },
   setItem: (key, value) => {
-    // Cache síncrono + AsyncStorage asíncrono si disponible
+    // Cache síncrono + AsyncStorage asíncrono
     if (!global._localStorageCache) {
       global._localStorageCache = {};
     }
     global._localStorageCache[key] = value;
     
-    // También guardar en AsyncStorage de manera asíncrona si está disponible
-    if (AsyncStorage) {
-      AsyncStorage.setItem(key, value).catch(console.error);
-    }
+    // También guardar en AsyncStorage de manera asíncrona
+    AsyncStorage.setItem(key, value).catch(console.error);
   },
   removeItem: (key) => {
     if (global._localStorageCache) {
       delete global._localStorageCache[key];
     }
-    if (AsyncStorage) {
-      AsyncStorage.removeItem(key).catch(console.error);
-    }
+    AsyncStorage.removeItem(key).catch(console.error);
   },
   clear: () => {
     global._localStorageCache = {};
-    if (AsyncStorage) {
-      AsyncStorage.clear().catch(console.error);
-    }
+    AsyncStorage.clear().catch(console.error);
   }
 };
 
-// Inicializar cache desde AsyncStorage si está disponible
+// Inicializar cache desde AsyncStorage
 const initializeLocalStorageCache = async () => {
   try {
-    if (AsyncStorage) {
-      const keys = await AsyncStorage.getAllKeys();
-      const items = await AsyncStorage.multiGet(keys);
-      global._localStorageCache = {};
-      
-      items.forEach(([key, value]) => {
-        if (value !== null) {
-          global._localStorageCache[key] = value;
-        }
-      });
-      
-      console.log('✅ localStorage cache initialized with', keys.length, 'items');
-    } else {
-      global._localStorageCache = {};
-      console.log('✅ localStorage cache initialized (memory-only)');
-    }
+    const keys = await AsyncStorage.getAllKeys();
+    const items = await AsyncStorage.multiGet(keys);
+    global._localStorageCache = {};
+    
+    items.forEach(([key, value]) => {
+      if (value !== null) {
+        global._localStorageCache[key] = value;
+      }
+    });
+    
+    console.log('✅ localStorage cache initialized with', keys.length, 'items');
   } catch (error) {
     console.error('❌ Failed to initialize localStorage cache:', error);
     global._localStorageCache = {};
@@ -682,27 +516,3 @@ if (typeof global.localStorage === 'undefined') {
 }
 
 console.log('✅ Crypto polyfills initialized successfully');
-
-// Interceptor global para errores de crypto
-const originalConsoleError = console.error;
-console.error = function(...args) {
-  // Interceptar errores de salt length para debug
-  const errorStr = args.join(' ');
-  if (errorStr.includes('invalid salt length')) {
-    console.log('🚨 Intercepted "invalid salt length" error:', ...args);
-    console.trace('Error origin trace');
-  }
-  return originalConsoleError.apply(console, args);
-};
-
-// Interceptor para Promise rejections no manejadas
-if (typeof global !== 'undefined') {
-  const originalPromiseReject = Promise.reject;
-  Promise.reject = function(reason) {
-    if (reason && typeof reason === 'object' && reason.message && reason.message.includes('invalid salt length')) {
-      console.log('🚨 Intercepted Promise rejection with salt length error:', reason);
-      console.trace('Promise rejection trace');
-    }
-    return originalPromiseReject.call(this, reason);
-  };
-}

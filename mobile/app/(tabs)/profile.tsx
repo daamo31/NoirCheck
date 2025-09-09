@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function ProfileTab() {
-  const { user, wallet, logout } = useAuth();
+  const { user, wallet, logout, connectXION, isConnected, isConnecting, clearAllDemoData } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -25,6 +25,41 @@ export default function ProfileTab() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Sign Out', style: 'destructive', onPress: logout }
+      ]
+    );
+  };
+
+  const handleConnectXION = async () => {
+    try {
+      const success = await connectXION();
+      if (success) {
+        Alert.alert('Success', 'XION wallet connected successfully!');
+      } else {
+        Alert.alert('Error', 'Failed to connect XION wallet');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while connecting to XION');
+    }
+  };
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      '🗑️ Clear All Data',
+      'This will remove ALL registered content and demo data. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Clear All', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await clearAllDemoData();
+              Alert.alert('✅ Success', 'All demo data has been cleared');
+            } catch (error) {
+              Alert.alert('❌ Error', 'Failed to clear data');
+            }
+          }
+        }
       ]
     );
   };
@@ -46,14 +81,25 @@ export default function ProfileTab() {
           {wallet?.address ? (
             <View>
               <Text style={styles.connectedText}>
-                {wallet.connected ? '✅ Connected' : '🔶 Demo Wallet'}
+                {wallet.connected ? '✅ Connected via Abstraxion' : '🔶 Ready to Connect'}
               </Text>
               <Text style={styles.addressText}>
                 {wallet.address.slice(0, 15)}...{wallet.address.slice(-10)}
               </Text>
             </View>
           ) : (
-            <Text style={styles.disconnectedText}>❌ No wallet connected</Text>
+            <View>
+              <Text style={styles.disconnectedText}>❌ No wallet connected</Text>
+              <TouchableOpacity 
+                style={[styles.connectButton, isConnecting && styles.connectButtonDisabled]}
+                onPress={handleConnectXION}
+                disabled={isConnecting}
+              >
+                <Text style={styles.connectButtonText}>
+                  {isConnecting ? 'Connecting...' : 'Connect XION Wallet'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -68,6 +114,10 @@ export default function ProfileTab() {
           
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionButtonText}>Help & Support</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.clearDataButton} onPress={handleClearAllData}>
+            <Text style={styles.clearDataButtonText}>🗑️ Clear All Demo Data</Text>
           </TouchableOpacity>
         </View>
 
@@ -171,6 +221,35 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  connectButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  connectButtonDisabled: {
+    backgroundColor: '#666',
+    opacity: 0.7,
+  },
+  connectButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  clearDataButton: {
+    backgroundColor: '#dc2626',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  clearDataButtonText: {
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

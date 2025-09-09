@@ -16,12 +16,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useRefresh } from '../../src/contexts/RefreshContext';
+import { ContentRegistry } from '../../src/services/ContentRegistry';
 
 interface ActivityItem {
-  id: number;
-  type: 'registration' | 'verification';
+  id: string;
+  type: 'registration';
   title: string;
   date: string;
+  author: string;
+  hash: string;
 }
 
 interface UserStats {
@@ -38,23 +42,59 @@ export default function OverviewScreen() {
   });
   
   const { user, wallet, connectXION } = useAuth();
+  const { refreshKey } = useRefresh();
 
-  // Load user statistics (mock data for now)
+  // Load user statistics from ContentRegistry
   useEffect(() => {
-    const loadUserStats = () => {
-      setUserStats({
-        totalRegistrations: Math.floor(Math.random() * 20) + 5,
-        totalVerifications: Math.floor(Math.random() * 50) + 10,
-        recentActivity: [
-          { id: 1, type: 'registration', title: 'Photo_001.jpg', date: '2025-08-06' },
-          { id: 2, type: 'verification', title: 'Document.pdf', date: '2025-08-05' },
-          { id: 3, type: 'registration', title: 'Video_clip.mp4', date: '2025-08-04' },
-        ],
-      });
+    const loadUserStats = async () => {
+      try {
+        const registeredContent = await ContentRegistry.getAllRegisteredContent();
+        const userEmail = user?.email;
+        
+        if (!userEmail) {
+          // No user logged in, show empty stats
+          setUserStats({
+            totalRegistrations: 0,
+            totalVerifications: 0,
+            recentActivity: [],
+          });
+          return;
+        }
+        
+        // Filter content by current user
+        const userContent = registeredContent.filter(content => content.author === userEmail);
+        
+        // Convert to activity items
+        const recentActivity: ActivityItem[] = userContent
+          .slice(-10) // Last 10 items
+          .reverse() // Most recent first
+          .map((content, index) => ({
+            id: content.hash,
+            type: 'registration' as const,
+            title: content.fileName,
+            date: content.registrationDate,
+            author: content.author,
+            hash: content.hash
+          }));
+        
+        setUserStats({
+          totalRegistrations: userContent.length,
+          totalVerifications: 0, // Will implement verification tracking later
+          recentActivity,
+        });
+      } catch (error) {
+        console.error('Error loading user stats:', error);
+        // Fallback to empty stats
+        setUserStats({
+          totalRegistrations: 0,
+          totalVerifications: 0,
+          recentActivity: [],
+        });
+      }
     };
 
     loadUserStats();
-  }, []);
+  }, [user?.email, refreshKey]); // Re-load when user changes or refresh is triggered
 
   const handleConnectXION = async () => {
     try {
@@ -117,20 +157,30 @@ export default function OverviewScreen() {
         {/* Recent Activity */}
         <View style={styles.activityCard}>
           <Text style={styles.cardTitle}>Recent Activity</Text>
-          {userStats.recentActivity.map((activity) => (
-            <View key={activity.id} style={styles.activityItem}>
-              <Text style={styles.activityIcon}>
-                {activity.type === 'registration' ? '📝' : '🔍'}
-              </Text>
-              <View style={styles.activityInfo}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityDate}>{activity.date}</Text>
+          {userStats.recentActivity.length > 0 ? (
+            userStats.recentActivity.map((activity) => (
+              <View key={activity.id} style={styles.activityItem}>
+                <Text style={styles.activityIcon}>📝</Text>
+                <View style={styles.activityInfo}>
+                  <Text style={styles.activityTitle}>{activity.title}</Text>
+                  <Text style={styles.activityDate}>{activity.date}</Text>
+                  <Text style={styles.activityHash}>
+                    Hash: {activity.hash.substring(0, 20)}...
+                  </Text>
+                </View>
+                <Text style={styles.activityType}>Registered</Text>
               </View>
-              <Text style={styles.activityType}>
-                {activity.type === 'registration' ? 'Registered' : 'Verified'}
+            ))
+          ) : (
+            <View style={styles.emptyActivity}>
+              <Text style={styles.emptyActivityText}>
+                No content registered yet
+              </Text>
+              <Text style={styles.emptyActivitySubtext}>
+                Go to Register tab to add your first content
               </Text>
             </View>
-          ))}
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -256,9 +306,30 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
+  activityHash: {
+    fontSize: 10,
+    color: '#888',
+    marginTop: 1,
+    fontFamily: 'monospace',
+  },
   activityType: {
     fontSize: 12,
     color: '#00D4AA',
     fontWeight: '500',
+  },
+  emptyActivity: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  emptyActivityText: {
+    color: '#666',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  emptyActivitySubtext: {
+    color: '#888',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 5,
   },
 });

@@ -1,10 +1,14 @@
 /**
- * Contexto de Autenticación simplificado
- * Versión temporal sin hooks de Abstraxion para evitar problemas de Metro
+ * Contexto de Autenticación con XION Abstraxion Real
+ * Integración completa con hooks de Abstraxion React Native
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  useAbstraxionAccount, 
+  useAbstraxionSigningClient
+} from '@burnt-labs/abstraxion-react-native';
 
 // Interfaces TypeScript
 interface User {
@@ -13,7 +17,7 @@ interface User {
   createdAt: string;
   xionConnected: boolean;
   metaAddress?: string;
-  predefinedWallet?: string; // Dirección predefinida para demo
+  // Removed predefinedWallet - users must connect manually
 }
 
 interface Wallet {
@@ -35,6 +39,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   updateUserMap: (data: UserMapData) => Promise<boolean>;
   getUserMapData: () => Promise<UserMapData | null>;
+  clearAllDemoData: () => Promise<void>;
+  // Abstraxion real states
+  xionAccount: any;
+  isConnected: boolean;
+  isConnecting: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,30 +53,44 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Estados locales
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // TEMPORAL: Comentado para evitar problemas de Metro con Abstraxion
-  // const abstraxionAccount = useAbstraxionAccount();
-  // const { client: signingClient } = useAbstraxionSigningClient();
-
+  // Hooks reales de Abstraxion
+  const { 
+    data: xionAccount, 
+    isConnected, 
+    isConnecting,
+    login: xionLogin,
+    logout: xionLogout
+  } = useAbstraxionAccount();
+  
+  const { client: signingClient } = useAbstraxionSigningClient();
+  
   // Cargar usuario desde AsyncStorage al iniciar
   useEffect(() => {
     loadUserFromStorage();
   }, []);
 
-  // TEMPORAL: Comentado para evitar problemas con Abstraxion
-  // useEffect(() => {
-  //   if (abstraxionAccount.isConnected && user) {
-  //     const updatedUser = { 
-  //       ...user, 
-  //       xionConnected: true,
-  //       metaAddress: abstraxionAccount.data?.bech32Address 
-  //     };
-  //     setUser(updatedUser);
-  //     AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-  //   }
-  // }, [abstraxionAccount.isConnected, abstraxionAccount.data]);
+  // Monitorear cambios en la conexión XION y actualizar el usuario
+  useEffect(() => {
+    const updateUserWithXION = async () => {
+      if (isConnected && xionAccount && user && !user.xionConnected) {
+        console.log('🔗 XION connection detected, updating user...');
+        const updatedUser = { 
+          ...user, 
+          xionConnected: true,
+          metaAddress: xionAccount.bech32Address
+        };
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        console.log('✅ User updated with XION wallet:', xionAccount.bech32Address);
+      }
+    };
+
+    updateUserWithXION();
+  }, [isConnected, xionAccount, user]);
 
   const loadUserFromStorage = async () => {
     try {
@@ -85,22 +108,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       console.log('🔄 Creating NoirCheck account...');
       
-      // Asignar dirección predefinida del env para demo
-      const predefinedWallet = "xion1h0ryxfpzsza9hrwwknyszl8rnx63cafh02l4q82wyssycq39vsyqpjts45";
-      
-      // Guardar datos del usuario localmente (NO conectar XION automáticamente)
+      // Crear usuario sin wallet predefinida - debe conectar explícitamente
       const userData: User = {
         id: Date.now().toString(),
         email,
         createdAt: new Date().toISOString(),
-        xionConnected: false,
-        predefinedWallet
+        xionConnected: false
+        // No predefinedWallet - usuario debe conectar manualmente
       };
       
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       
-      console.log('✅ NoirCheck account created successfully with wallet:', predefinedWallet);
+      console.log('✅ NoirCheck account created successfully');
       return true;
     } catch (error) {
       console.error('❌ Account creation failed:', error);
@@ -113,26 +133,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const connectXION = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-      console.log('🔄 Connecting to XION via Meta Account...');
+      console.log('🔄 Connecting to XION via Abstraxion...');
       
-      // TEMPORAL: Simular conexión XION exitosa para evitar bloqueos con Metro
-      console.log('⚠️ XION connection simulated for demo purposes');
-      
-      if (user) {
-        // Simular conexión exitosa usando la dirección predefinida
-        const simulatedAddress = "xion1h0ryxfpzsza9hrwwknyszl8rnx63cafh02l4q82wyssycq39vsyqpjts45";
-        const updatedUser = { 
-          ...user, 
-          xionConnected: true,
-          metaAddress: simulatedAddress
-        };
-        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        console.log('✅ XION connection simulated successfully');
+      if (isConnected && xionAccount) {
+        console.log('✅ Already connected to XION');
+        
+        if (user && !user.xionConnected) {
+          // Update user with XION connection
+          const updatedUser = { 
+            ...user, 
+            xionConnected: true,
+            metaAddress: xionAccount.bech32Address
+          };
+          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+        }
+        
         return true;
       }
       
-      return false;
+      // Usar el método login de Abstraxion para iniciar la conexión
+      console.log('🚀 Initiating XION login process...');
+      await xionLogin();
+      
+      console.log('✅ XION login initiated successfully');
+      
+      // El estado se actualizará automáticamente a través de los hooks
+      return true;
       
     } catch (error) {
       console.error('❌ XION connection failed:', error);
@@ -144,7 +171,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateUserMap = async (data: UserMapData): Promise<boolean> => {
     try {
-      // TEMPORAL: Simulación sin cliente de signing real
+      // Simular actualización hasta resolver polyfills
       console.warn('⚠️ User Map update simulated - XION integration temporarily disabled');
       return true;
     } catch (error) {
@@ -155,7 +182,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getUserMapData = async (): Promise<UserMapData | null> => {
     try {
-      // TEMPORAL: Simulación sin cliente de signing real
+      // Simular query hasta resolver polyfills
       console.warn('⚠️ User Map query simulated - XION integration temporarily disabled');
       return null;
     } catch (error) {
@@ -164,15 +191,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const clearAllDemoData = async (): Promise<void> => {
+    try {
+      // Limpiar todo el storage del usuario y contenido
+      await AsyncStorage.multiRemove(['user', '@NoirCheck:RegisteredContent']);
+      
+      // Resetear estado local
+      setUser(null);
+      
+      console.log('🗑️ Cleared all demo data and user storage');
+    } catch (error) {
+      console.error('❌ Failed to clear demo data:', error);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem('user');
       setUser(null);
       
-      // TEMPORAL: Comentado logout de Abstraxion
-      // if (abstraxionAccount.logout) {
-      //   abstraxionAccount.logout();
-      // }
+      // Usar logout real de Abstraxion
+      if (isConnected) {
+        xionLogout();
+        console.log('🔌 XION wallet disconnected');
+      }
       
       console.log('✅ User logged out');
     } catch (error) {
@@ -180,10 +222,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const wallet: Wallet | null = user?.predefinedWallet ? {
-    address: user.predefinedWallet,
-    connected: user.xionConnected || false // Usar el estado real de conexión XION
-  } : null;
+  const wallet: Wallet | null = user?.metaAddress ? {
+    address: user.metaAddress,
+    connected: user.xionConnected || false
+  } : (xionAccount ? {
+    address: xionAccount.bech32Address,
+    connected: isConnected
+  } : null);
 
   const value: AuthContextType = {
     user,
@@ -194,7 +239,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isAuthenticated: !!user,
     updateUserMap,
-    getUserMapData
+    getUserMapData,
+    clearAllDemoData,
+    // Abstraxion real states
+    xionAccount,
+    isConnected,
+    isConnecting
   };
 
   return (

@@ -28,9 +28,9 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../src/contexts/AuthContext';
 
 export default function LoginScreen() {
-  // Local state for form inputs con valores predefinidos para demo
-  const [email, setEmail] = useState('by.cozyhome@gmail.com');
-  const [password, setPassword] = useState('123456');
+  // Local state for form inputs - empty by default
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
     // Authentication context and navigation
