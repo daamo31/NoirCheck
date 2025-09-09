@@ -17,9 +17,11 @@ config.resolver.alias = {
   crypto: 'react-native-quick-crypto',
   stream: 'stream-browserify',
   buffer: 'buffer',
+  '@react-native-async-storage/async-storage': '@react-native-async-storage/async-storage',
 };
 
-// Configurar polyfills globales
+// Asegurar que AsyncStorage se resuelve correctamente
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
 module.exports = withLibsodiumResolver(config);

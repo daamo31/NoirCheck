@@ -610,18 +610,36 @@ global.crypto.subtle = {
 
 // localStorage mock usando AsyncStorage (compatible con sincronización)
 let AsyncStorage = null;
+
+// Intentar múltiples formas de importar AsyncStorage
 try {
-  AsyncStorage = require('@react-native-async-storage/async-storage');
+  // Intento 1: Import normal
+  AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  if (!AsyncStorage || typeof AsyncStorage.getAllKeys !== 'function') {
+    // Intento 2: Import sin default
+    AsyncStorage = require('@react-native-async-storage/async-storage');
+  }
 } catch (error) {
-  console.log('⚠️ AsyncStorage not available, using memory-only localStorage');
+  console.log('⚠️ AsyncStorage require failed:', error.message);
+}
+
+// Verificar si AsyncStorage tiene las funciones necesarias
+if (AsyncStorage && typeof AsyncStorage.getAllKeys === 'function') {
+  console.log('✅ AsyncStorage loaded successfully');
+} else {
+  console.log('⚠️ AsyncStorage not functional, using memory-only localStorage');
+  AsyncStorage = null;
 }
 
 const localStorageMock = {
   getItem: (key) => {
     // Retornar desde cache síncrono
-    return global._localStorageCache?.[key] || null;
+    const value = global._localStorageCache?.[key];
+    console.log(`📦 localStorage.getItem('${key}') ->`, value ? 'found' : 'null');
+    return value || null;
   },
   setItem: (key, value) => {
+    console.log(`📦 localStorage.setItem('${key}', '${typeof value === 'string' ? value.substring(0, 50) : value}...')`);
     // Cache síncrono + AsyncStorage asíncrono si disponible
     if (!global._localStorageCache) {
       global._localStorageCache = {};
@@ -629,33 +647,52 @@ const localStorageMock = {
     global._localStorageCache[key] = value;
     
     // También guardar en AsyncStorage de manera asíncrona si está disponible
-    if (AsyncStorage) {
-      AsyncStorage.setItem(key, value).catch(console.error);
+    if (AsyncStorage && typeof AsyncStorage.setItem === 'function') {
+      AsyncStorage.setItem(key, value).catch(error => {
+        console.warn('⚠️ AsyncStorage.setItem failed:', error.message);
+      });
     }
   },
   removeItem: (key) => {
+    console.log(`📦 localStorage.removeItem('${key}')`);
     if (global._localStorageCache) {
       delete global._localStorageCache[key];
     }
-    if (AsyncStorage) {
-      AsyncStorage.removeItem(key).catch(console.error);
+    if (AsyncStorage && typeof AsyncStorage.removeItem === 'function') {
+      AsyncStorage.removeItem(key).catch(error => {
+        console.warn('⚠️ AsyncStorage.removeItem failed:', error.message);
+      });
     }
   },
   clear: () => {
+    console.log('📦 localStorage.clear()');
     global._localStorageCache = {};
-    if (AsyncStorage) {
-      AsyncStorage.clear().catch(console.error);
+    if (AsyncStorage && typeof AsyncStorage.clear === 'function') {
+      AsyncStorage.clear().catch(error => {
+        console.warn('⚠️ AsyncStorage.clear failed:', error.message);
+      });
     }
+  },
+  // Propiedades adicionales que algunos SDKs esperan
+  length: 0,
+  key: (index) => {
+    const keys = Object.keys(global._localStorageCache || {});
+    return keys[index] || null;
   }
 };
 
 // Inicializar cache desde AsyncStorage si está disponible
 const initializeLocalStorageCache = async () => {
+  // Inicializar cache inmediatamente para operaciones síncronas
+  if (!global._localStorageCache) {
+    global._localStorageCache = {};
+  }
+
   try {
-    if (AsyncStorage) {
+    if (AsyncStorage && typeof AsyncStorage.getAllKeys === 'function') {
+      console.log('🔄 Initializing localStorage cache from AsyncStorage...');
       const keys = await AsyncStorage.getAllKeys();
       const items = await AsyncStorage.multiGet(keys);
-      global._localStorageCache = {};
       
       items.forEach(([key, value]) => {
         if (value !== null) {
@@ -663,13 +700,13 @@ const initializeLocalStorageCache = async () => {
         }
       });
       
-      console.log('✅ localStorage cache initialized with', keys.length, 'items');
+      console.log('✅ localStorage cache initialized with', keys.length, 'items from AsyncStorage');
     } else {
-      global._localStorageCache = {};
-      console.log('✅ localStorage cache initialized (memory-only)');
+      console.log('✅ localStorage cache initialized (memory-only mode)');
     }
   } catch (error) {
     console.error('❌ Failed to initialize localStorage cache:', error);
+    // En caso de error, asegurar que el cache existe
     global._localStorageCache = {};
   }
 };
@@ -678,7 +715,13 @@ const initializeLocalStorageCache = async () => {
 initializeLocalStorageCache();
 
 if (typeof global.localStorage === 'undefined') {
+  // Hacer que length sea dinámico
+  Object.defineProperty(localStorageMock, 'length', {
+    get: () => Object.keys(global._localStorageCache || {}).length
+  });
+  
   global.localStorage = localStorageMock;
+  console.log('✅ localStorage polyfill initialized');
 }
 
 console.log('✅ Crypto polyfills initialized successfully');
